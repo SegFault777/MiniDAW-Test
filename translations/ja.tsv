@@ -1,0 +1,757 @@
+#name	日本語
+# MiniDAW translation. One 'English<TAB>Translation' pair per line; untranslated texts stay in English.
+# Use \n for a line break. Keep placeholders such as %1 unchanged.
+&File	ファイル(&F)
+&Edit	編集(&E)
+&Track	トラック(&T)
+T&ransport	トランスポート(&R)
+&View	表示(&V)
+&Help	ヘルプ(&H)
+New	新規
+Open…	開く…
+Save	保存
+Save As…	名前を付けて保存…
+Import Audio…	オーディオを読み込む…
+Import MIDI File…	MIDIファイルを読み込む…
+Export MIDI File…	MIDIファイルを書き出す…
+Bounce to WAV…	WAVにバウンス…
+Preferences…	環境設定…
+Quit	終了
+Undo	元に戻す
+Redo	やり直す
+Delete	削除
+Duplicate Region	リージョンを複製
+Split at Playhead	再生ヘッドで分割
+Snap to Grid	グリッドにスナップ
+Volume Automation	ボリュームオートメーション
+New Audio Track	新規オーディオトラック
+New Software Instrument Track	新規ソフトウェア音源トラック
+New Drum Machine Track	新規ドラムマシントラック
+New Drummer Track	新規ドラマートラック
+Delete Track	トラックを削除
+Show Tempo Track	テンポトラックを表示
+Time Signature…	拍子…
+Go to Beginning	先頭へ移動
+Play / Pause	再生 / 一時停止
+Stop	停止
+Record	録音
+Cycle	サイクル
+Metronome Click	メトロノーム
+Count-in (1 bar)	カウントイン (1小節)
+Inspector	インスペクタ
+Mixer	ミキサー
+Smart Controls	スマートコントロール
+Piano Roll	ピアノロール
+Step Sequencer	ステップシーケンサー
+Drummer Editor	ドラマーエディタ
+Loop Browser	ループブラウザ
+Show / Hide Editors	エディタの表示 / 非表示
+Musical Typing	ミュージカルタイピング
+About MiniDAW	MiniDAWについて
+Tracks	トラック
+Tempo	テンポ
+Audio	オーディオ
+Software Instrument	ソフトウェア音源
+Drum Machine	ドラムマシン
+Drummer	ドラマー
+No track selected	トラックが選択されていません
+INSPECTOR	インスペクタ
+Audio FX	オーディオFX
+Pan	パン
+Mute	ミュート
+Solo	ソロ
+Record enable	録音可能
+Master	マスター
+Follow Tempo	テンポに追従
+Source tempo	元のテンポ
+Transpose	トランスポーズ
+Preset	プリセット
+Kick	キック
+Snare	スネア
+Hi-Hat	ハイハット
+Clap	クラップ
+Rock	ロック
+Pop	ポップ
+Hip-Hop	ヒップホップ
+House	ハウス
+Funk	ファンク
+Disco	ディスコ
+Channel EQ	チャンネルEQ
+Compressor	コンプレッサー
+Echo	エコー
+Reverb	リバーブ
+Overdrive	オーバードライブ
+Limiter	リミッター
+Bypass	バイパス
+Style	スタイル
+Bars	小節数
+Swing	スウィング
+Fills	フィル
+New Variation	新しいバリエーション
+Simple	シンプル
+Complex	複雑
+Loud	大きく
+Velocity	ベロシティ
+Grid	グリッド
+Quantize (Q)	クオンタイズ (Q)
+Ramp to Next Point	次のポイントまで変化
+Delete Point	ポイントを削除
+Rename Track…	トラック名を変更…
+Rename Track	トラック名を変更
+Track name:	トラック名:
+Time Signature	拍子
+Beats per bar	1小節の拍数
+Note value	音符の長さ
+Starting at bar	開始小節
+LOOP BROWSER	ループブラウザ
+Search	検索
+Preview on click	クリックで試聴
+Folder…	フォルダ…
+Preferences	環境設定
+General	一般
+Plug-ins	プラグイン
+Output device	出力デバイス
+System Default	システムのデフォルト
+Buffer size	バッファサイズ
+Play Test Tone	テストトーンを再生
+Status	状態
+MIDI input	MIDI入力
+None	なし
+Language	言語
+Automatic (system language)	自動 (システムの言語)
+Restart MiniDAW to apply a new language.	新しい言語を適用するにはMiniDAWを再起動してください。
+Restart MiniDAW to apply the new language.	新しい言語を適用するにはMiniDAWを再起動してください。
+Loops folder	ループフォルダ
+Browse…	参照…
+Rescan	再スキャン
+Untitled	名称未設定
+Unsaved changes	未保存の変更
+Save changes to the project before continuing?	続行する前にプロジェクトの変更を保存しますか?
+Open Project	プロジェクトを開く
+Save Project	プロジェクトを保存
+Saved %1	%1 を保存しました
+Not a valid MiniDAW project file.	有効なMiniDAWプロジェクトファイルではありません。
+There is nothing to bounce.	バウンスする内容がありません。
+Audio error: %1	オーディオエラー: %1
+No audio output device was found.	オーディオ出力デバイスが見つかりません。
+# v0.5
+Cut	切り取り
+Copy	コピー
+Paste	貼り付け
+Duplicate Track	トラックを複製
+Bounce	バウンス
+Range	範囲
+Format	形式
+Whole project	プロジェクト全体
+Cycle range	サイクル範囲
+16-bit PCM	16ビットPCM
+24-bit PCM	24ビットPCM
+32-bit float	32ビット浮動小数点
+Dither (16-bit)	ディザ (16ビット)
+Normalize to	ノーマライズ レベル
+Add reverb / echo tail (2 s)	リバーブ／エコーの余韻を追加 (2秒)
+Set a cycle range first (right-drag on the ruler).	先にサイクル範囲を設定してください (ルーラーを右ドラッグ)。
+This audio is still loading.	このオーディオはまだ読み込み中です。
+MIDI regions can be pasted on Software Instrument and Drummer tracks.	MIDIリージョンはソフトウェア音源トラックとドラマートラックに貼り付けられます。
+Audio regions can be pasted on Audio tracks.	オーディオリージョンはオーディオトラックに貼り付けられます。
+%1 copy	%1 のコピー
+Input device	入力デバイス
+Recording latency compensation	録音レイテンシー補正
+Moves recorded audio earlier (positive) or later (negative) to make up for the latency of your audio interface.	オーディオインターフェースの遅延を補正するため、録音したオーディオを前 (正の値) または後ろ (負の値) へずらします。
+Gain	ゲイン
+Fade In	フェードイン
+Fade Out	フェードアウト
+Reverse	リバース
+Normalize	ノーマライズ
+# v0.6
+Automation	オートメーション
+Automation Parameter	オートメーション パラメータ
+Volume	ボリューム
+Pan	パン
+Send A	センドA
+Send B	センドB
+Marker %1	マーカー %1
+Add Marker	マーカーを追加
+Next Marker	次のマーカー
+Previous Marker	前のマーカー
+Rename Marker	マーカー名を変更
+Rename Marker…	マーカー名を変更…
+Delete Marker	マーカーを削除
+Add Marker Here	ここにマーカーを追加
+Name	名前
+Recover Project	プロジェクトの復元
+MiniDAW did not close properly last time. Restore the last autosaved project?	MiniDAWが前回正常に終了しませんでした。最後の自動保存を復元しますか？
+Recovered the autosaved project. Please save it.	自動保存されたプロジェクトを復元しました。保存してください。
+Autosave every	自動保存の間隔
+ min	 分
+Off	オフ
+Open Recent	最近使ったプロジェクト
+Clear Menu	メニューを消去
+Tap Tempo	タップテンポ
+Tempo: %1 BPM	テンポ: %1 BPM
+Move Track Up	トラックを上へ移動
+Move Track Down	トラックを下へ移動
+Track Color…	トラックの色…
+Track Color	トラックの色
+Mute / Unmute Region	リージョンのミュート／解除
+Chorus	コーラス
+Filter	フィルター
+MiniDAW Plug-ins	MiniDAW プラグイン
+# v0.7
+Bounce in Place	その場でバウンス
+Arpeggiate Region…	リージョンをアルペジオ化…
+Quantize Region…	リージョンをクオンタイズ…
+Scale Quantize…	スケール クオンタイズ…
+Humanize…	ヒューマナイズ…
+Chord Trigger…	コード トリガー…
+MIDI Transform	MIDI トランスフォーム
+Select a MIDI region first.	先にMIDIリージョンを選択してください。
+Bounced the track to a new audio track.	トラックを新しいオーディオトラックにバウンスしました。
+This track has no regions to bounce.	バウンスするリージョンがありません。
+The track is silent, nothing was bounced.	トラックが無音のため、バウンスしませんでした。
+%1 (Bounce)	%1 (バウンス)
+Arpeggiate Region	リージョンのアルペジオ化
+Pattern	パターン
+Up	アップ
+Down	ダウン
+Up & Down	アップ＆ダウン
+Down & Up	ダウン＆アップ
+Random	ランダム
+As Played	演奏順
+Rate	レート
+Octave Range	オクターブ範囲
+Gate	ゲート
+Quantize Region	リージョンのクオンタイズ
+Strength	強さ
+50 % is straight, 66 % gives a triplet feel.	50 % はストレート、66 % は三連のノリです。
+Quantize note lengths	ノートの長さもクオンタイズ
+Scale Quantize	スケール クオンタイズ
+Key	キー
+Scale	スケール
+Major	メジャー
+Minor	マイナー
+Harmonic Minor	ハーモニックマイナー
+Melodic Minor	メロディックマイナー
+Dorian	ドリアン
+Phrygian	フリジアン
+Lydian	リディアン
+Mixolydian	ミクソリディアン
+Major Pentatonic	メジャーペンタトニック
+Minor Pentatonic	マイナーペンタトニック
+Blues	ブルース
+Chromatic	クロマチック
+Humanize	ヒューマナイズ
+Timing	タイミング
+Largest timing change as a percentage of a 1/16 note.	16分音符に対する割合で表した最大のタイミング変化です。
+Chord Trigger	コード トリガー
+Chord	コード
+Diminished	ディミニッシュ
+Augmented	オーギュメント
+Suspended 2nd	サス2
+Suspended 4th	サス4
+Major 7th	メジャー7th
+Minor 7th	マイナー7th
+Dominant 7th	ドミナント7th
+Octave	オクターブ
+Inversion	転回
+Legato	レガート
+Transpose…	トランスポーズ…
+Crescendo / Decrescendo…	クレッシェンド / デクレッシェンド…
+Repeat Region…	リージョンを繰り返し…
+Join Regions	リージョンを結合
+Detect Tempo…	テンポを検出…
+Convert Pattern to MIDI Region	パターンをMIDIリージョンに変換
+Select a region first.	先にリージョンを選択してください。
+Select an audio region first.	先にオーディオリージョンを選択してください。
+Select a drum machine track first.	先にドラムマシントラックを選択してください。
+Interval	音程
+semitones	半音
+Crescendo / Decrescendo	クレッシェンド / デクレッシェンド
+Start velocity	開始ベロシティ
+End velocity	終了ベロシティ
+Repeat Region	リージョンを繰り返し
+Number of copies	コピー数
+Detect Tempo	テンポを検出
+No clear tempo was found in this region.	このリージョンから明確なテンポを検出できませんでした。
+Detected tempo: %1 BPM	検出されたテンポ: %1 BPM
+Follow project tempo	プロジェクトテンポに追従
+Set project tempo	プロジェクトテンポをこの値に
+%1 (MIDI)	%1 (MIDI)
+The pattern is empty.	パターンが空です。
+Only regions of the same kind can be joined.	同じ種類のリージョン同士のみ結合できます。
+There is no region after this one to join.	このリージョンの後に結合するリージョンがありません。
+These audio regions cannot be joined: they must be neighbours that play the same recording one after the other.	これらのオーディオリージョンは結合できません。同じ録音を続けて再生する隣接リージョンである必要があります。
+File	ファイル
+Edit	編集
+Track	トラック
+Functions	機能
+View	表示
++  Add Track	+  トラックを追加
+Loops	ループ
+New Project	新規プロジェクト
+Open...	開く...
+Open Recent...	最近使った項目を開く...
+No recent projects	最近のプロジェクトはありません
+Save As...	名前を付けて保存...
+Import Audio...	オーディオを読み込む...
+Import MIDI File...	MIDIファイルを読み込む...
+Export MIDI File...	MIDIファイルを書き出す...
+Bounce to WAV...	WAVにバウンス...
+Preferences...	環境設定...
+Cut Region	リージョンをカット
+Copy Region	リージョンをコピー
+Paste Region	リージョンをペースト
+Delete Region	リージョンを削除
+Rename...	名前を変更...
+Snap to Grid: On	グリッドにスナップ: オン
+Snap to Grid: Off	グリッドにスナップ: オフ
+Rename Track...	トラック名を変更...
+Convert Pattern to MIDI Region...	パターンをMIDIリージョンに変換...
+Repeat Region...	リージョンを繰り返し...
+Quantize...	クオンタイズ...
+Scale Quantize...	スケールクオンタイズ...
+Humanize...	ヒューマナイズ...
+Arpeggiate...	アルペジオ...
+Chord Trigger...	コードトリガー...
+Transpose...	トランスポーズ...
+Crescendo / Decrescendo...	クレッシェンド / デクレッシェンド...
+Fixed Note Length...	固定ノート長...
+Scale Velocity...	ベロシティをスケール...
+Fix Overlaps	オーバーラップを修正
+Remove Duplicate Notes	重複ノートを削除
+Retrograde	レトログラード
+Invert Pitches	ピッチを反転
+Strip Silence...	無音部分を削除...
+Detect Tempo...	テンポを検出...
+Reverse Region	リージョンを逆再生
+Normalize Region	リージョンをノーマライズ
+Measure Loudness	ラウドネスを測定
+Hide Bottom Panel	下部パネルを隠す
+Show Bottom Panel	下部パネルを表示
+Hide Inspector	インスペクタを隠す
+Show Inspector	インスペクタを表示
+Zoom In	拡大
+Zoom Out	縮小
+Tempo...	テンポ...
+Time Signature...	拍子記号...
+Rename Marker...	マーカー名を変更...
+Metronome	メトロノーム
+Count-in	カウントイン
+Musical Typing: On	ミュージックタイピング: オン
+Musical Typing: Off	ミュージックタイピング: オフ
+Cancel	キャンセル
+Close	閉じる
+Quantize	クオンタイズ
+Strip	削除
+Also quantize note lengths	ノート長もクオンタイズ
+Pentatonic Major	ペンタトニック・メジャー
+Pentatonic Minor	ペンタトニック・マイナー
+Random seed	乱数シード
+Up / Down	アップ / ダウン
+Down / Up	ダウン / アップ
+As played	演奏順
+Octaves	オクターブ
+Sus2	サス2
+Sus4	サス4
+Major 7	メジャー7
+Minor 7	マイナー7
+Dominant 7	ドミナント7
+Fixed Note Length	固定ノート長
+Length	長さ
+1 Bar	1小節
+Scale Velocity	ベロシティをスケール
+Offset	オフセット
+Strip Silence	無音部分を削除
+Threshold	スレッショルド
+Minimum silence	最小無音長
+Padding	パディング
+Follows project tempo	プロジェクトテンポに追従中
+Project tempo	プロジェクトテンポ
+Normalize level	ノーマライズレベル
+Rename Region	リージョン名を変更
+256 samples (5 ms)	256サンプル (5 ms)
+512 samples (11 ms)	512サンプル (11 ms)
+1024 samples (23 ms)	1024サンプル (23 ms)
+2048 samples (46 ms)	2048サンプル (46 ms)
+4096 samples (92 ms)	4096サンプル (92 ms)
+English	English
+Restart MiniDAW to apply a new language. Autosave 0 = off.	新しい言語を適用するにはMiniDAWを再起動してください。自動保存 0 = オフ。
+Ready	準備完了
+OUT	出力
+Region	リージョン
+Instrument	インストゥルメント
+Inserts	インサート
++ Add effect	+ エフェクトを追加
+Audio track	オーディオトラック
+Synth	シンセ
+Drum Kit	ドラムキット
+Center	センター
+Send A (reverb)	センドA (リバーブ)
+Send B (echo)	センドB (エコー)
+Fade in	フェードイン
+Fade out	フェードアウト
+No region selected.	リージョンが選択されていません。
+Select a track or a region to see its properties.	プロパティを表示するにはトラックまたはリージョンを選択してください。
+Select a track to edit its instrument and effects.	インストゥルメントとエフェクトを編集するにはトラックを選択してください。
+This track has no instrument or effects. Add an effect in the Inspector.	このトラックにはインストゥルメントもエフェクトもありません。インスペクタでエフェクトを追加してください。
+Select a MIDI region (double-click one) to edit its notes.	ノートを編集するにはMIDIリージョンを選択してください (ダブルクリック)。
+Select a Drum Machine track to edit its pattern.	パターンを編集するにはドラムマシントラックを選択してください。
+Select a Drummer region (double-click an empty lane of a Drummer track to create one).	ドラマーリージョンを選択してください (ドラマートラックの空きレーンをダブルクリックで作成)。
+Complexity	複雑さ
+Loudness	ラウドネス
+Fills: On	フィル: オン
+Fills: Off	フィル: オフ
+New variation	新しいバリエーション
+Clear pattern	パターンをクリア
+Choose folder...	フォルダを選択...
+Stop preview	プレビューを停止
+loading...	読み込み中...
+Ctrl+Shift+S	Ctrl+Shift+S
+Select a track or a region first.	先にトラックまたはリージョンを選択してください。
+Arm a track with the R button first.	先にRボタンでトラックを録音待機にしてください。
+Region copied.	リージョンをコピーしました。
+Legato applied.	レガートを適用しました。
+Overlaps fixed.	オーバーラップを修正しました。
+Duplicate notes removed.	重複ノートを削除しました。
+Region reversed.	リージョンを反転しました。
+Pitches inverted.	ピッチを反転しました。
+Preferences saved.	環境設定を保存しました。
+New project.	新規プロジェクトです。
+Musical typing off.	ミュージックタイピングをオフにしました。
+File dialogs are not available here.	ここではファイルダイアログを使用できません。
+Use File > Import Audio to add audio.	オーディオを追加するにはファイル > オーディオを読み込むを使用してください。
+Drum machine patterns are not part of the native UI yet.	ドラムマシンのパターンはまだネイティブUIにありません。
+Too quiet or too short to measure.	音が小さすぎるか短すぎて測定できません。
+Qt-free native version. GPL-3.0-or-later. Fonts: Liberation Sans (SIL OFL).	Qt不使用のネイティブ版。GPL-3.0-or-later。フォント: Liberation Sans (SIL OFL)。
+MiniDAW - a lightweight Logic Pro-inspired digital audio workstation.	MiniDAW - Logic Proに着想を得た軽量なデジタルオーディオワークステーション。
+Browser	ブラウザ
+Nothing matches.	一致する項目がありません。
+Instruments	インストゥルメント
+Effects	エフェクト
+built in	内蔵
+Devices	デバイス
+Editor	エディタ
+Add an effect	エフェクトを追加
+This device has no parameters here.	このデバイスにはここで操作できるパラメータがありません。
+Select a track to see its devices.	デバイスを表示するにはトラックを選択してください。
+MiniDAW plug-ins	MiniDAWプラグイン
+VST3 plug-ins	VST3プラグイン
+VST3 folders (separate with ;)	VST3フォルダ (;で区切る)
+Rescan plug-ins	プラグインを再スキャン
+Scanning plug-ins in the background...	バックグラウンドでプラグインをスキャン中...
+Plug-in scan finished.	プラグインのスキャンが完了しました。
+This plug-in has no editor window.	このプラグインにはエディタウィンドウがありません。
+Show Browser	ブラウザを表示
+Hide Browser	ブラウザを隠す
+Track Height: Compact	トラックの高さ: コンパクト
+Track Height: Normal	トラックの高さ: 標準
+Track Height: Tall	トラックの高さ: 大
+Select a Software Instrument track first.	先にソフトウェア音源トラックを選択してください。
+Select a track first.	先にトラックを選択してください。
+Drop an effect on a track.	エフェクトをトラックにドロップしてください。
+Drop an instrument on a Software Instrument track, or on an empty part of the arrangement.	インストゥルメントはソフトウェア音源トラックか、アレンジの空きスペースにドロップしてください。
+No tempo found - use Detect Tempo and choose 'Follow project tempo'.	テンポが見つかりません。テンポを検出して「プロジェクトテンポに追従」を選んでください。
+No tracks - use  + Add Track	トラックがありません。+ トラックを追加を使ってください
+Added %1	%1 を追加しました
+Instrument: %1	インストゥルメント: %1
+Opened %1	%1 を開きました
+Could not open the project: %1	プロジェクトを開けません: %1
+Importing %1	%1 を読み込み中
+Imported %1	%1 を読み込みました
+Exported %1	%1 を書き出しました
+Could not import: %1	読み込めません: %1
+Could not export: %1	書き出せません: %1
+Could not save: %1	保存できません: %1
+Bounced to %1	%1 にバウンスしました
+Could not bounce: %1	バウンスできません: %1
+New track with %1	%1 を使った新規トラック
+Octave %1	オクターブ %1
+%1 added as an insert.	%1 をインサートとして追加しました。
+%1 region after Strip Silence.	無音削除後のリージョン: %1
+%1 regions after Strip Silence.	無音削除後のリージョン: %1
+Go to the start (Enter)	先頭へ移動 (Enter)
+Play / pause (Space)	再生 / 一時停止 (Space)
+Record into the armed tracks (R)	録音待機中のトラックに録音 (R)
+Cycle on / off (C). Shift-drag the ruler to set the cycle range	サイクルのオン/オフ (C)。ルーラーをShiftドラッグで範囲を設定
+Metronome (K)	メトロノーム (K)
+Count-in before recording	録音前のカウントイン
+Add an audio, instrument, drum machine or Drummer track	オーディオ、音源、ドラムマシン、ドラマートラックを追加
+Grid for moving and drawing: click to change the value	移動と描画のグリッド: クリックで値を変更
+Zoom (Ctrl + mouse wheel)	ズーム (Ctrl + マウスホイール)
+Show or hide the bottom panel (X)	下部パネルの表示/非表示 (X)
+Click to move the playhead. Shift-drag sets the cycle range	クリックで再生ヘッドを移動。Shiftドラッグでサイクル範囲
+Drag to move, drag the right edge to resize, double-click to edit, right-click for functions	ドラッグで移動、右端をドラッグでサイズ変更、ダブルクリックで編集、右クリックで機能
+Drag to resize the region	ドラッグでリージョンのサイズを変更
+Click to jump to the marker, drag to move it, right-click for more	クリックでマーカーへ移動、ドラッグで移動、右クリックでその他
+Click to select the track, right-click for track functions	クリックでトラックを選択、右クリックでトラック機能
+Arm for recording	録音待機
+Volume - double-click to reset	ボリューム - ダブルクリックでリセット
+Volume - double-click to reset to -1.9 dB	ボリューム - ダブルクリックで -1.9 dB にリセット
+Pan - drag up or down, double-click to centre	パン - 上下にドラッグ、ダブルクリックでセンター
+Drag up or down to change - hold Shift for fine control - double-click to reset	上下にドラッグで変更 - Shiftで微調整 - ダブルクリックでリセット
+Drag to change	ドラッグで変更
+Switch the bottom panel	下部パネルを切り替え
+Double-click to add, or drag onto a track (loops and instruments also onto an empty part of the arrangement)	ダブルクリックで追加、またはトラックにドラッグ (ループと音源はアレンジの空きにも可)
+Click and type to filter the browser	クリックして入力するとブラウザを絞り込み
+Click to add a note, drag to move or resize, right-click to delete	クリックでノート追加、ドラッグで移動/サイズ変更、右クリックで削除
+Click a key to hear the note	鍵盤をクリックして音を確認
+Drag to change a note's velocity	ドラッグでノートのベロシティを変更
+Click to toggle a step, drag to paint	クリックでステップを切り替え、ドラッグでペイント
+Click to add a point, drag to move it, right-click to delete it	クリックでポイント追加、ドラッグで移動、右クリックで削除
+Click to add a point, drag to move it, right-click to delete it.	クリックでポイント追加、ドラッグで移動、右クリックで削除します。
+%1 notes copied.	%1 個のノートをコピーしました。
+# v0.12 Vulkan interface
+   from	開始
+   to	終了
++ Add Effect	+ エフェクトを追加
++ Add Track	+ トラックを追加
++ FX	+ FX
++ Insert	+ インサート
++ Save Snapshot	+ スナップショットを保存
++ Track	+ トラック
+%1 note changed.	%1個のノートを変更しました。
+%1 notes changed.	%1個のノートを変更しました。
+Action	アクション
+Adapt Tempo...	テンポを合わせる...
+Add condition 2	条件2を追加
+Also snap note lengths	ノートの長さもスナップ
+Apply	適用
+Apply Groove...	グルーヴを適用...
+Apply to the notes that do NOT match	一致しないノートに適用
+Arm Record	録音待機
+Audio Region	オーディオリージョン
+Auto	自動
+Auto: %1	自動: %1
+Auto: Bar	自動: 小節
+Aux A: Reverb	Aux A: リバーブ
+Aux A: Reverb...	Aux A: リバーブ...
+Aux B: Echo	Aux B: エコー
+Aux B: Echo...	Aux B: エコー...
+BROWSER	ブラウザ
+Bar	小節
+Beat Detective...	ビートディテクティブ...
+Beat unit	拍の単位
+Bounce / Export Audio...	バウンス / オーディオを書き出し...
+Capture MIDI	MIDIキャプチャ
+Clear Lane	レーンをクリア
+Click to add a point - drag to move - right-click to delete - the line is followed during playback	クリックでポイント追加 - ドラッグで移動 - 右クリックで削除 - 再生中はラインに従います
+Colour: Velocity	色: ベロシティ
+Command Palette	コマンドパレット
+Command Palette...	コマンドパレット...
+Condition 1	条件1
+Condition 2	条件2
+Cycle Track Height	トラックの高さを切り替え
+Damping	ダンピング
+Density	密度
+Discard Changes	変更を破棄
+Drum Machine - click the steps, drag to paint	ドラムマシン - ステップをクリック、ドラッグでペイント
+Eraser	消しゴム
+Eraser Tool	消しゴムツール
+Esc or F1 closes - Ctrl+K searches every command	Esc または F1 で閉じる - Ctrl+K で全コマンドを検索
+Feedback	フィードバック
+Filter: every condition must match. Action: applied to the notes that match.	フィルター: すべての条件に一致する必要があります。アクション: 一致したノートに適用されます。
+Fold	フォールド
+Fold Notes	ノートをフォールド
+Follow Playhead	再生ヘッドに追従
+Functions v	機能 v
+Ghost	ゴースト
+Go to End	終わりへ移動
+Go to Start	先頭へ移動
+Grid: %1	グリッド: %1
+Help	ヘルプ
+Highlight	ハイライト
+Keyboard Shortcuts	キーボードショートカット
+Keyboard Shortcuts...	キーボードショートカット...
+Keyboard shortcuts	キーボードショートカット
+Largest leap	最大の跳躍
+Lock	ロック
+Logical Editor	ロジカルエディター
+Logical Editor...	ロジカルエディター...
+Lowest octave	最低オクターブ
+MIDI Region	MIDIリージョン
+Make Groove	グルーヴを作成
+Marker added.	マーカーを追加しました。
+Maximize Bottom Panel	下部パネルを最大化
+Mix	ミックス
+MixConsole Snapshots	MixConsoleスナップショット
+Musical typing on: A W S E D F T G Y H U J K play notes, Z / X change the octave.	ミュージカルタイピング オン: A W S E D F T G Y H U J K で演奏、Z / X でオクターブ変更。
+Mute Region	リージョンをミュート
+Mute Tool	ミュートツール
+Mute Track	トラックをミュート
+Next Grid Size	次のグリッドサイズ
+No next marker.	次のマーカーはありません。
+Not following the playhead.	再生ヘッドに追従していません。
+Note length	ノートの長さ
+Nothing to bounce.	バウンスするものがありません。
+Nudge Region Left	リージョンを左へナッジ
+Nudge Region Right	リージョンを右へナッジ
+OK	OK
+Parameter	パラメーター
+Pattern doubled to %1 beats.	パターンを%1拍に倍にしました。
+Pencil	鉛筆
+Pencil Tool	鉛筆ツール
+Pitch	ピッチ
+Playhead Back One Bar	再生ヘッドを1小節戻す
+Playhead Forward One Bar	再生ヘッドを1小節進める
+Pointer	ポインター
+Pointer Tool	ポインターツール
+Preview	プレビュー
+Put the playhead inside a region to split it.	分割するにはリージョン内に再生ヘッドを置いてください。
+Recall	呼び出し
+Recall Previous Snapshot	前のスナップショットを呼び出し
+Recalled %1	%1 を呼び出しました
+Recalled mixer snapshot %1	ミキサースナップショット%1を呼び出しました
+Rename Region...	リージョン名を変更...
+Riff Machine	リフマシン
+Riff Machine...	リフマシン...
+Riff written (seed %1).	リフを書き込みました(シード %1)。
+Riff...	リフ...
+Ripple Delete Region	リップル削除
+Ripple delete: the following regions moved %1 beats earlier.	リップル削除: 後続のリージョンが%1拍前に移動しました。
+Roll New Riff	新しいリフを生成
+Save Mixer Snapshot	ミキサースナップショットを保存
+Saved mixer snapshot %1 (Alt+%2 recalls it)	ミキサースナップショット%1を保存しました(Alt+%2で呼び出し)
+Scissors	ハサミ
+Scissors Tool	ハサミツール
+Search commands	コマンドを検索
+Search loops, instruments, effects	ループ、楽器、エフェクトを検索
+Seed (new number = new riff)	シード(数字が変わると新しいリフ)
+Select Next Track	次のトラックを選択
+Select Previous Track	前のトラックを選択
+Select a Drum Machine track to program its steps.	ステップを打ち込むにはドラムマシントラックを選択してください。
+Select a MIDI region to edit its notes - or double-click an instrument lane to create one.	ノートを編集するにはMIDIリージョンを選択 - または楽器レーンをダブルクリックして作成します。
+Select a region to see its properties.	プロパティを表示するにはリージョンを選択してください。
+Select an audio region (or put the playhead inside one) to tab to its transients.	トランジェントへ移動するにはオーディオリージョンを選択(または再生ヘッドを内に置く)してください。
+Settings are kept in %LOCALAPPDATA%\MiniDAW.	設定は %LOCALAPPDATA%\MiniDAW に保存されます。
+Show / Hide Bottom Panel	下部パネルの表示 / 非表示
+Show / Hide Browser	ブラウザの表示 / 非表示
+Show / Hide Inspector	インスペクターの表示 / 非表示
+Show Automation	オートメーションを表示
+Show Devices	デバイスを表示
+Show Editor	エディターを表示
+Show Mixer	ミキサーを表示
+Show Snapshots	スナップショットを表示
+Show Step Sequencer	ステップシーケンサーを表示
+Size	サイズ
+Snap	スナップ
+Snap off.	スナップ オフ。
+Snap on: %1	スナップ オン: %1
+Snapshots	スナップショット
+Solo Track	トラックをソロ
+Sound	サウンド
+Space: play  -  R: record  -  1-5: tools  -  Tab: next transient  -  Ctrl+K: search every command  -  F1: shortcuts	Space: 再生  -  R: 録音  -  1-5: ツール  -  Tab: 次のトランジェント  -  Ctrl+K: 全コマンド検索  -  F1: ショートカット
+Stamp	スタンプ
+Steps	ステップ
+Stop and Return to Start	停止して先頭へ戻る
+Store levels, pans, sends, mutes and solos under a name and bring them back with one click or Alt+1 ... 9.	レベル、パン、センド、ミュート、ソロを名前を付けて保存し、クリック1回またはAlt+1 ... 9で呼び出せます。
+Tab to Next Transient	次のトランジェントへ
+Tab to Previous Transient	前のトランジェントへ
+Tap	タップ
+Time	時間
+Transport	トランスポート
+Typing Octave Down	タイピングのオクターブを下げる
+Typing Octave Up	タイピングのオクターブを上げる
+Use + Add Effect in the Devices panel or drag an effect from the browser.	デバイスパネルの + エフェクトを追加 を使うか、ブラウザからエフェクトをドラッグしてください。
+Value	値
+Velocity from	ベロシティ(開始)
+Velocity to	ベロシティ(終了)
+Vulkan user interface. GPL-3.0-or-later.	Vulkanユーザーインターフェース。GPL-3.0-or-later。
+Width	幅
+Workspace: Arrange	ワークスペース: アレンジ
+Workspace: Edit	ワークスペース: 編集
+Workspace: Edit - the editor gets most of the window	ワークスペース: 編集 - エディターがウィンドウの大部分を占めます
+Workspace: Mix	ワークスペース: ミックス
+Workspace: Mix - the mixer gets most of the window	ワークスペース: ミックス - ミキサーがウィンドウの大部分を占めます
+Write Riff	リフを書き込む
+Writes a new melody in the scale into this region (replaces its notes).	このリージョンにスケールに沿った新しいメロディを書き込みます(既存のノートは置き換えられます)。
+Zoom to Fit Project	プロジェクト全体にズーム
+Zoom to Selected Region	選択リージョンにズーム
+Zoomed to fit the project.	プロジェクト全体にズームしました。
+%1 regions selected.	%1個のリージョンを選択しました。
+Select All Regions	すべてのリージョンを選択
+Nothing fits the tracks at this place.	この位置のトラックには合うものがありません。
+Tempo (BPM)	テンポ (BPM)
+Click to add a tempo change - drag to move - double-click a point to ramp to the next - right-click to delete	クリックでテンポ変化を追加 - ドラッグで移動 - ポイントをダブルクリックで次のポイントまでランプ - 右クリックで削除
+Select a Drummer region to shape its groove - or double-click a Drummer track's lane to create one.	グルーヴを作るにはDrummerリージョンを選択 - またはDrummerトラックのレーンをダブルクリックして作成します。
+Seed	シード
+Add fills at the end	最後にフィルを追加
+Roll New Variation	新しいバリエーションを生成
+This region has no notes yet.	このリージョンにはまだノートがありません。
+Show Drummer	Drummerを表示
+Side Stick	サイドスティック
+Tom	タム
+Closed Hat	クローズドハット
+Pedal Hat	ペダルハット
+Open Hat	オープンハット
+Crash	クラッシュ
+Ride	ライド
+Ride Bell	ライドベル
+Tambourine	タンバリン
+Cowbell	カウベル
+Percussion	パーカッション
+# Tutorial
+Welcome to MiniDAW	MiniDAWへようこそ
+MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.	MiniDAWは軽くて高速な音楽スタジオです。1つのウィンドウで録音、シーケンス、編集、ミックスができます。
+This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	このチュートリアルは短い15ページです。「次へ」「戻る」ボタンか左右の矢印キーを使ってください。Escで閉じ、ヘルプ > チュートリアルからいつでも開き直せます。
+You do not need to remember anything: Ctrl+K opens a palette that finds every command by name.	覚える必要はありません。Ctrl+Kを押すと、名前ですべてのコマンドを探せるパレットが開きます。
+The window at a glance	ウィンドウの全体像
+The menu bar and the transport (play, record, tempo, position) are at the top.	一番上にメニューバーとトランスポート(再生、録音、テンポ、位置)があります。
+The big area in the middle is the arrangement: track headers on the left, the timeline with its regions on the right.	中央の大きな領域がアレンジです。左にトラックヘッダー、右にリージョンのあるタイムラインがあります。
+The browser (loops, instruments, effects) and the inspector sit at the sides, and the bottom panel switches between Mixer, Editor, Steps, Devices, Snapshots, Automation and Drummer.	ブラウザ(ループ、楽器、エフェクト)とインスペクターは両側にあり、下のパネルはミキサー、エディター、ステップ、デバイス、スナップショット、オートメーション、Drummerを切り替えます。
+Playing and moving around	再生と移動
+Space starts and stops playback. Click the ruler to move the playhead.	Spaceで再生の開始と停止ができます。ルーラーをクリックすると再生ヘッドが移動します。
+Scroll with the mouse wheel to move through the song and hold Ctrl while scrolling to zoom. The Zoom to Fit Project command shows the whole song.	マウスホイールで曲の中を移動し、Ctrlを押しながらホイールでズームします。「プロジェクト全体にズーム」コマンドで曲全体が表示されます。
+Turn Follow Playhead on to keep the playhead in view while the song plays.	「再生ヘッドに追従」をオンにすると、再生中も再生ヘッドが常に画面内に表示されます。
+Adding tracks	トラックの追加
+Use the Track menu or the + Add Track button to add a track. There are four kinds: Audio (recordings and loops), Instrument (MIDI with a synth), Drums (a step-sequenced drum machine) and Drummer (a drummer that plays for you).	トラックメニューか「+ トラック」ボタンでトラックを追加します。オーディオ(録音とループ)、インストゥルメント(シンセで鳴らすMIDI)、ドラム(ステップ式ドラムマシン)、Drummer(自動で叩くドラマー)の4種類があります。
+Click a track header to select it. Right-click it for more choices: rename, colour, duplicate or delete.	トラックヘッダーをクリックして選択します。右クリックで名前の変更、色、複製、削除などができます。
+Getting sound quickly: the browser	すばやく音を出す: ブラウザ
+The browser on the right lists loops, instruments and effects. Type in the search box to filter them.	右側のブラウザにはループ、楽器、エフェクトが並びます。検索ボックスに入力して絞り込めます。
+Drag a loop onto the arrangement to place it, drag an instrument onto a track to change its sound, or drag an effect onto a track to add it to its chain.	ループをアレンジにドラッグすると配置され、楽器をトラックにドラッグすると音色が変わり、エフェクトをトラックにドラッグするとエフェクトチェーンに追加されます。
+Clicking an item previews it, so you can listen before you drag.	項目をクリックするとプレビューできるので、ドラッグする前に試聴できます。
+The Drummer: instant drums	Drummer: すぐに使えるドラム
+Add a Drummer track and double-click its lane to create a region. A drummer starts playing at once.	Drummerトラックを追加し、そのレーンをダブルクリックしてリージョンを作成します。ドラマーはすぐに演奏を始めます。
+Open the Drummer tab (Ctrl+7) to choose a style and change the Complexity, Loudness, Swing and Fills. Roll New Variation gives you a new pattern with the same settings.	Drummerタブ(Ctrl+7)でスタイルを選び、複雑さ、ラウドネス、スウィング、フィルを変えてみましょう。「新しいバリエーションを生成」は同じ設定で新しいパターンを作ります。
+Every change can be undone with Ctrl+Z.	すべての変更はCtrl+Zで元に戻せます。
+Recording	録音
+Select a track and arm it for recording, then press R. Audio tracks record from your audio input, instrument tracks record what you play on a MIDI keyboard.	トラックを選んで録音待機にしてからRを押します。オーディオトラックはオーディオ入力から、インストゥルメントトラックはMIDIキーボードの演奏を録音します。
+No MIDI keyboard? Musical typing turns the computer keys A W S E D F T G Y H U J K into piano keys, and Z and X change the octave.	MIDIキーボードがない? ミュージカルタイピングを使うと、キーボードのA W S E D F T G Y H U J Kがピアノの鍵盤になり、Z/Xでオクターブを変えられます。
+The metronome and the count-in are in the transport bar. Capture MIDI saves what you played even when you forgot to press record.	メトロノームとカウントインはトランスポートバーにあります。MIDIキャプチャは、録音ボタンを押し忘れても演奏内容を保存します。
+Editing regions: the five tools	リージョンの編集: 5つのツール
+Press 1 for the Pointer (select and move), 2 for the Pencil (draw), 3 for the Scissors (cut), 4 for the Eraser and 5 to Mute.	1はポインター(選択と移動)、2は鉛筆(描画)、3はハサミ(カット)、4は消しゴム、5はミュートです。
+With the Pointer, drag a region to move it, drag its right edge to change its length and hold Alt while dragging to copy it.	ポインターでリージョンをドラッグすると移動、右端をドラッグすると長さの変更、Altを押しながらドラッグするとコピーになります。
+Snap keeps everything on the grid. Press G to turn it on or off.	スナップはすべてをグリッドに合わせます。Gで オン/オフを切り替えます。
+Working with several regions	複数のリージョンを扱う
+Shift-click or Ctrl-click adds regions to the selection. Drag on an empty part of a lane to draw a rubber band, or press Ctrl+A to select everything.	Shift+クリックまたはCtrl+クリックでリージョンを選択に追加します。レーンの空いた場所をドラッグするとラバーバンドで選択でき、Ctrl+Aですべてを選択します。
+Drag any selected region to move the whole group, even onto other tracks. Alt-drag duplicates the group.	選択したリージョンの1つをドラッグするとグループ全体が動き、他のトラックにも移動できます。Alt+ドラッグでグループを複製します。
+Cut, copy, paste, delete, mute and ripple delete all work on the whole selection, and each one is a single undo step.	カット、コピー、ペースト、削除、ミュート、リップル削除はすべて選択全体に適用され、それぞれ1回で元に戻せます。
+The piano roll	ピアノロール
+Select a MIDI region and press E to open the Editor tab. Draw notes with the Pencil, move them by dragging, and resize them at their edges.	MIDIリージョンを選択してEを押し、エディタータブを開きます。鉛筆でノートを描き、ドラッグで移動し、端で長さを調整します。
+The velocity of each note is shown by its colour. Fold hides the keys you do not use, Highlight marks the notes of a scale, and ghost notes show the other regions of the track.	ノートのベロシティは色で表示されます。フォールドは使っていない鍵を隠し、ハイライトはスケールの音を示し、ゴーストノートは同じトラックの他のリージョンを表示します。
+Stamps place chords, and the Riff Machine writes a new melody in a scale. Q quantizes the selected notes.	スタンプはコードを配置し、リフマシンはスケールに沿った新しいメロディを書き込みます。Qは選択したノートをクォンタイズします。
+The step sequencer	ステップシーケンサー
+A Drums track has a step grid instead of a piano roll. Click a step to switch it on, or drag across many steps to paint them.	ドラムトラックにはピアノロールの代わりにステップグリッドがあります。ステップをクリックしてオンにするか、複数のステップをドラッグしてペイントします。
+Each row is one drum sound. Drag in the velocity strip to make single hits louder or softer.	各行が1つのドラムサウンドです。ベロシティのバーをドラッグして、個々のヒットを大きくしたり小さくしたりします。
+Open it with Ctrl+3.	Ctrl+3で開きます。
+The mixer and effects	ミキサーとエフェクト
+The Mixer (Ctrl+1) has one strip per track: a fader for the volume, a pan control, mute and solo, two sends (reverb and echo) and a level meter. Narrow makes the strips thinner to fit more of them.	ミキサー(Ctrl+1)にはトラックごとに1つのストリップがあります。ボリュームフェーダー、パン、ミュートとソロ、2つのセンド(リバーブとエコー)、レベルメーターがあり、「狭く」で より多くのストリップが画面に収まります。
+The Devices tab (Ctrl+4) shows the effect chain of the selected track as cards with knobs. Use + Add Effect to insert an effect, and drag a card to change the order.	デバイスタブ(Ctrl+4)には、選択したトラックのエフェクトチェーンがノブ付きのカードで表示されます。「+ エフェクトを追加」でエフェクトを挿入し、カードをドラッグして順番を変えます。
+Automation and tempo	オートメーションとテンポ
+The Automation tab (Ctrl+6) draws a curve for the volume, pan or a send of the selected track. Click to add a point, drag to move it and right-click to delete it.	オートメーションタブ(Ctrl+6)では、選択したトラックのボリューム、パン、センドのカーブを描きます。クリックでポイント追加、ドラッグで移動、右クリックで削除です。
+Choose Tempo (BPM) to draw tempo changes for the whole song. Double-click a point to let the tempo glide to the next one.	「テンポ (BPM)」を選ぶと、曲全体のテンポ変化を描けます。ポイントをダブルクリックすると、次のポイントまでテンポが滑らかに変化します。
+The curve is followed during playback.	カーブは再生中にそのまま反映されます。
+Snapshots and workspaces	スナップショットとワークスペース
+A mixer snapshot remembers all levels, pans, sends, mutes and solos. Save one with Ctrl+Shift+Enter and bring it back with one click or Alt+1 to Alt+9. Open the tab with Ctrl+5.	ミキサースナップショットは、すべてのレベル、パン、センド、ミュート、ソロを記憶します。Ctrl+Shift+Enterで保存し、クリック1回またはAlt+1〜Alt+9で呼び出せます。タブはCtrl+5で開きます。
+Workspaces change the whole layout with one key: F5 is for arranging, F6 for mixing and F7 for editing.	ワークスペースはキー1つでレイアウト全体を切り替えます。F5はアレンジ、F6はミキシング、F7は編集用です。
+Saving, exporting and what next	保存、書き出し、そしてこれから
+Save your project with Ctrl+S. MiniDAW also keeps an automatic backup and offers to recover it if the program closes unexpectedly. Undo (Ctrl+Z) and Redo (Ctrl+Shift+Z) go back as far as you need.	Ctrl+Sでプロジェクトを保存します。MiniDAWは自動バックアップも保持し、プログラムが予期せず終了した場合は復元を提案します。元に戻す(Ctrl+Z)とやり直し(Ctrl+Shift+Z)は必要なだけさかのぼれます。
+Use Bounce / Export Audio to render the song to a WAV file.	「バウンス / オーディオを書き出し」で曲をWAVファイルにレンダリングします。
+Remember the two helpers: Ctrl+K finds any command by name, and F1 shows every keyboard shortcut. Hover over a control and the status bar at the bottom explains it.	2つの助っ人を覚えておきましょう。Ctrl+Kは名前で任意のコマンドを探し、F1はすべてのキーボードショートカットを表示します。コントロールにマウスを重ねると、下のステータスバーが説明します。
+Start with a Drummer, add a few loops from the browser, record an idea, and enjoy making music.	Drummerから始めて、ブラウザからループをいくつか加え、アイデアを録音して、音楽作りを楽しみましょう。
+Tutorial	チュートリアル
+Tutorial...	チュートリアル...
+Close the tutorial (Esc)	チュートリアルを閉じる (Esc)
+Back	戻る
+Next	次へ
+Done	完了
+Try it	試してみる

@@ -1,0 +1,757 @@
+#name	Español
+# MiniDAW translation. One 'English<TAB>Translation' pair per line; untranslated texts stay in English.
+# Use \n for a line break. Keep placeholders such as %1 unchanged.
+&File	&Archivo
+&Edit	&Editar
+&Track	&Pista
+T&ransport	T&ransporte
+&View	&Ver
+&Help	A&yuda
+New	Nuevo
+Open…	Abrir…
+Save	Guardar
+Save As…	Guardar como…
+Import Audio…	Importar audio…
+Import MIDI File…	Importar archivo MIDI…
+Export MIDI File…	Exportar archivo MIDI…
+Bounce to WAV…	Exportar a WAV…
+Preferences…	Preferencias…
+Quit	Salir
+Undo	Deshacer
+Redo	Rehacer
+Delete	Eliminar
+Duplicate Region	Duplicar región
+Split at Playhead	Dividir en el cursor
+Snap to Grid	Ajustar a la cuadrícula
+Volume Automation	Automatización de volumen
+New Audio Track	Nueva pista de audio
+New Software Instrument Track	Nueva pista de instrumento de software
+New Drum Machine Track	Nueva pista de caja de ritmos
+New Drummer Track	Nueva pista de batería (Drummer)
+Delete Track	Eliminar pista
+Show Tempo Track	Mostrar pista de tempo
+Time Signature…	Compás…
+Go to Beginning	Ir al principio
+Play / Pause	Reproducir / Pausa
+Stop	Detener
+Record	Grabar
+Cycle	Ciclo
+Metronome Click	Metrónomo
+Count-in (1 bar)	Cuenta previa (1 compás)
+Inspector	Inspector
+Mixer	Mezclador
+Smart Controls	Controles inteligentes
+Piano Roll	Piano roll
+Step Sequencer	Secuenciador de pasos
+Drummer Editor	Editor de Drummer
+Loop Browser	Explorador de loops
+Show / Hide Editors	Mostrar / ocultar editores
+Musical Typing	Teclado musical
+About MiniDAW	Acerca de MiniDAW
+Tracks	Pistas
+Tempo	Tempo
+Audio	Audio
+Software Instrument	Instrumento de software
+Drum Machine	Caja de ritmos
+Drummer	Baterista
+No track selected	Ninguna pista seleccionada
+INSPECTOR	INSPECTOR
+Audio FX	Efectos de audio
+Pan	Panorama
+Mute	Silenciar
+Solo	Solo
+Record enable	Armar grabación
+Master	Master
+Follow Tempo	Seguir tempo
+Source tempo	Tempo original
+Transpose	Transponer
+Preset	Preajuste
+Kick	Bombo
+Snare	Caja
+Hi-Hat	Hi-hat
+Clap	Palmas
+Rock	Rock
+Pop	Pop
+Hip-Hop	Hip-hop
+House	House
+Funk	Funk
+Disco	Disco
+Channel EQ	Ecualizador de canal
+Compressor	Compresor
+Echo	Eco
+Reverb	Reverberación
+Overdrive	Saturación
+Limiter	Limitador
+Bypass	Bypass
+Style	Estilo
+Bars	Compases
+Swing	Swing
+Fills	Redobles
+New Variation	Nueva variación
+Simple	Simple
+Complex	Complejo
+Loud	Fuerte
+Velocity	Velocidad
+Grid	Cuadrícula
+Quantize (Q)	Cuantizar (Q)
+Ramp to Next Point	Rampa al siguiente punto
+Delete Point	Eliminar punto
+Rename Track…	Renombrar pista…
+Rename Track	Renombrar pista
+Track name:	Nombre de la pista:
+Time Signature	Compás
+Beats per bar	Tiempos por compás
+Note value	Valor de la nota
+Starting at bar	Desde el compás
+LOOP BROWSER	EXPLORADOR DE LOOPS
+Search	Buscar
+Preview on click	Escuchar al hacer clic
+Folder…	Carpeta…
+Preferences	Preferencias
+General	General
+Plug-ins	Plug-ins
+Output device	Dispositivo de salida
+System Default	Predeterminado del sistema
+Buffer size	Tamaño del búfer
+Play Test Tone	Reproducir tono de prueba
+Status	Estado
+MIDI input	Entrada MIDI
+None	Ninguno
+Language	Idioma
+Automatic (system language)	Automático (idioma del sistema)
+Restart MiniDAW to apply a new language.	Reinicia MiniDAW para aplicar el nuevo idioma.
+Restart MiniDAW to apply the new language.	Reinicia MiniDAW para aplicar el nuevo idioma.
+Loops folder	Carpeta de loops
+Browse…	Examinar…
+Rescan	Volver a buscar
+Untitled	Sin título
+Unsaved changes	Cambios sin guardar
+Save changes to the project before continuing?	¿Guardar los cambios del proyecto antes de continuar?
+Open Project	Abrir proyecto
+Save Project	Guardar proyecto
+Saved %1	Guardado %1
+Not a valid MiniDAW project file.	No es un archivo de proyecto de MiniDAW válido.
+There is nothing to bounce.	No hay nada que exportar.
+Audio error: %1	Error de audio: %1
+No audio output device was found.	No se encontró ningún dispositivo de salida de audio.
+# v0.5
+Cut	Cortar
+Copy	Copiar
+Paste	Pegar
+Duplicate Track	Duplicar pista
+Bounce	Exportar
+Range	Rango
+Format	Formato
+Whole project	Proyecto completo
+Cycle range	Rango de ciclo
+16-bit PCM	PCM de 16 bits
+24-bit PCM	PCM de 24 bits
+32-bit float	Coma flotante de 32 bits
+Dither (16-bit)	Dithering (16 bits)
+Normalize to	Normalizar a
+Add reverb / echo tail (2 s)	Añadir cola de reverb / eco (2 s)
+Set a cycle range first (right-drag on the ruler).	Define primero un rango de ciclo (arrastra con el botón derecho en la regla).
+This audio is still loading.	Este audio aún se está cargando.
+MIDI regions can be pasted on Software Instrument and Drummer tracks.	Las regiones MIDI se pueden pegar en pistas de instrumento de software y de baterista.
+Audio regions can be pasted on Audio tracks.	Las regiones de audio se pueden pegar en pistas de audio.
+%1 copy	Copia de %1
+Input device	Dispositivo de entrada
+Recording latency compensation	Compensación de latencia de grabación
+Moves recorded audio earlier (positive) or later (negative) to make up for the latency of your audio interface.	Mueve el audio grabado hacia delante (positivo) o hacia atrás (negativo) para compensar la latencia de tu interfaz de audio.
+Gain	Ganancia
+Fade In	Fundido de entrada
+Fade Out	Fundido de salida
+Reverse	Invertir
+Normalize	Normalizar
+# v0.6
+Automation	Automatización
+Automation Parameter	Parámetro de automatización
+Volume	Volumen
+Pan	Panorama
+Send A	Envío A
+Send B	Envío B
+Marker %1	Marcador %1
+Add Marker	Añadir marcador
+Next Marker	Marcador siguiente
+Previous Marker	Marcador anterior
+Rename Marker	Renombrar marcador
+Rename Marker…	Renombrar marcador…
+Delete Marker	Eliminar marcador
+Add Marker Here	Añadir marcador aquí
+Name	Nombre
+Recover Project	Recuperar proyecto
+MiniDAW did not close properly last time. Restore the last autosaved project?	MiniDAW no se cerró correctamente la última vez. ¿Restaurar el último proyecto guardado automáticamente?
+Recovered the autosaved project. Please save it.	Se recuperó el proyecto guardado automáticamente. Guárdalo.
+Autosave every	Guardado automático cada
+ min	 min
+Off	Desactivado
+Open Recent	Abrir reciente
+Clear Menu	Borrar menú
+Tap Tempo	Tap tempo
+Tempo: %1 BPM	Tempo: %1 BPM
+Move Track Up	Subir pista
+Move Track Down	Bajar pista
+Track Color…	Color de la pista…
+Track Color	Color de la pista
+Mute / Unmute Region	Silenciar / reactivar región
+Chorus	Chorus
+Filter	Filtro
+MiniDAW Plug-ins	Plug-ins de MiniDAW
+# v0.7
+Bounce in Place	Bounce en el sitio
+Arpeggiate Region…	Arpegiar región…
+Quantize Region…	Cuantizar región…
+Scale Quantize…	Cuantizar a escala…
+Humanize…	Humanizar…
+Chord Trigger…	Disparador de acordes…
+MIDI Transform	Transformación MIDI
+Select a MIDI region first.	Selecciona primero una región MIDI.
+Bounced the track to a new audio track.	Se hizo el bounce de la pista a una nueva pista de audio.
+This track has no regions to bounce.	La pista no tiene regiones para el bounce.
+The track is silent, nothing was bounced.	La pista está en silencio; no se hizo el bounce.
+%1 (Bounce)	%1 (bounce)
+Arpeggiate Region	Arpegiar región
+Pattern	Patrón
+Up	Ascendente
+Down	Descendente
+Up & Down	Ascendente y descendente
+Down & Up	Descendente y ascendente
+Random	Aleatorio
+As Played	Orden tocado
+Rate	Velocidad
+Octave Range	Rango de octavas
+Gate	Puerta
+Quantize Region	Cuantizar región
+Strength	Intensidad
+50 % is straight, 66 % gives a triplet feel.	50 % es recto, 66 % da sensación de tresillo.
+Quantize note lengths	Cuantizar también la duración de las notas
+Scale Quantize	Cuantizar a escala
+Key	Tonalidad
+Scale	Escala
+Major	Mayor
+Minor	Menor
+Harmonic Minor	Menor armónica
+Melodic Minor	Menor melódica
+Dorian	Dórico
+Phrygian	Frigio
+Lydian	Lidio
+Mixolydian	Mixolidio
+Major Pentatonic	Pentatónica mayor
+Minor Pentatonic	Pentatónica menor
+Blues	Blues
+Chromatic	Cromática
+Humanize	Humanizar
+Timing	Tiempo
+Largest timing change as a percentage of a 1/16 note.	Mayor cambio de tiempo como porcentaje de una semicorchea.
+Chord Trigger	Disparador de acordes
+Chord	Acorde
+Diminished	Disminuido
+Augmented	Aumentado
+Suspended 2nd	Suspendido 2.ª
+Suspended 4th	Suspendido 4.ª
+Major 7th	Mayor 7.ª
+Minor 7th	Menor 7.ª
+Dominant 7th	Dominante 7.ª
+Octave	Octava
+Inversion	Inversión
+Legato	Legato
+Transpose…	Transponer…
+Crescendo / Decrescendo…	Crescendo / Decrescendo…
+Repeat Region…	Repetir región…
+Join Regions	Unir regiones
+Detect Tempo…	Detectar tempo…
+Convert Pattern to MIDI Region	Convertir patrón en región MIDI
+Select a region first.	Selecciona primero una región.
+Select an audio region first.	Selecciona primero una región de audio.
+Select a drum machine track first.	Selecciona primero una pista de caja de ritmos.
+Interval	Intervalo
+semitones	semitonos
+Crescendo / Decrescendo	Crescendo / Decrescendo
+Start velocity	Velocidad inicial
+End velocity	Velocidad final
+Repeat Region	Repetir región
+Number of copies	Número de copias
+Detect Tempo	Detectar tempo
+No clear tempo was found in this region.	No se encontró un tempo claro en esta región.
+Detected tempo: %1 BPM	Tempo detectado: %1 BPM
+Follow project tempo	Seguir el tempo del proyecto
+Set project tempo	Fijar el tempo del proyecto en este valor
+%1 (MIDI)	%1 (MIDI)
+The pattern is empty.	El patrón está vacío.
+Only regions of the same kind can be joined.	Solo se pueden unir regiones del mismo tipo.
+There is no region after this one to join.	No hay ninguna región después de esta para unir.
+These audio regions cannot be joined: they must be neighbours that play the same recording one after the other.	No se pueden unir estas regiones de audio: deben ser vecinas y reproducir la misma grabación una tras otra.
+File	Archivo
+Edit	Edición
+Track	Pista
+Functions	Funciones
+View	Ver
++  Add Track	+  Añadir pista
+Loops	Loops
+New Project	Proyecto nuevo
+Open...	Abrir...
+Open Recent...	Abrir reciente...
+No recent projects	No hay proyectos recientes
+Save As...	Guardar como...
+Import Audio...	Importar audio...
+Import MIDI File...	Importar archivo MIDI...
+Export MIDI File...	Exportar archivo MIDI...
+Bounce to WAV...	Exportar a WAV...
+Preferences...	Preferencias...
+Cut Region	Cortar región
+Copy Region	Copiar región
+Paste Region	Pegar región
+Delete Region	Eliminar región
+Rename...	Cambiar nombre...
+Snap to Grid: On	Ajustar a la cuadrícula: sí
+Snap to Grid: Off	Ajustar a la cuadrícula: no
+Rename Track...	Cambiar nombre de pista...
+Convert Pattern to MIDI Region...	Convertir patrón en región MIDI...
+Repeat Region...	Repetir región...
+Quantize...	Cuantizar...
+Scale Quantize...	Cuantizar a escala...
+Humanize...	Humanizar...
+Arpeggiate...	Arpegiar...
+Chord Trigger...	Disparador de acordes...
+Transpose...	Transponer...
+Crescendo / Decrescendo...	Crescendo / Decrescendo...
+Fixed Note Length...	Duración fija de nota...
+Scale Velocity...	Escalar velocidad...
+Fix Overlaps	Corregir solapamientos
+Remove Duplicate Notes	Quitar notas duplicadas
+Retrograde	Retrógrado
+Invert Pitches	Invertir alturas
+Strip Silence...	Eliminar silencios...
+Detect Tempo...	Detectar tempo...
+Reverse Region	Invertir región
+Normalize Region	Normalizar región
+Measure Loudness	Medir sonoridad
+Hide Bottom Panel	Ocultar panel inferior
+Show Bottom Panel	Mostrar panel inferior
+Hide Inspector	Ocultar inspector
+Show Inspector	Mostrar inspector
+Zoom In	Acercar
+Zoom Out	Alejar
+Tempo...	Tempo...
+Time Signature...	Compás...
+Rename Marker...	Cambiar nombre de marcador...
+Metronome	Metrónomo
+Count-in	Cuenta previa
+Musical Typing: On	Escritura musical: sí
+Musical Typing: Off	Escritura musical: no
+Cancel	Cancelar
+Close	Cerrar
+Quantize	Cuantizar
+Strip	Eliminar
+Also quantize note lengths	Cuantizar también la duración
+Pentatonic Major	Pentatónica mayor
+Pentatonic Minor	Pentatónica menor
+Random seed	Semilla aleatoria
+Up / Down	Arriba / Abajo
+Down / Up	Abajo / Arriba
+As played	Como se tocó
+Octaves	Octavas
+Sus2	Sus2
+Sus4	Sus4
+Major 7	Mayor 7
+Minor 7	Menor 7
+Dominant 7	Dominante 7
+Fixed Note Length	Duración fija de nota
+Length	Duración
+1 Bar	1 compás
+Scale Velocity	Escalar velocidad
+Offset	Desplazamiento
+Strip Silence	Eliminar silencios
+Threshold	Umbral
+Minimum silence	Silencio mínimo
+Padding	Margen
+Follows project tempo	Sigue el tempo del proyecto
+Project tempo	Tempo del proyecto
+Normalize level	Nivel de normalización
+Rename Region	Cambiar nombre de región
+256 samples (5 ms)	256 muestras (5 ms)
+512 samples (11 ms)	512 muestras (11 ms)
+1024 samples (23 ms)	1024 muestras (23 ms)
+2048 samples (46 ms)	2048 muestras (46 ms)
+4096 samples (92 ms)	4096 muestras (92 ms)
+English	English
+Restart MiniDAW to apply a new language. Autosave 0 = off.	Reinicia MiniDAW para aplicar un idioma nuevo. Autoguardado 0 = desactivado.
+Ready	Listo
+OUT	SALIDA
+Region	Región
+Instrument	Instrumento
+Inserts	Inserciones
++ Add effect	+ Añadir efecto
+Audio track	Pista de audio
+Synth	Sintetizador
+Drum Kit	Batería
+Center	Centro
+Send A (reverb)	Envío A (reverb)
+Send B (echo)	Envío B (eco)
+Fade in	Fundido de entrada
+Fade out	Fundido de salida
+No region selected.	No hay región seleccionada.
+Select a track or a region to see its properties.	Selecciona una pista o una región para ver sus propiedades.
+Select a track to edit its instrument and effects.	Selecciona una pista para editar su instrumento y efectos.
+This track has no instrument or effects. Add an effect in the Inspector.	Esta pista no tiene instrumento ni efectos. Añade un efecto en el inspector.
+Select a MIDI region (double-click one) to edit its notes.	Selecciona una región MIDI (doble clic) para editar sus notas.
+Select a Drum Machine track to edit its pattern.	Selecciona una pista de caja de ritmos para editar su patrón.
+Select a Drummer region (double-click an empty lane of a Drummer track to create one).	Selecciona una región de baterista (doble clic en un carril vacío de una pista de baterista para crearla).
+Complexity	Complejidad
+Loudness	Sonoridad
+Fills: On	Fills: sí
+Fills: Off	Fills: no
+New variation	Nueva variación
+Clear pattern	Borrar patrón
+Choose folder...	Elegir carpeta...
+Stop preview	Detener vista previa
+loading...	cargando...
+Ctrl+Shift+S	Ctrl+Shift+S
+Select a track or a region first.	Selecciona primero una pista o una región.
+Arm a track with the R button first.	Arma primero una pista con el botón R.
+Region copied.	Región copiada.
+Legato applied.	Legato aplicado.
+Overlaps fixed.	Solapamientos corregidos.
+Duplicate notes removed.	Notas duplicadas eliminadas.
+Region reversed.	Región invertida.
+Pitches inverted.	Alturas invertidas.
+Preferences saved.	Preferencias guardadas.
+New project.	Proyecto nuevo.
+Musical typing off.	Escritura musical desactivada.
+File dialogs are not available here.	Los cuadros de diálogo de archivo no están disponibles aquí.
+Use File > Import Audio to add audio.	Usa Archivo > Importar audio para añadir audio.
+Drum machine patterns are not part of the native UI yet.	Los patrones de caja de ritmos aún no forman parte de la interfaz nativa.
+Too quiet or too short to measure.	Demasiado silencioso o corto para medir.
+Qt-free native version. GPL-3.0-or-later. Fonts: Liberation Sans (SIL OFL).	Versión nativa sin Qt. GPL-3.0-or-later. Fuente: Liberation Sans (SIL OFL).
+MiniDAW - a lightweight Logic Pro-inspired digital audio workstation.	MiniDAW - una estación de audio digital ligera inspirada en Logic Pro.
+Browser	Explorador
+Nothing matches.	No hay coincidencias.
+Instruments	Instrumentos
+Effects	Efectos
+built in	incluido
+Devices	Dispositivos
+Editor	Editor
+Add an effect	Añadir un efecto
+This device has no parameters here.	Este dispositivo no tiene parámetros aquí.
+Select a track to see its devices.	Selecciona una pista para ver sus dispositivos.
+MiniDAW plug-ins	Plug-ins de MiniDAW
+VST3 plug-ins	Plug-ins VST3
+VST3 folders (separate with ;)	Carpetas VST3 (separadas por ;)
+Rescan plug-ins	Volver a buscar plug-ins
+Scanning plug-ins in the background...	Buscando plug-ins en segundo plano...
+Plug-in scan finished.	Búsqueda de plug-ins terminada.
+This plug-in has no editor window.	Este plug-in no tiene ventana de edición.
+Show Browser	Mostrar explorador
+Hide Browser	Ocultar explorador
+Track Height: Compact	Altura de pista: compacta
+Track Height: Normal	Altura de pista: normal
+Track Height: Tall	Altura de pista: alta
+Select a Software Instrument track first.	Selecciona primero una pista de instrumento.
+Select a track first.	Selecciona primero una pista.
+Drop an effect on a track.	Suelta el efecto sobre una pista.
+Drop an instrument on a Software Instrument track, or on an empty part of the arrangement.	Suelta el instrumento sobre una pista de instrumento o en un espacio vacío del arreglo.
+No tempo found - use Detect Tempo and choose 'Follow project tempo'.	No se encontró tempo: usa Detectar tempo y elige 'Seguir el tempo del proyecto'.
+No tracks - use  + Add Track	No hay pistas: usa + Añadir pista
+Added %1	Añadido: %1
+Instrument: %1	Instrumento: %1
+Opened %1	Abierto: %1
+Could not open the project: %1	No se pudo abrir el proyecto: %1
+Importing %1	Importando %1
+Imported %1	Importado: %1
+Exported %1	Exportado: %1
+Could not import: %1	No se pudo importar: %1
+Could not export: %1	No se pudo exportar: %1
+Could not save: %1	No se pudo guardar: %1
+Bounced to %1	Exportado a %1
+Could not bounce: %1	No se pudo exportar: %1
+New track with %1	Pista nueva con %1
+Octave %1	Octava %1
+%1 added as an insert.	%1 añadido como inserción.
+%1 region after Strip Silence.	%1 región tras eliminar silencios.
+%1 regions after Strip Silence.	%1 regiones tras eliminar silencios.
+Go to the start (Enter)	Ir al inicio (Intro)
+Play / pause (Space)	Reproducir / pausar (Espacio)
+Record into the armed tracks (R)	Grabar en las pistas armadas (R)
+Cycle on / off (C). Shift-drag the ruler to set the cycle range	Ciclo sí/no (C). Arrastra la regla con Mayús para fijar el rango
+Metronome (K)	Metrónomo (K)
+Count-in before recording	Cuenta previa a la grabación
+Add an audio, instrument, drum machine or Drummer track	Añade una pista de audio, instrumento, caja de ritmos o baterista
+Grid for moving and drawing: click to change the value	Cuadrícula para mover y dibujar: haz clic para cambiarla
+Zoom (Ctrl + mouse wheel)	Zoom (Ctrl + rueda del ratón)
+Show or hide the bottom panel (X)	Mostrar u ocultar el panel inferior (X)
+Click to move the playhead. Shift-drag sets the cycle range	Haz clic para mover el cabezal. Mayús + arrastrar fija el ciclo
+Drag to move, drag the right edge to resize, double-click to edit, right-click for functions	Arrastra para mover, el borde derecho para cambiar el tamaño, doble clic para editar, clic derecho para funciones
+Drag to resize the region	Arrastra para cambiar el tamaño de la región
+Click to jump to the marker, drag to move it, right-click for more	Clic para ir al marcador, arrastra para moverlo, clic derecho para más
+Click to select the track, right-click for track functions	Clic para seleccionar la pista, clic derecho para sus funciones
+Arm for recording	Armar para grabar
+Volume - double-click to reset	Volumen - doble clic para restablecer
+Volume - double-click to reset to -1.9 dB	Volumen - doble clic para volver a -1.9 dB
+Pan - drag up or down, double-click to centre	Panorama - arrastra arriba o abajo, doble clic para centrar
+Drag up or down to change - hold Shift for fine control - double-click to reset	Arrastra arriba o abajo - Mayús para ajuste fino - doble clic para restablecer
+Drag to change	Arrastra para cambiar
+Switch the bottom panel	Cambiar el panel inferior
+Double-click to add, or drag onto a track (loops and instruments also onto an empty part of the arrangement)	Doble clic para añadir o arrastra a una pista (loops e instrumentos también a un espacio vacío)
+Click and type to filter the browser	Haz clic y escribe para filtrar el explorador
+Click to add a note, drag to move or resize, right-click to delete	Clic para añadir una nota, arrastra para mover o cambiar tamaño, clic derecho para borrar
+Click a key to hear the note	Haz clic en una tecla para oírla
+Drag to change a note's velocity	Arrastra para cambiar la velocidad de la nota
+Click to toggle a step, drag to paint	Clic para activar un paso, arrastra para pintar
+Click to add a point, drag to move it, right-click to delete it	Clic para añadir un punto, arrastra para moverlo, clic derecho para borrarlo
+Click to add a point, drag to move it, right-click to delete it.	Clic para añadir un punto, arrastra para moverlo, clic derecho para borrarlo.
+%1 notes copied.	%1 notas copiadas.
+# v0.12 Vulkan interface
+   from	desde
+   to	hasta
++ Add Effect	+ Añadir efecto
++ Add Track	+ Añadir pista
++ FX	+ FX
++ Insert	+ Inserto
++ Save Snapshot	+ Guardar instantánea
++ Track	+ Pista
+%1 note changed.	Se cambió %1 nota.
+%1 notes changed.	Se cambiaron %1 notas.
+Action	Acción
+Adapt Tempo...	Adaptar tempo...
+Add condition 2	Añadir condición 2
+Also snap note lengths	Ajustar también la duración de las notas
+Apply	Aplicar
+Apply Groove...	Aplicar groove...
+Apply to the notes that do NOT match	Aplicar a las notas que NO coinciden
+Arm Record	Armar grabación
+Audio Region	Región de audio
+Auto	Auto
+Auto: %1	Auto: %1
+Auto: Bar	Auto: compás
+Aux A: Reverb	Aux A: Reverb
+Aux A: Reverb...	Aux A: Reverb...
+Aux B: Echo	Aux B: Eco
+Aux B: Echo...	Aux B: Eco...
+BROWSER	NAVEGADOR
+Bar	Compás
+Beat Detective...	Beat Detective...
+Beat unit	Unidad de pulso
+Bounce / Export Audio...	Bounce / Exportar audio...
+Capture MIDI	Capturar MIDI
+Clear Lane	Borrar carril
+Click to add a point - drag to move - right-click to delete - the line is followed during playback	Clic para añadir un punto - arrastrar para mover - clic derecho para borrar - la línea se sigue durante la reproducción
+Colour: Velocity	Color: velocidad
+Command Palette	Paleta de comandos
+Command Palette...	Paleta de comandos...
+Condition 1	Condición 1
+Condition 2	Condición 2
+Cycle Track Height	Alternar altura de pista
+Damping	Amortiguación
+Density	Densidad
+Discard Changes	Descartar cambios
+Drum Machine - click the steps, drag to paint	Caja de ritmos - clic en los pasos, arrastra para pintar
+Eraser	Borrador
+Eraser Tool	Herramienta Borrador
+Esc or F1 closes - Ctrl+K searches every command	Esc o F1 cierra - Ctrl+K busca todos los comandos
+Feedback	Realimentación
+Filter: every condition must match. Action: applied to the notes that match.	Filtro: deben cumplirse todas las condiciones. Acción: se aplica a las notas que coinciden.
+Fold	Plegar
+Fold Notes	Plegar notas
+Follow Playhead	Seguir cabezal
+Functions v	Funciones v
+Ghost	Fantasma
+Go to End	Ir al final
+Go to Start	Ir al principio
+Grid: %1	Cuadrícula: %1
+Help	Ayuda
+Highlight	Resaltar
+Keyboard Shortcuts	Atajos de teclado
+Keyboard Shortcuts...	Atajos de teclado...
+Keyboard shortcuts	Atajos de teclado
+Largest leap	Salto máximo
+Lock	Bloquear
+Logical Editor	Editor lógico
+Logical Editor...	Editor lógico...
+Lowest octave	Octava más baja
+MIDI Region	Región MIDI
+Make Groove	Crear groove
+Marker added.	Marcador añadido.
+Maximize Bottom Panel	Maximizar panel inferior
+Mix	Mezcla
+MixConsole Snapshots	Instantáneas de MixConsole
+Musical typing on: A W S E D F T G Y H U J K play notes, Z / X change the octave.	Teclado musical activado: A W S E D F T G Y H U J K tocan notas, Z / X cambian la octava.
+Mute Region	Silenciar región
+Mute Tool	Herramienta Silenciar
+Mute Track	Silenciar pista
+Next Grid Size	Siguiente tamaño de cuadrícula
+No next marker.	No hay más marcadores.
+Not following the playhead.	No se sigue el cabezal.
+Note length	Duración de nota
+Nothing to bounce.	Nada que exportar.
+Nudge Region Left	Mover región a la izquierda
+Nudge Region Right	Mover región a la derecha
+OK	Aceptar
+Parameter	Parámetro
+Pattern doubled to %1 beats.	Patrón duplicado a %1 pulsos.
+Pencil	Lápiz
+Pencil Tool	Herramienta Lápiz
+Pitch	Altura
+Playhead Back One Bar	Cabezal un compás atrás
+Playhead Forward One Bar	Cabezal un compás adelante
+Pointer	Puntero
+Pointer Tool	Herramienta Puntero
+Preview	Previsualizar
+Put the playhead inside a region to split it.	Coloca el cabezal dentro de una región para dividirla.
+Recall	Recuperar
+Recall Previous Snapshot	Recuperar instantánea anterior
+Recalled %1	Se recuperó %1
+Recalled mixer snapshot %1	Instantánea de mezcla %1 recuperada
+Rename Region...	Renombrar región...
+Riff Machine	Riff Machine
+Riff Machine...	Riff Machine...
+Riff written (seed %1).	Riff escrito (semilla %1).
+Riff...	Riff...
+Ripple Delete Region	Eliminar región con ripple
+Ripple delete: the following regions moved %1 beats earlier.	Borrado ripple: las regiones siguientes se movieron %1 pulsos antes.
+Roll New Riff	Generar nuevo riff
+Save Mixer Snapshot	Guardar instantánea de mezcla
+Saved mixer snapshot %1 (Alt+%2 recalls it)	Instantánea de mezcla %1 guardada (Alt+%2 la recupera)
+Scissors	Tijeras
+Scissors Tool	Herramienta Tijeras
+Search commands	Buscar comandos
+Search loops, instruments, effects	Buscar loops, instrumentos, efectos
+Seed (new number = new riff)	Semilla (otro número = otro riff)
+Select Next Track	Seleccionar pista siguiente
+Select Previous Track	Seleccionar pista anterior
+Select a Drum Machine track to program its steps.	Selecciona una pista de caja de ritmos para programar sus pasos.
+Select a MIDI region to edit its notes - or double-click an instrument lane to create one.	Selecciona una región MIDI para editar sus notas - o haz doble clic en un carril de instrumento para crear una.
+Select a region to see its properties.	Selecciona una región para ver sus propiedades.
+Select an audio region (or put the playhead inside one) to tab to its transients.	Selecciona una región de audio (o coloca el cabezal dentro) para saltar a sus transitorios.
+Settings are kept in %LOCALAPPDATA%\MiniDAW.	Los ajustes se guardan en %LOCALAPPDATA%\MiniDAW.
+Show / Hide Bottom Panel	Mostrar / ocultar panel inferior
+Show / Hide Browser	Mostrar / ocultar navegador
+Show / Hide Inspector	Mostrar / ocultar inspector
+Show Automation	Mostrar automatización
+Show Devices	Mostrar dispositivos
+Show Editor	Mostrar editor
+Show Mixer	Mostrar mezclador
+Show Snapshots	Mostrar instantáneas
+Show Step Sequencer	Mostrar secuenciador de pasos
+Size	Tamaño
+Snap	Ajuste
+Snap off.	Ajuste desactivado.
+Snap on: %1	Ajuste activado: %1
+Snapshots	Instantáneas
+Solo Track	Solo de pista
+Sound	Sonido
+Space: play  -  R: record  -  1-5: tools  -  Tab: next transient  -  Ctrl+K: search every command  -  F1: shortcuts	Espacio: reproducir  -  R: grabar  -  1-5: herramientas  -  Tab: siguiente transitorio  -  Ctrl+K: buscar comandos  -  F1: atajos
+Stamp	Sello
+Steps	Pasos
+Stop and Return to Start	Detener y volver al inicio
+Store levels, pans, sends, mutes and solos under a name and bring them back with one click or Alt+1 ... 9.	Guarda niveles, panoramas, envíos, silencios y solos con un nombre y recupéralos con un clic o con Alt+1 ... 9.
+Tab to Next Transient	Ir al siguiente transitorio
+Tab to Previous Transient	Ir al transitorio anterior
+Tap	Tap
+Time	Tiempo
+Transport	Transporte
+Typing Octave Down	Octava del teclado hacia abajo
+Typing Octave Up	Octava del teclado hacia arriba
+Use + Add Effect in the Devices panel or drag an effect from the browser.	Usa + Añadir efecto en el panel Dispositivos o arrastra un efecto desde el navegador.
+Value	Valor
+Velocity from	Velocidad desde
+Velocity to	Velocidad hasta
+Vulkan user interface. GPL-3.0-or-later.	Interfaz de usuario Vulkan. GPL-3.0-or-later.
+Width	Ancho
+Workspace: Arrange	Espacio de trabajo: Arreglo
+Workspace: Edit	Espacio de trabajo: Edición
+Workspace: Edit - the editor gets most of the window	Espacio de trabajo: Edición - el editor ocupa la mayor parte de la ventana
+Workspace: Mix	Espacio de trabajo: Mezcla
+Workspace: Mix - the mixer gets most of the window	Espacio de trabajo: Mezcla - el mezclador ocupa la mayor parte de la ventana
+Write Riff	Escribir riff
+Writes a new melody in the scale into this region (replaces its notes).	Escribe en esta región una melodía nueva dentro de la escala (reemplaza sus notas).
+Zoom to Fit Project	Ajustar zoom al proyecto
+Zoom to Selected Region	Zoom a la región seleccionada
+Zoomed to fit the project.	Zoom ajustado al proyecto.
+%1 regions selected.	%1 regiones seleccionadas.
+Select All Regions	Seleccionar todas las regiones
+Nothing fits the tracks at this place.	Nada encaja en las pistas de este lugar.
+Tempo (BPM)	Tempo (BPM)
+Click to add a tempo change - drag to move - double-click a point to ramp to the next - right-click to delete	Clic para añadir un cambio de tempo - arrastrar para mover - doble clic en un punto para hacer rampa al siguiente - clic derecho para borrar
+Select a Drummer region to shape its groove - or double-click a Drummer track's lane to create one.	Selecciona una región de Drummer para dar forma al ritmo - o haz doble clic en el carril de una pista Drummer para crear una.
+Seed	Semilla
+Add fills at the end	Añadir fills al final
+Roll New Variation	Generar nueva variación
+This region has no notes yet.	Esta región aún no tiene notas.
+Show Drummer	Mostrar Drummer
+Side Stick	Side Stick
+Tom	Tom
+Closed Hat	Hi-hat cerrado
+Pedal Hat	Hi-hat de pedal
+Open Hat	Hi-hat abierto
+Crash	Crash
+Ride	Ride
+Ride Bell	Campana del ride
+Tambourine	Pandereta
+Cowbell	Cencerro
+Percussion	Percusión
+# Tutorial
+Welcome to MiniDAW	Bienvenido a MiniDAW
+MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.	MiniDAW es un estudio musical ligero y rápido: graba, secuencia, edita y mezcla en una sola ventana.
+This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	Este tutorial tiene 15 páginas breves. Usa los botones Siguiente y Atrás o las flechas izquierda y derecha. Esc lo cierra y puedes abrirlo cuando quieras desde Ayuda > Tutorial.
+You do not need to remember anything: Ctrl+K opens a palette that finds every command by name.	No necesitas memorizar nada: Ctrl+K abre una paleta que encuentra cualquier comando por su nombre.
+The window at a glance	La ventana de un vistazo
+The menu bar and the transport (play, record, tempo, position) are at the top.	Arriba están la barra de menús y el transporte (reproducir, grabar, tempo, posición).
+The big area in the middle is the arrangement: track headers on the left, the timeline with its regions on the right.	El área grande del centro es el arreglo: las cabeceras de pista a la izquierda y la línea de tiempo con sus regiones a la derecha.
+The browser (loops, instruments, effects) and the inspector sit at the sides, and the bottom panel switches between Mixer, Editor, Steps, Devices, Snapshots, Automation and Drummer.	El navegador (loops, instrumentos, efectos) y el inspector están a los lados, y el panel inferior alterna entre Mezclador, Editor, Pasos, Dispositivos, Instantáneas, Automatización y Drummer.
+Playing and moving around	Reproducir y desplazarse
+Space starts and stops playback. Click the ruler to move the playhead.	Espacio inicia y detiene la reproducción. Haz clic en la regla para mover el cabezal.
+Scroll with the mouse wheel to move through the song and hold Ctrl while scrolling to zoom. The Zoom to Fit Project command shows the whole song.	Usa la rueda del ratón para recorrer la canción y Ctrl + rueda para hacer zoom. El comando Ajustar zoom al proyecto muestra toda la canción.
+Turn Follow Playhead on to keep the playhead in view while the song plays.	Activa Seguir cabezal para mantener el cabezal a la vista mientras suena la canción.
+Adding tracks	Añadir pistas
+Use the Track menu or the + Add Track button to add a track. There are four kinds: Audio (recordings and loops), Instrument (MIDI with a synth), Drums (a step-sequenced drum machine) and Drummer (a drummer that plays for you).	Usa el menú Pista o el botón + Pista para añadir una pista. Hay cuatro tipos: Audio (grabaciones y loops), Instrumento (MIDI con sintetizador), Batería (caja de ritmos por pasos) y Drummer (un baterista que toca por ti).
+Click a track header to select it. Right-click it for more choices: rename, colour, duplicate or delete.	Haz clic en la cabecera de una pista para seleccionarla. Clic derecho para renombrar, cambiar el color, duplicar o eliminar.
+Getting sound quickly: the browser	Sonido rápido: el navegador
+The browser on the right lists loops, instruments and effects. Type in the search box to filter them.	El navegador de la derecha lista loops, instrumentos y efectos. Escribe en el cuadro de búsqueda para filtrarlos.
+Drag a loop onto the arrangement to place it, drag an instrument onto a track to change its sound, or drag an effect onto a track to add it to its chain.	Arrastra un loop al arreglo para colocarlo, un instrumento a una pista para cambiar su sonido, o un efecto a una pista para añadirlo a su cadena.
+Clicking an item previews it, so you can listen before you drag.	Al hacer clic en un elemento se previsualiza, así que puedes escucharlo antes de arrastrarlo.
+The Drummer: instant drums	El Drummer: baterías al instante
+Add a Drummer track and double-click its lane to create a region. A drummer starts playing at once.	Añade una pista Drummer y haz doble clic en su carril para crear una región. El baterista empieza a tocar enseguida.
+Open the Drummer tab (Ctrl+7) to choose a style and change the Complexity, Loudness, Swing and Fills. Roll New Variation gives you a new pattern with the same settings.	En la pestaña Drummer (Ctrl+7) elige un estilo y ajusta Complejidad, Intensidad, Swing y Fills. Generar nueva variación crea otro patrón con los mismos ajustes.
+Every change can be undone with Ctrl+Z.	Cualquier cambio se puede deshacer con Ctrl+Z.
+Recording	Grabar
+Select a track and arm it for recording, then press R. Audio tracks record from your audio input, instrument tracks record what you play on a MIDI keyboard.	Selecciona una pista, armala para grabar y pulsa R. Las pistas de audio graban desde tu entrada de audio y las de instrumento lo que toques en un teclado MIDI.
+No MIDI keyboard? Musical typing turns the computer keys A W S E D F T G Y H U J K into piano keys, and Z and X change the octave.	¿No tienes teclado MIDI? El teclado musical convierte las teclas A W S E D F T G Y H U J K en teclas de piano, y Z y X cambian la octava.
+The metronome and the count-in are in the transport bar. Capture MIDI saves what you played even when you forgot to press record.	El metrónomo y la cuenta previa están en la barra de transporte. Capturar MIDI guarda lo que tocaste aunque olvidaras pulsar grabar.
+Editing regions: the five tools	Editar regiones: las cinco herramientas
+Press 1 for the Pointer (select and move), 2 for the Pencil (draw), 3 for the Scissors (cut), 4 for the Eraser and 5 to Mute.	Pulsa 1 para el Puntero (seleccionar y mover), 2 para el Lápiz (dibujar), 3 para las Tijeras (cortar), 4 para el Borrador y 5 para Silenciar.
+With the Pointer, drag a region to move it, drag its right edge to change its length and hold Alt while dragging to copy it.	Con el Puntero, arrastra una región para moverla, arrastra su borde derecho para cambiar su duración y mantén Alt para copiarla.
+Snap keeps everything on the grid. Press G to turn it on or off.	Ajuste mantiene todo en la cuadrícula. Pulsa G para activarlo o desactivarlo.
+Working with several regions	Trabajar con varias regiones
+Shift-click or Ctrl-click adds regions to the selection. Drag on an empty part of a lane to draw a rubber band, or press Ctrl+A to select everything.	Shift+clic o Ctrl+clic añade regiones a la selección. Arrastra en una zona vacía de un carril para dibujar un recuadro, o pulsa Ctrl+A para seleccionarlo todo.
+Drag any selected region to move the whole group, even onto other tracks. Alt-drag duplicates the group.	Arrastra cualquier región seleccionada para mover todo el grupo, incluso a otras pistas. Alt+arrastrar duplica el grupo.
+Cut, copy, paste, delete, mute and ripple delete all work on the whole selection, and each one is a single undo step.	Cortar, copiar, pegar, eliminar, silenciar y borrado ripple funcionan sobre toda la selección y cada uno se deshace de una vez.
+The piano roll	El piano roll
+Select a MIDI region and press E to open the Editor tab. Draw notes with the Pencil, move them by dragging, and resize them at their edges.	Selecciona una región MIDI y pulsa E para abrir la pestaña Editor. Dibuja notas con el Lápiz, muévelas arrastrando y cambia su duración por los bordes.
+The velocity of each note is shown by its colour. Fold hides the keys you do not use, Highlight marks the notes of a scale, and ghost notes show the other regions of the track.	La velocidad de cada nota se muestra con su color. Plegar oculta las teclas que no usas, Resaltar marca las notas de una escala y las notas fantasma muestran las otras regiones de la pista.
+Stamps place chords, and the Riff Machine writes a new melody in a scale. Q quantizes the selected notes.	Los sellos colocan acordes y la Riff Machine escribe una melodía nueva dentro de una escala. Q cuantiza las notas seleccionadas.
+The step sequencer	El secuenciador de pasos
+A Drums track has a step grid instead of a piano roll. Click a step to switch it on, or drag across many steps to paint them.	Una pista de batería tiene una cuadrícula de pasos en lugar del piano roll. Haz clic en un paso para activarlo o arrastra por varios para pintarlos.
+Each row is one drum sound. Drag in the velocity strip to make single hits louder or softer.	Cada fila es un sonido de batería. Arrastra en la tira de velocidad para hacer cada golpe más fuerte o más suave.
+Open it with Ctrl+3.	Ábrelo con Ctrl+3.
+The mixer and effects	El mezclador y los efectos
+The Mixer (Ctrl+1) has one strip per track: a fader for the volume, a pan control, mute and solo, two sends (reverb and echo) and a level meter. Narrow makes the strips thinner to fit more of them.	El Mezclador (Ctrl+1) tiene una tira por pista: un fader de volumen, panorama, silencio y solo, dos envíos (reverb y eco) y un medidor de nivel. Estrecho hace las tiras más delgadas para que quepan más.
+The Devices tab (Ctrl+4) shows the effect chain of the selected track as cards with knobs. Use + Add Effect to insert an effect, and drag a card to change the order.	La pestaña Dispositivos (Ctrl+4) muestra la cadena de efectos de la pista seleccionada como tarjetas con potenciómetros. Usa + Añadir efecto para insertar uno y arrastra una tarjeta para cambiar el orden.
+Automation and tempo	Automatización y tempo
+The Automation tab (Ctrl+6) draws a curve for the volume, pan or a send of the selected track. Click to add a point, drag to move it and right-click to delete it.	La pestaña Automatización (Ctrl+6) dibuja una curva para el volumen, el panorama o un envío de la pista seleccionada. Haz clic para añadir un punto, arrastra para moverlo y clic derecho para borrarlo.
+Choose Tempo (BPM) to draw tempo changes for the whole song. Double-click a point to let the tempo glide to the next one.	Elige Tempo (BPM) para dibujar los cambios de tempo de toda la canción. Haz doble clic en un punto para que el tempo se deslice hasta el siguiente.
+The curve is followed during playback.	La curva se sigue durante la reproducción.
+Snapshots and workspaces	Instantáneas y espacios de trabajo
+A mixer snapshot remembers all levels, pans, sends, mutes and solos. Save one with Ctrl+Shift+Enter and bring it back with one click or Alt+1 to Alt+9. Open the tab with Ctrl+5.	Una instantánea de mezcla recuerda todos los niveles, panoramas, envíos, silencios y solos. Guárdala con Ctrl+Mayús+Intro y recupérala con un clic o con Alt+1 a Alt+9. Abre la pestaña con Ctrl+5.
+Workspaces change the whole layout with one key: F5 is for arranging, F6 for mixing and F7 for editing.	Los espacios de trabajo cambian todo el diseño con una tecla: F5 para arreglar, F6 para mezclar y F7 para editar.
+Saving, exporting and what next	Guardar, exportar y lo siguiente
+Save your project with Ctrl+S. MiniDAW also keeps an automatic backup and offers to recover it if the program closes unexpectedly. Undo (Ctrl+Z) and Redo (Ctrl+Shift+Z) go back as far as you need.	Guarda el proyecto con Ctrl+S. MiniDAW también mantiene una copia automática y te ofrece recuperarla si el programa se cierra de forma inesperada. Deshacer (Ctrl+Z) y Rehacer (Ctrl+Mayús+Z) retroceden todo lo que necesites.
+Use Bounce / Export Audio to render the song to a WAV file.	Usa Bounce / Exportar audio para renderizar la canción en un archivo WAV.
+Remember the two helpers: Ctrl+K finds any command by name, and F1 shows every keyboard shortcut. Hover over a control and the status bar at the bottom explains it.	Recuerda los dos ayudantes: Ctrl+K encuentra cualquier comando por su nombre y F1 muestra todos los atajos de teclado. Pasa el ratón sobre un control y la barra de estado inferior lo explica.
+Start with a Drummer, add a few loops from the browser, record an idea, and enjoy making music.	Empieza con un Drummer, añade algunos loops del navegador, graba una idea y disfruta haciendo música.
+Tutorial	Tutorial
+Tutorial...	Tutorial...
+Close the tutorial (Esc)	Cerrar el tutorial (Esc)
+Back	Atrás
+Next	Siguiente
+Done	Hecho
+Try it	Probar
