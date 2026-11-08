@@ -5,7 +5,9 @@
 // plug-ins and settings. It moves events into vkui::Gui, runs vkui::Studio once per frame and hands the draw list to the GPU.
 // windows.h must not define the min / max macros: dsp/Param.h has members called min and max.
 #ifndef NOMINMAX
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #endif
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -96,7 +98,7 @@ public:
         GetTextMetricsW(m_dc, &tm);
         out.advance = float(sz.cx);
         const int pad = px / 4 + 2;
-        const int w = std::min(kW, sz.cx + 2 * pad), h = std::min(kH, int(tm.tmHeight) + 2);
+        const int w = std::min<int>(kW, int(sz.cx) + 2 * pad), h = std::min<int>(kH, int(tm.tmHeight) + 2);
         if (cp == ' ' || w <= 0 || h <= 0) return true;
         std::memset(m_bits, 0, size_t(kW) * size_t(h) * 4);
         TextOutW(m_dc, pad, 0, buf, n);

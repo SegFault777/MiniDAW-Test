@@ -2,6 +2,11 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
+
+// <windows.h> (rpcndr.h) defines "small" as a macro for char, and this header has a text style called small.
+#ifdef small
+#undef small
+#endif
 // Vulkan UI: the "Aurora" look - a calm blue-grey dark theme with one accent, and a colour per track.
 #include "Draw.h"
 

@@ -28,6 +28,9 @@
 | A member used before its declaration inside a class | Reorder the members; MSVC and GCC differ in what they accept |
 | `fopen` / `sscanf` warnings | `-D_CRT_SECURE_NO_WARNINGS` (already on) |
 | Link error `LNK2005` (CRT conflict) | Native and the VST3 SDK are both `-MT`. Do not mix |
+| `error C2628: 'TextStyle' followed by 'char'` | `<windows.h>` (rpcndr.h) defines `small` as a macro for `char`. `src/vulkan/Theme.h` does `#undef small`; do the same if you name something `small`, `near` or `far` |
+| `std::min` / `std::max` with `LONG` and `int` | The types must match: write `std::min<int>(a, b)` when mixing Windows types (`LONG`, `DWORD`) with `int` |
+| `warning C4005: 'NOMINMAX': macro redefinition` | The build already passes `-DNOMINMAX`; use `#ifndef NOMINMAX` before defining it in a file |
 | Vulkan: a struct field that does not exist | `tests/mock/vulkan/vulkan.h` is only a stand-in; check the field against the real Khronos header |
 
 ## Commit messages and versions
