@@ -139,14 +139,27 @@ jobs:
         with:
           arch: x64
 
-      - name: Get the Vulkan headers and glslang
+      - name: Get the Vulkan headers
         shell: bash
         run: |
           git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git "$RUNNER_TEMP/Vulkan-Headers"
           echo "VULKAN_HEADERS_DIR=$RUNNER_TEMP/Vulkan-Headers" >> "$GITHUB_ENV"
-          curl -fsSL -o "$RUNNER_TEMP/glslang.zip" https://github.com/KhronosGroup/glslang/releases/download/main-tot/glslang-master-windows-Release.zip
-          mkdir -p "$RUNNER_TEMP/glslang" && unzip -q "$RUNNER_TEMP/glslang.zip" -d "$RUNNER_TEMP/glslang"
-          echo "GLSLANG_VALIDATOR=$RUNNER_TEMP/glslang/bin/glslangValidator.exe" >> "$GITHUB_ENV"
+
+      # glslang publishes a rolling "main-tot" release. The asset name has changed before (master -> main), so it is
+      # found with a pattern instead of a fixed URL, and glslangValidator.exe is searched for inside the zip.
+      - name: Get glslang (the GLSL compiler)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/glslang/zip" "$RUNNER_TEMP/glslang/x"
+          gh release download main-tot --repo KhronosGroup/glslang --pattern '*windows-Release.zip' --dir "$RUNNER_TEMP/glslang/zip"
+          ls -l "$RUNNER_TEMP/glslang/zip"
+          unzip -q -o "$(ls "$RUNNER_TEMP"/glslang/zip/*.zip | head -n 1)" -d "$RUNNER_TEMP/glslang/x"
+          VAL="$(find "$RUNNER_TEMP/glslang/x" -iname 'glslangValidator.exe' | head -n 1)"
+          if [ -z "$VAL" ]; then echo "glslangValidator.exe not found in the glslang download"; find "$RUNNER_TEMP/glslang/x" -maxdepth 3; exit 1; fi
+          echo "glslangValidator: $VAL"
+          echo "GLSLANG_VALIDATOR=$VAL" >> "$GITHUB_ENV"
 
       - name: Get the VST3 SDK (optional)
         shell: bash

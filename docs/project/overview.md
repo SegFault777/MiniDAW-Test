@@ -31,5 +31,5 @@ MiniDAW has no relation to these companies, does not copy their products (see [u
 | --- | --- | --- |
 | Engine (core, DSP, platform) | `src/core`, `src/dsp`, `src/platform` | No Qt, tested on Linux |
 | **Native app** `MiniDAW.exe` | `src/ui`, `src/native` | Installer and portable zip |
-| **Vulkan app** `MiniDAWVulkan.exe` | `src/vulkan` | Portable zip; GPU parts not yet verified on Windows (see `HANDOVER.md`) |
+| **Vulkan app** `MiniDAWVulkan.exe` | `src/vulkan` | Portable zip; GPU parts not yet verified on Windows |
 | Old Qt app `MiniDAWQt.exe` | `src/*.cpp`, `src/Engine.*`, `src/vst3` | Portable zip only, no longer extended |

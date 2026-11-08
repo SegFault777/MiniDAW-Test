@@ -36,7 +36,7 @@ All notable changes to this project are documented in this file.
 - Versions bumped to 0.12 in all version strings.
 
 ### Not done yet
-- Windows-only code (`VkMain.cpp`, `VkRenderer.cpp`, the Win32 changes) and the shaders were not compiled on Windows / a GPU in this session. See `HANDOVER.md`.
+- Windows-only code (`VkMain.cpp`, `VkRenderer.cpp`, the Win32 changes) and the shaders were not compiled on Windows / a GPU in this session.
 
 ## [0.11] - 2026-11-04
 
