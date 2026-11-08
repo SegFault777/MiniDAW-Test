@@ -51,6 +51,8 @@ public:
 
     // ---- Model (UI thread) ----
     std::vector<Track> snapshot() const;
+    /// Live level (L, R peak) of every track: a cheap alternative to snapshot() for drawing meters while the song plays.
+    void trackPeaks(std::vector<std::pair<float, float>>& out) const;
     int trackCount() const;
     DrumPattern drumPattern(int track) const;
     double regionBeats(const Region& r) const;
@@ -252,7 +254,10 @@ public:
     // ---- Project ----
     std::string projectPath() const { return m_path; }
     bool isDirty() const { return m_dirty; }
-    void markDirty() { m_dirty = true; }
+    void markDirty() { m_dirty = true; ++m_rev; }
+    /// Counts every change of the project (any call that marks it dirty). A user interface compares it with the last value
+    /// it saw to know when a new snapshot() is needed.
+    std::uint64_t revision() const { return m_rev; }
     void newProject();
     bool saveProject(const std::string& path, std::string* error);
     bool loadProject(const std::string& path, std::string* error);
@@ -328,6 +333,7 @@ private:
     std::atomic<double> m_loopA{0.0}, m_loopB{16.0};
     std::atomic<bool> m_playing{false}, m_recording{false}, m_recAudio{false};
     std::atomic<bool> m_metro{false}, m_countIn{false}, m_loopOn{false}, m_dirty{false};
+    std::atomic<std::uint64_t> m_rev{0};
     std::atomic<int> m_flush{0};   // bit 0: release synth notes, bit 1: reset every effect
     std::atomic<float> m_master{0.9f};
     std::atomic<int> m_recOffsetMs{0};

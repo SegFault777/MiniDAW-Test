@@ -45,11 +45,16 @@ Track Session::makeTrack(TrackType type, const std::string& name) {
 }
 
 void Session::changed(bool structural) {
-    m_dirty = true;
+    markDirty();
     if (m_hooks.changed) m_hooks.changed(structural);
 }
 
 std::vector<Track> Session::snapshot() const { std::lock_guard<std::mutex> l(m_mutex); return m_tracks; }
+void Session::trackPeaks(std::vector<std::pair<float, float>>& out) const {
+    std::lock_guard<std::mutex> l(m_mutex);
+    out.resize(m_tracks.size());
+    for (size_t i = 0; i < m_tracks.size(); ++i) out[i] = {m_tracks[i].peakL, m_tracks[i].peakR};
+}
 int Session::trackCount() const { std::lock_guard<std::mutex> l(m_mutex); return int(m_tracks.size()); }
 
 DrumPattern Session::drumPattern(int track) const {
@@ -143,7 +148,7 @@ void Session::renameTrack(int i, const std::string& name) {
     changed(true);
 }
 
-#define TRACK_SET(...) { std::lock_guard<std::mutex> l(m_mutex); if (i < 0 || i >= int(m_tracks.size())) return; Track& t = m_tracks[size_t(i)]; __VA_ARGS__; } m_dirty = true;
+#define TRACK_SET(...) { std::lock_guard<std::mutex> l(m_mutex); if (i < 0 || i >= int(m_tracks.size())) return; Track& t = m_tracks[size_t(i)]; __VA_ARGS__; } markDirty();
 void Session::setVolume(int i, float v) { TRACK_SET(t.volume = std::clamp(v, 0.f, 1.5f)) }
 void Session::setPan(int i, float p) { TRACK_SET(t.pan = std::clamp(p, -1.f, 1.f)) }
 void Session::setSendA(int i, float v) { TRACK_SET(t.sendA = std::clamp(v, 0.f, 1.f)) }
@@ -186,7 +191,7 @@ void Session::setInsertBypass(int track, int slot, bool bypass) {
     if (track < 0 || track >= int(m_tracks.size())) return;
     auto& v = m_tracks[size_t(track)].inserts;
     if (slot >= 0 && slot < int(v.size())) v[size_t(slot)]->bypass = bypass;
-    m_dirty = true;
+    markDirty();
 }
 
 void Session::setInstrument(int track, const std::string& instrumentId) {
@@ -208,7 +213,7 @@ void Session::setInstrumentPreset(int track, int preset) {
     if (track < 0 || track >= int(m_tracks.size()) || !m_tracks[size_t(track)].instrument) return;
     m_tracks[size_t(track)].instrument->setPreset(preset);
     m_tracks[size_t(track)].preset = preset;
-    m_dirty = true;
+    markDirty();
 }
 
 void Session::regenDrummer(Region& r, const dsp::TempoMap& tm) const {
@@ -586,7 +591,7 @@ void Session::setStep(int track, int row, int step, bool on) {
     std::lock_guard<std::mutex> l(m_mutex);
     if (track < 0 || track >= int(m_tracks.size())) return;
     m_tracks[size_t(track)].steps[size_t(row)][size_t(step)] = on;
-    m_dirty = true;
+    markDirty();
 }
 
 void Session::setDrumPattern(int track, const DrumPattern& p) {
@@ -678,7 +683,7 @@ void Session::setTempoMap(std::shared_ptr<const dsp::TempoMap> map, bool commit)
     const double beat = positionBeats();   // keep the playhead at the same musical position
     { std::lock_guard<std::mutex> l(m_tempoMutex); m_tempo = map; }
     { std::lock_guard<std::mutex> l(m_mutex); m_pos = i64(std::llround(map->beatToFrame(beat))); }
-    m_dirty = true;
+    markDirty();
     if (m_hooks.tempoChanged) m_hooks.tempoChanged();
     if (commit) commitTempo();
 }
@@ -745,7 +750,7 @@ void Session::pushUndo() {
     m_undo.push_back(std::move(s));
     if (m_undo.size() > 60) m_undo.erase(m_undo.begin());
     m_redo.clear();
-    m_dirty = true;
+    markDirty();
 }
 
 void Session::restore(UndoState s) {
@@ -826,7 +831,7 @@ void Session::seekBeats(double beat) {
 void Session::setLoop(bool on, double a, double b) {
     if (a >= 0 && b > a) { m_loopA = a; m_loopB = b; }
     m_loopOn = on;
-    m_dirty = true;
+    markDirty();
     if (m_hooks.loopChanged) m_hooks.loopChanged();
 }
 

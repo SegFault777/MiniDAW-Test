@@ -28,6 +28,8 @@ All notable changes to this project are documented in this file.
 - Vulkan interface: **tempo lane** in the Automation tab (Parameter > Tempo (BPM)): add, drag, ramp (double-click a point) and delete tempo changes; each edit can be undone.
 - Vulkan interface: **Drummer tab** (`Ctrl+7`, or double-click a Drummer region): style, complexity, loudness, swing, fills, bars, seed ("Roll New Variation") and a preview of the generated pattern, one row per drum. Slider drags are one undo step.
 - Vulkan interface: **Help > Tutorial...** - a 15-page built-in tutorial (`src/vulkan/StudioTutorial.cpp`), translated into Korean, Japanese, Simplified Chinese and Spanish.
+- Performance (Vulkan interface): while the song plays, only the meters are refreshed instead of copying the whole project every frame; the full copy is made when the project changes (`Session::revision()`, `Session::trackPeaks()`) or while recording.
+- CI: the GLSL compiler for the Vulkan job is installed from the LunarG Vulkan SDK (Chocolatey), with a build from the glslang source as the fallback.
 - Translations of the Vulkan interface (166 new texts) in Korean, Japanese, Simplified Chinese and Spanish; messages with numbers now use `%1` patterns (`Studio::fmt`).
 - English documentation: all of `docs/` (`user/`, `dev/`, `project/`), the root `README.md` and `ARCHITECTURE.md`. `docs/dev/` and `docs/project/` were rewritten to describe the three executables, `src/vulkan`, portable mode and the new build targets; `docs/project/ui-design.md` now compares five DAWs.
 

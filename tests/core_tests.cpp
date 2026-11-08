@@ -875,6 +875,19 @@ static void testV012() {
 }
 
 
+static void testRevisionAndPeaks() {
+    Session s;
+    const int t = s.addTrack(TrackType::Instrument, "R");
+    const auto r0 = s.revision();
+    s.setVolume(t, 0.5f);
+    CHECK(s.revision() > r0);                       // every edit moves the revision (the UI copies the model only then)
+    const auto r1 = s.revision();
+    std::vector<std::pair<float, float>> pk;
+    s.trackPeaks(pk);
+    CHECK(pk.size() == size_t(s.trackCount()) && pk[size_t(t)].first == 0.f && pk[size_t(t)].second == 0.f);
+    CHECK(s.revision() == r1);                      // reading peaks does not count as a change
+}
+
 static void testMoveRegions() {
     using S = Session;
     S s;
@@ -960,7 +973,7 @@ static void testMoveRegions() {
 int main() {
     testJson(); testText(); testWav(); testSaveLoad(); testUndo(); testClipboardAndDuplicate(); testAutosave();
     testExport(); testBounce(); testAutomationPan(); testMidiOps(); testMidiOps2(); testSessionRegions(); testSessionTransforms();
-    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testMoveRegions();
+    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testMoveRegions(); testRevisionAndPeaks();
     std::printf("core fails=%d\n", fails);
     return fails;
 }

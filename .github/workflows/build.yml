@@ -145,20 +145,30 @@ jobs:
           git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git "$RUNNER_TEMP/Vulkan-Headers"
           echo "VULKAN_HEADERS_DIR=$RUNNER_TEMP/Vulkan-Headers" >> "$GITHUB_ENV"
 
-      # glslang publishes a rolling "main-tot" release. The asset name has changed before (master -> main), so it is
-      # found with a pattern instead of a fixed URL, and glslangValidator.exe is searched for inside the zip.
-      - name: Get glslang (the GLSL compiler)
+      # The GLSL compiler. Prebuilt glslang downloads are not reliable (the rolling "main-tot" release has no Windows zip),
+      # so: 1) the LunarG Vulkan SDK from Chocolatey (it contains glslangValidator and glslc), and if that fails
+      # 2) glslang is built from source (about 3 minutes, without the optimizer so no extra dependencies are needed).
+      - name: Get a GLSL compiler
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p "$RUNNER_TEMP/glslang/zip" "$RUNNER_TEMP/glslang/x"
-          gh release download main-tot --repo KhronosGroup/glslang --pattern '*windows-Release.zip' --dir "$RUNNER_TEMP/glslang/zip"
-          ls -l "$RUNNER_TEMP/glslang/zip"
-          unzip -q -o "$(ls "$RUNNER_TEMP"/glslang/zip/*.zip | head -n 1)" -d "$RUNNER_TEMP/glslang/x"
-          VAL="$(find "$RUNNER_TEMP/glslang/x" -iname 'glslangValidator.exe' | head -n 1)"
-          if [ -z "$VAL" ]; then echo "glslangValidator.exe not found in the glslang download"; find "$RUNNER_TEMP/glslang/x" -maxdepth 3; exit 1; fi
-          echo "glslangValidator: $VAL"
+          T="$RUNNER_TEMP"
+          VAL=""
+          if choco install vulkan-sdk -y --no-progress; then
+            VAL="$(find /c/VulkanSDK -iname 'glslangValidator.exe' 2>/dev/null | head -n 1)"
+          else
+            echo "Chocolatey could not install the Vulkan SDK; building glslang from source"
+          fi
+          if [ -z "$VAL" ]; then
+            git clone --depth 1 https://github.com/KhronosGroup/glslang.git "$T/glslang-src"
+            cmake -S "$T/glslang-src" -B "$T/glslang-build" -G Ninja -DCMAKE_BUILD_TYPE=Release \
+              -DENABLE_OPT=OFF -DENABLE_HLSL=OFF -DENABLE_CTEST=OFF -DBUILD_EXTERNAL=OFF -DGLSLANG_TESTS=OFF
+            cmake --build "$T/glslang-build" --target glslang-standalone
+            VAL="$(find "$T/glslang-build" -iname 'glslang*.exe' | grep -i -E 'glslang(Validator)?\.exe$' | head -n 1)"
+          fi
+          if [ -z "$VAL" ]; then echo "No GLSL compiler could be found or built"; exit 1; fi
+          VAL="$(cygpath -m "$VAL")"
+          echo "GLSL compiler: $VAL"
+          "$VAL" --version | head -n 3
           echo "GLSLANG_VALIDATOR=$VAL" >> "$GITHUB_ENV"
 
       - name: Get the VST3 SDK (optional)

@@ -57,7 +57,7 @@ A file that includes `windows.h` must have `NOMINMAX` defined **before** it (mem
 | --- | --- | --- |
 | `tests` | ubuntu | `bash tests/run.sh` |
 | `native` | windows | Download the VST3 SDK (continue on failure), install Inno Setup, `build.sh native-release`, upload the installer and the portable zip, release on a tag |
-| `vulkan` | windows | Clone Vulkan-Headers, download glslang with `gh release download` (by file-name pattern), `build.sh vulkan-release`, upload the Vulkan portable zip |
+| `vulkan` | windows | Clone Vulkan-Headers, install a GLSL compiler (LunarG Vulkan SDK from Chocolatey, else glslang built from source), `build.sh vulkan-release`, upload the Vulkan portable zip |
 | `qt` | windows | Install Qt, `build.sh qt`, upload the Qt portable zip |
 
 A release is made by pushing a `v<version>` tag (for example `v0.12`, `v0.10_1`).

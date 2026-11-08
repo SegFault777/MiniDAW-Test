@@ -284,6 +284,34 @@ int main(int argc, char** argv) {
         r.frame(1);
     }
 
+    // ---- playback does not copy the whole model every frame: only the meters are refreshed
+    {
+        r.frame(2);
+        const int copies = st.fullSnapshotCount();
+        s.seekBeats(0);
+        s.play();
+        std::vector<std::int16_t> pcm(2 * 2048);
+        float seen = 0;
+        for (int i = 0; i < 40; ++i) {
+            s.fillInt16(pcm.data(), 2048);
+            r.frame(1);
+            for (const auto& t : st.tracks()) seen = std::max(seen, std::max(t.peakL, t.peakR));
+        }
+        CHECK(st.fullSnapshotCount() == copies);      // 40 frames of playback, no whole-model copy
+        CHECK(seen > 0.001f);                         // the meters still move
+        s.stop();
+        for (int i = 0; i < 140; ++i) s.fillInt16(pcm.data(), 2048);   // the audio thread runs on: reverb tails ring out (about 4 s), then the meters are cleared
+        r.frame(2);
+        float after = 0;
+        for (const auto& t : st.tracks()) after = std::max(after, std::max(t.peakL, t.peakR));
+        CHECK(after == 0.f);                          // and they are cleared after the stop
+        // an edit during playback is picked up at once
+        s.play(); r.frame(1);
+        s.setVolume(0, 0.5f); r.frame(2);
+        CHECK(st.fullSnapshotCount() > copies && std::fabs(st.tracks()[0].volume - 0.5f) < 1e-4);
+        s.stop(); r.frame(2);
+    }
+
     // ---- scissors, eraser, mute tool, pencil
     r.key('3'); r.click(bx(6.1), laneY(0));
     CHECK(s.snapshot()[0].regions.size() == 2 && std::fabs(s.snapshot()[0].regions[1].start - 6.0) < 1e-6);

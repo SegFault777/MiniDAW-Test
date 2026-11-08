@@ -128,6 +128,7 @@ public:
     void acceptDialog() { if (m_dlg.open) finishDialog(true); }
     Rect arrangementRect() const { return m_rArr; }
     Rect dockRect() const { return m_rDock; }
+    int fullSnapshotCount() const { return m_fullSnapshots; }
     Rect browserRect() const { return m_rBrowser; }
     Rect inspectorRect() const { return m_rInspector; }
     Rect transportRect() const { return m_rTransport; }
@@ -227,6 +228,10 @@ private:
     void drawAutomation(const Rect& r);
     void drawDrummer(const Rect& r);
     bool m_drumCkpt = false;   // one undo point per slider drag
+    bool m_wasRunning = false, m_peaksLive = false;
+    std::uint64_t m_lastRev = ~std::uint64_t(0);
+    std::vector<std::pair<float, float>> m_peakScratch;
+    int m_fullSnapshots = 0;   // how many whole-model copies were taken (tests)
     void auditionNote(int track, int pitch);
     double prGridBeats() const;
     void applyToNotes(const std::function<std::vector<core::Note>(const std::vector<core::Note>&)>& fn);

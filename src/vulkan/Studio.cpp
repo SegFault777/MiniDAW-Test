@@ -66,15 +66,32 @@ double Studio::snapBeat(double beat, bool force) const {
 }
 
 void Studio::refreshModel() {
-    const bool running = m_s.isPlaying() || m_s.isRecording();
-    if (m_modelDirty.exchange(false) || running || m_tracks.empty()) {
+    // The whole model is copied only when it changed (or while recording). While the song merely plays, the only things that move
+    // are the meters, so just the peaks are fetched: a big project is no longer copied 60 times a second.
+    const bool recording = m_s.isRecording();
+    const bool playing = m_s.isPlaying();
+    const bool wasRunning = m_wasRunning;
+    m_wasRunning = playing || recording;
+    const std::uint64_t rev = m_s.revision();
+    if (m_modelDirty.exchange(false) || recording || m_tracks.empty() || rev != m_lastRev) {
+        m_lastRev = rev;
         m_tracks = m_s.snapshot();
+        ++m_fullSnapshots;
         for (size_t i = m_multi.size(); i-- > 0;) {   // drop selected regions that no longer exist
             const auto p = m_multi[i];
             if (p.first < 0 || p.first >= int(m_tracks.size()) || p.second < 0 || p.second >= int(m_tracks[size_t(p.first)].regions.size())) m_multi.erase(m_multi.begin() + std::ptrdiff_t(i));
         }
         m_markers = m_s.markers();
         m_tempo = m_s.tempoMap();
+    } else if (playing || wasRunning || m_peaksLive) {   // after stopping, keep reading until the audio thread has cleared the meters
+        m_s.trackPeaks(m_peakScratch);
+        m_peaksLive = false;
+        if (m_peakScratch.size() == m_tracks.size()) {
+            for (size_t i = 0; i < m_tracks.size(); ++i) {
+                m_tracks[i].peakL = m_peakScratch[i].first; m_tracks[i].peakR = m_peakScratch[i].second;
+                if (m_peakScratch[i].first > 0 || m_peakScratch[i].second > 0) m_peaksLive = true;
+            }
+        } else m_modelDirty = true;   // the track list changed behind our back: take a full copy next frame
     }
     float l = 0, r = 0;
     m_s.masterPeaks(l, r);

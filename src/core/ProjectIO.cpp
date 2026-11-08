@@ -208,7 +208,7 @@ void Session::clearAutosave() {
 
 void Session::markRecovered() {
     m_path.clear();
-    m_dirty = true;
+    markDirty();
 }
 
 /// Writes the project. An autosave never changes the project's path or dirty state; it keeps every
