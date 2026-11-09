@@ -767,3 +767,5 @@ Group G	Grupo G
 Group H	Grupo H
 Track %1 is in this group now.	La pista %1 está ahora en este grupo.
 Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	Grupo de mezcla: las pistas del mismo grupo mueven juntas sus faders, panoramas, envíos, silencio y solo (mantén Alt para cambiar solo una)
+Settings are kept in %1.	Los ajustes se guardan en %1.
+Portable mode: settings are kept in %1.	Modo portátil: los ajustes se guardan en %1.

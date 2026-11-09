@@ -87,3 +87,6 @@ Tracks in the same group move together. Click the small circle at the right of a
 - **mute** and **solo** are shared.
 
 Hold **Alt** while changing a control to change only that track. Groups are saved with the project, and each group has its own colour and letter. You can also set a group from the command palette (`Ctrl+K`, "mixer group").
+
+## Where the settings are
+The Vulkan version keeps its settings in `vulkan-settings.ini`. The Preferences window shows the exact place: `%LOCALAPPDATA%\MiniDAW` for an installed copy, or the `data` folder next to the program in the portable edition (the one with `MiniDAW.portable`). The file is created at the first start and updated when you close the program.

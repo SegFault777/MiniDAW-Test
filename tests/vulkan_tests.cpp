@@ -395,6 +395,21 @@ int main(int argc, char** argv) {
         CHECK(st.tracks()[0].group == 0 && st.tracks()[1].group == 0);
     }
 
+    // ---- the Preferences window tells where the settings file is
+    {
+        core::Session sp;
+        Host hp; hp.loopFolder = "../loops"; hp.dataDir = "C:\\Users\\me\\AppData\\Local\\MiniDAW";
+        Studio stp(sp, hp);
+        Gui gp; DrawList dlp; auto fontsp = std::make_shared<Fonts>(makeBuiltinFontSource());
+        double tp = 1.0;
+        auto framep = [&](int n) { for (int i = 0; i < n; ++i) { dlp.begin(1440, 900, 1.0f, fontsp.get()); gp.beginFrame(dlp, tp); stp.frame(gp, tp); gp.endFrame(); tp += 0.05; } };
+        framep(3);
+        CHECK(stp.runCommand("Preferences..."));
+        framep(3);
+        softRender(dlp, *fontsp, theme::bg0).savePpm("/tmp/vk_prefs.ppm");
+        CHECK(stp.dialogOpen());
+    }
+
     // ---- scissors, eraser, mute tool, pencil
     r.key('3'); r.click(bx(6.1), laneY(0));
     CHECK(s.snapshot()[0].regions.size() == 2 && std::fabs(s.snapshot()[0].regions[1].start - 6.0) < 1e-6);

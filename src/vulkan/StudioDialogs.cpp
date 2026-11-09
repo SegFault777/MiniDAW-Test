@@ -413,7 +413,7 @@ void Studio::dlgAux(int bus) {
 
 void Studio::dlgAbout() {
     openDialog("About MiniDAW", {DlgField::note("MiniDAW - a lightweight Logic Pro-inspired digital audio workstation."), DlgField::note("Vulkan user interface. GPL-3.0-or-later."),
-                                 DlgField::note(m_host.portable ? "Portable mode: settings are kept in the 'data' folder next to the program." : "Settings are kept in %LOCALAPPDATA%\\MiniDAW.")}, nullptr, "Close");
+                                 DlgField::note(fmt(m_host.portable ? "Portable mode: settings are kept in %1." : "Settings are kept in %1.", m_host.dataDir + "\\vulkan-settings.ini"))}, nullptr, "Close");
 }
 
 void Studio::dlgPreferences() {
@@ -442,7 +442,8 @@ void Studio::dlgPreferences() {
                                DlgField::number("Recording latency compensation", std::atof(get("recOffset", "0").c_str()), -500, 500, 1, 0, " ms"), DlgField::choice("MIDI input", midiNames, midiIdx), DlgField::choice("Language", langNames, langIdx),
                                DlgField::number("Autosave every", std::atof(get("autosave", "2").c_str()), 0, 60, 1, 0, " min"), DlgField::input("Loops folder", get("loops", m_host.loopFolder)), DlgField::input("VST3 folders (separate with ;)", get("vst3Folders", "")),
                                DlgField::slider("Interface scale", std::atof(get("uiScale", "1").c_str()), 0.75, 2.0, 2, " x"),
-                               DlgField::note("Restart MiniDAW to apply a new language or scale. Autosave 0 = off.")};
+                               DlgField::note("Restart MiniDAW to apply a new language or scale. Autosave 0 = off."),
+                               DlgField::note(fmt(m_host.portable ? "Portable mode: settings are kept in %1." : "Settings are kept in %1.", m_host.dataDir + "\\vulkan-settings.ini"))};
     openDialog("Preferences", std::move(f), [this, outs, ins, midis, langList, bufs](const std::vector<DlgField>& v) {
         auto s = m_host.settings;
         s["output"] = v[0].index == 0 ? "" : outs[size_t(v[0].index - 1)].first;

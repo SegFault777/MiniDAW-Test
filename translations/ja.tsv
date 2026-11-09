@@ -767,3 +767,5 @@ Group G	グループ G
 Group H	グループ H
 Track %1 is in this group now.	トラック%1をこのグループに入れました。
 Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	ミキサーグループ: 同じグループのトラックはフェーダー、パン、センド、ミュート、ソロが一緒に動きます(Altを押すと1つだけ変わります)
+Settings are kept in %1.	設定は %1 に保存されます。
+Portable mode: settings are kept in %1.	ポータブルモード: 設定は %1 に保存されます。

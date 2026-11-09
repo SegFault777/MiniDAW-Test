@@ -264,7 +264,9 @@ void loadSettings(App& a) {
     }
 }
 void saveSettings(App& a) {
+    CreateDirectoryW(widen(a.dataDir).c_str(), nullptr);   // the folder may have been removed while the program was running
     std::ofstream out(a.settingsPath, std::ios::trunc);
+    out << "# MiniDAW (Vulkan) settings - written by the program, safe to delete\n";
     for (const auto& kv : a.settings) out << kv.first << '=' << kv.second << '\n';
 }
 
@@ -490,6 +492,10 @@ LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
                 if (!a->session.saveProject(p, &err)) { MessageBoxW(h, widen("Could not save: " + err).c_str(), L"MiniDAW", MB_OK | MB_ICONERROR); return 0; }
             }
         }
+        if (a->studio) {   // remember the layout (and create the settings file if it is not there yet)
+            for (const auto& kv : a->studio->layoutSettings()) a->settings[kv.first] = kv.second;
+            saveSettings(*a);
+        }
         DestroyWindow(h);
         return 0;
     case kJobMessage: {   // also reached from inside modal dialogs and menus
@@ -553,6 +559,7 @@ int main() {
         CreateDirectoryW(widen(app.dataDir).c_str(), nullptr);
         app.settingsPath = app.dataDir + "\\vulkan-settings.ini";
         loadSettings(app);
+        if (GetFileAttributesW(widen(app.settingsPath).c_str()) == INVALID_FILE_ATTRIBUTES) saveSettings(app);   // first start: create the file
         const auto languages = core::findLanguages(app.exeDir + "\\translations");
         std::string code = app.settings.count("language") ? app.settings["language"] : "auto";
         if (code == "auto") {
