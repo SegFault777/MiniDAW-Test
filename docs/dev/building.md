@@ -42,7 +42,7 @@ If a file named `MiniDAW.portable` lies next to the executable, all data (settin
 `native-deploy` and `vulkan-deploy` create that marker in the portable folders. Native and Vulkan share the marker but use different settings files (`native-settings.ini` / `vulkan-settings.ini`).
 
 ## VST3 support
-Download the Steinberg VST3 SDK and point `VST3_SDK_DIR` at it. `native` then compiles the SDK sources with the static CRT (`-MT`) and `src/native/Vst3Native.cpp` with `-DMINIDAW_VST3`. **If that fails, a warning is printed and the build is repeated without VST3**, so an SDK problem never blocks the whole build. The last line of the build log says `VST3 hosting: enabled / disabled`.
+Download the Steinberg VST3 SDK and point `VST3_SDK_DIR` at it. `native` then compiles the SDK sources with the static CRT (`-MT`) and `src/native/Vst3Native.cpp` with `-DMINIDAW_VST3`. Some SDK files change place between SDK versions (`threadchecker_win32.cpp`, `commonstringconvert.cpp` and the file that defines `IPlugFrame::iid`), so `build.sh` finds them by name or by content (`vst3_named_sources`, `vst3_plugframe_source`); when no SDK file defines `IPlugFrame::iid`, `Vst3Native.cpp` defines it (`-DMINIDAW_DEFINE_PLUGFRAME_IID`). **If that fails, a warning is printed and the build is repeated without VST3**, so an SDK problem never blocks the whole build. The last line of the build log says `VST3 hosting: enabled / disabled`.
 ```
 git clone --depth 1 --recurse-submodules https://github.com/steinbergmedia/vst3sdk.git
 export VST3_SDK_DIR=$PWD/vst3sdk

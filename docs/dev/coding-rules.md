@@ -32,6 +32,7 @@
 | `std::min` / `std::max` with `LONG` and `int` | The types must match: write `std::min<int>(a, b)` when mixing Windows types (`LONG`, `DWORD`) with `int` |
 | `warning C4005: 'NOMINMAX': macro redefinition` | The build already passes `-DNOMINMAX`; use `#ifndef NOMINMAX` before defining it in a file |
 | The window is black while its edge is dragged | Windows runs a modal loop while sizing, so the main loop does not render. `VkMain.cpp` draws from `WM_SIZE` / `WM_PAINT` (`renderNow`); keep that when you change the window code |
+| `LNK2019` for `ThreadChecker::create`, `StringConvert::convert` or `IPlugFrame::iid` | A VST3 SDK source file is missing from the build. The place of these files changes between SDK versions, so `build.sh` looks for them by name / content; add a new file name to `vst3_named_sources` if another symbol is missing |
 | Vulkan: a struct field that does not exist | `tests/mock/vulkan/vulkan.h` is only a stand-in; check the field against the real Khronos header |
 
 ## Commit messages and versions

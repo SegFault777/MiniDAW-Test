@@ -190,6 +190,24 @@ do_build() {
 #   NF_TAG      object folder name            NF_EXE      output file name in build/
 #   NF_SOURCES  the sources of the program    NF_FLAGS    extra compiler flags      NF_LIBS  extra libraries
 # VST3 hosting is added when VST3_SDK_DIR points to the Steinberg SDK; if that fails the build continues without it.
+# Source files of the VST3 SDK whose place differs from one SDK version to the next. They are found by name or by content instead
+# of a fixed path. vst3_named_sources prints threadchecker_win32.cpp (ThreadChecker::create) and commonstringconvert.cpp
+# (StringConvert::convert); vst3_plugframe_source prints the file that defines IPlugFrame::iid (nothing if there is none).
+vst3_named_sources() {
+    local root="$1" f n
+    for n in threadchecker_win32.cpp commonstringconvert.cpp; do
+        f="$(find "$root/public.sdk" "$root/base" "$root/pluginterfaces" -iname "$n" 2>/dev/null | head -n 1)"
+        [ -n "$f" ] && echo "$f"
+    done
+    return 0
+}
+vst3_plugframe_source() {
+    local root="$1"
+    grep -rl --include='*.cpp' -E 'DEF_CLASS_IID *\( *(Steinberg::)?IPlugFrame *\)' "$root/public.sdk" "$root/pluginterfaces" "$root/base" 2>/dev/null \
+        | grep -v -E 'samples|test|_mac|_linux' | head -n 1
+    return 0
+}
+
 native_family() {
     command -v cl >/dev/null 2>&1 || die "cl.exe not found: activate the MSVC x64 environment first"
     local SRC_W; SRC_W="$(cygpath -m "$SRC")"
@@ -211,6 +229,7 @@ native_family() {
 
     # ---- optional VST3: the SDK sources (static CRT like the rest), then the native sources with -DMINIDAW_VST3 ----
     local vst3_ok=0 vst3_objs=() SDK=""
+    VST3_DEFS=""
     if [ -n "${VST3_SDK_DIR:-}" ] && [ -d "$VST3_SDK_DIR/public.sdk" ]; then
         echo "== $NF_TAG VST3 SDK"
         SDK="$(cygpath -m "$VST3_SDK_DIR")"
@@ -225,6 +244,18 @@ native_family() {
         for g in public.sdk/source/vst/vstinitiids.cpp public.sdk/source/vst/utility/stringconvert.cpp public.sdk/source/common/memorystream.cpp; do
             [ -f "$VST3_SDK_DIR/$g" ] && sdk_sources+=("$VST3_SDK_DIR/$g")
         done
+        # files that move between SDK versions (found by name / content); duplicates of the list above are skipped
+        local extra plugframe
+        plugframe="$(vst3_plugframe_source "$VST3_SDK_DIR")"
+        for extra in $(vst3_named_sources "$VST3_SDK_DIR") $plugframe; do
+            case " ${sdk_sources[*]} " in *" $extra "*) continue ;; esac
+            echo "   + $extra"
+            sdk_sources+=("$extra")
+        done
+        if [ -z "$plugframe" ]; then
+            echo "   no SDK file defines IPlugFrame::iid: Vst3Native.cpp defines it"
+            VST3_DEFS="-DMINIDAW_DEFINE_PLUGFRAME_IID"
+        fi
         local SDKCXX=(cl -nologo -std:c++17 -O2 -EHsc -MT -utf-8 -W1 -DRELEASE=1 -DUNICODE -D_UNICODE -DWIN32 -D_WINDOWS -DNOMINMAX -I"$SDK")
         OBJS=()
         if compile_all "$NF_TAG-vst3sdk" "${SDKCXX[@]}" -- "${sdk_sources[@]}"; then
@@ -239,7 +270,7 @@ native_family() {
     local ok=0
     if [ "$vst3_ok" -eq 1 ]; then
         OBJS=("${vst3_objs[@]}")
-        if compile_all "$NF_TAG" "${NATIVE[@]}" -DMINIDAW_VST3 -DRELEASE=1 -I"$SDK" -- "${sources[@]}" && native_link; then
+        if compile_all "$NF_TAG" "${NATIVE[@]}" -DMINIDAW_VST3 ${VST3_DEFS:-} -DRELEASE=1 -I"$SDK" -- "${sources[@]}" && native_link; then
             ok=1
             echo "VST3 hosting: enabled"
         else
