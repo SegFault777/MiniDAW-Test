@@ -72,3 +72,18 @@ Select a Drummer region and press `Ctrl+7` (or double-click the region). Choose 
 
 ## Tutorial
 **Help > Tutorial...** (the first item of the Help menu) opens a 15-page tutorial that walks through the window, tracks, the browser, the Drummer, recording, the five tools, selecting several regions, the piano roll, the step sequencer, the mixer, automation, snapshots and workspaces, and saving. Use **Next** / **Back**, the Left / Right arrow keys or the dots at the bottom; **Try it** (on some pages) closes the tutorial and opens the matching panel; **Esc** closes it.
+
+## Comfort and speed
+- **Your layout is remembered.** Which panels are open, their sizes, the bottom tab, the track height, the zoom, Snap and Follow Playhead are saved in the settings file and restored the next time you start.
+- **Notifications.** Messages (for example "Riff written" or "Snap off") appear as a small floating note above the status bar and fade out by themselves.
+- **Middle mouse button.** Hold it over the lanes and drag to move the view like a hand.
+- **Edge scrolling.** While you drag regions or a rubber band close to the edge of the lanes, the view scrolls by itself; the nearer to the edge (or beyond it), the faster.
+- **Light on the computer.** The window only redraws when something changes or moves. While the song plays, only the level meters are refreshed, so big projects stay smooth.
+
+## Mixer groups
+Tracks in the same group move together. Click the small circle at the right of a channel's header in the Mixer (or right-click a track header > **Mixer Group**) and pick **Group A** to **H**; **No Group** removes it. In a group:
+- moving a **fader** keeps the ratio between the tracks (halve one, and the others are halved too),
+- **pan** and the **sends** keep their difference,
+- **mute** and **solo** are shared.
+
+Hold **Alt** while changing a control to change only that track. Groups are saved with the project, and each group has its own colour and letter. You can also set a group from the command palette (`Ctrl+K`, "mixer group").

@@ -755,3 +755,15 @@ Back	上一页
 Next	下一页
 Done	完成
 Try it	试一试
+No Group	无分组
+Mixer Group	混音分组
+Group A	分组 A
+Group B	分组 B
+Group C	分组 C
+Group D	分组 D
+Group E	分组 E
+Group F	分组 F
+Group G	分组 G
+Group H	分组 H
+Track %1 is in this group now.	轨道 %1 已加入此分组。
+Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	混音分组:同一分组的轨道会一起调整推子、声像、发送、静音和独奏(按住 Alt 只改变一个)

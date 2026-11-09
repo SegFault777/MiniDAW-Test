@@ -312,6 +312,89 @@ int main(int argc, char** argv) {
         s.stop(); r.frame(2);
     }
 
+    // ---- usability: toast, middle-mouse pan, edge scrolling while dragging, layout that is remembered
+    {
+        // toast: a floating note is drawn while a message is fresh
+        r.wait(5.0); r.frame(3);                                // let earlier messages fade out
+        auto region = [&] {                                      // the pixels where the toast is drawn (centre, just above the status bar)
+            const auto img = softRender(r.dl, *r.fonts, theme::bg0);
+            std::vector<std::uint32_t> out;
+            for (int y = int(r.H) - 90; y < int(r.H) - 40; ++y) for (int x = int(r.W / 2) - 60; x < int(r.W / 2) + 60; ++x) out.push_back(img.px[size_t(y) * size_t(img.w) + size_t(x)]);
+            return out;
+        };
+        const auto quiet = region();
+        st.message("Layout saved for next time");
+        r.frame(8);
+        CHECK(region() != quiet);
+        r.shot("/tmp/vk_toast.ppm");
+        r.wait(5.0); r.frame(2);
+        // middle mouse button drags the view
+        const double sx0 = st.scrollBeats();
+        const float mx = bx(8), my = laneY(1) + 20;
+        r.gui.onMouseMove(mx, my); r.frame(1);
+        r.gui.onMouseButton(2, true); r.frame(1);
+        r.gui.onMouseMove(mx - 120, my); r.frame(1);
+        r.gui.onMouseMove(mx - 240, my); r.frame(1);
+        r.gui.onMouseButton(2, false); r.frame(1);
+        CHECK(st.scrollBeats() > sx0 + 4.0);
+        r.gui.onMouseMove(mx - 240, my); r.frame(1);               // and back to the left edge of the song (the view never goes below beat 0)
+        r.gui.onMouseButton(2, true); r.frame(1);
+        r.gui.onMouseMove(mx + 60, my); r.frame(2);
+        r.gui.onMouseButton(2, false); r.frame(1);
+        CHECK(st.scrollBeats() == 0.0);
+        r.gui.onMouseMove(mx, my); r.frame(2);
+    }
+    {
+        // the layout is stored through the host and restored by a new studio
+        core::Session s2;
+        std::map<std::string, std::string> saved;
+        Host h2;
+        h2.loopFolder = "../loops";
+        h2.storeSettings = [&](const std::map<std::string, std::string>& m) { saved = m; };
+        Studio st2(s2, h2);
+        Gui g2; DrawList dl2; auto fonts2 = std::make_shared<Fonts>(makeBuiltinFontSource());
+        double t2 = 1.0;
+        auto frame2 = [&](int n) { for (int i = 0; i < n; ++i) { dl2.begin(1440, 900, 1.0f, fonts2.get()); g2.beginFrame(dl2, t2); st2.frame(g2, t2); g2.endFrame(); t2 += 0.3; } };
+        frame2(3);
+        CHECK(saved.empty());                                   // nothing is written at start-up
+        CHECK(st2.runCommand("Show / Hide Browser"));
+        CHECK(st2.runCommand("Show Drummer"));
+        frame2(4);
+        CHECK(saved.count("showBrowser") && saved["showBrowser"] == "0" && saved["dockTab"] == "6");
+        Host h3; h3.settings = saved; h3.loopFolder = "../loops";
+        core::Session s3;
+        Studio st3(s3, h3);
+        CHECK(!st3.browserVisible());
+        CHECK(st3.layoutSettings() == saved);
+        // nonsense values are clamped, not trusted
+        Studio st4(s3, h3);
+        st4.applyLayout({{"dockH", "99999"}, {"zoom", "-5"}, {"dockTab", "77"}});
+        CHECK(st4.layoutSettings()["dockH"] == "900.0" && st4.layoutSettings()["dockTab"] == "6");
+    }
+
+    // ---- mixer groups: grouped tracks follow each other, Alt changes only one
+    {
+        CHECK(st.runCommand("Show Mixer"));
+        st.selectRegion(0, -1); CHECK(st.runCommand("~Mixer Group: A"));
+        st.selectRegion(1, -1); CHECK(st.runCommand("~Mixer Group: A"));
+        st.selectRegion(3, -1); CHECK(st.runCommand("~Mixer Group: C"));
+        r.frame(3);
+        CHECK(st.tracks()[0].group == 1 && st.tracks()[1].group == 1 && st.tracks()[2].group == 0 && st.tracks()[3].group == 3);
+        const float v0 = s.snapshot()[0].volume, v1 = s.snapshot()[1].volume, v2 = s.snapshot()[2].volume;
+        s.setVolume(0, v0 * 0.5f);
+        CHECK(std::fabs(s.snapshot()[1].volume - v1 * 0.5f) < 1e-5f && s.snapshot()[2].volume == v2);
+        r.shot("/tmp/vk_groups.ppm");
+        r.gui.setMods(ModAlt); r.frame(1);                        // Alt held: the group is bypassed
+        s.setVolume(0, v0);
+        CHECK(std::fabs(s.snapshot()[1].volume - v1 * 0.5f) < 1e-5f);
+        r.gui.setMods(0); r.frame(1);
+        s.setVolume(0, v0 * 0.5f); s.setVolume(1, v1);              // put things back (linked again)
+        for (int i = 0; i < 4; ++i) { st.selectRegion(i, -1); st.runCommand("~Mixer Group: None"); }
+        s.setVolume(0, v0); s.setVolume(1, v1);
+        r.frame(2);
+        CHECK(st.tracks()[0].group == 0 && st.tracks()[1].group == 0);
+    }
+
     // ---- scissors, eraser, mute tool, pencil
     r.key('3'); r.click(bx(6.1), laneY(0));
     CHECK(s.snapshot()[0].regions.size() == 2 && std::fabs(s.snapshot()[0].regions[1].start - 6.0) < 1e-6);

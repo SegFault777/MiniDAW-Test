@@ -831,3 +831,15 @@ Back	이전
 Next	다음
 Done	완료
 Try it	해 보기
+No Group	그룹 없음
+Mixer Group	믹서 그룹
+Group A	그룹 A
+Group B	그룹 B
+Group C	그룹 C
+Group D	그룹 D
+Group E	그룹 E
+Group F	그룹 F
+Group G	그룹 G
+Group H	그룹 H
+Track %1 is in this group now.	트랙 %1이(가) 이 그룹에 들어갔습니다.
+Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	믹서 그룹: 같은 그룹의 트랙은 페이더, 팬, 센드, 음소거, 솔로가 함께 움직입니다(Alt를 누르면 하나만 바뀝니다)

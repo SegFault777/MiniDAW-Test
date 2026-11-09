@@ -108,6 +108,12 @@ void Studio::registerCommands() {
     addCmd("Track", "Move Track Down", "Ctrl+Alt+Down", KeyDown, C | A, [this] { if (m_selTrack + 1 < int(m_tracks.size())) { m_s.moveTrack(m_selTrack, m_selTrack + 1); ++m_selTrack; } }, trk);
     sep("Track");
     addCmd("Track", "Arm Record", "Shift+R", 'R', S, [this] { m_s.setArmed(m_selTrack, !m_tracks[size_t(m_selTrack)].armed); }, trk);
+    {   // palette-only aliases: Ctrl+K, "group b"
+        static const char* groupLabels[] = {"~Mixer Group: None", "~Mixer Group: A", "~Mixer Group: B", "~Mixer Group: C", "~Mixer Group: D",
+                                            "~Mixer Group: E", "~Mixer Group: F", "~Mixer Group: G", "~Mixer Group: H"};
+        for (int gnum = 0; gnum <= 8; ++gnum)
+            addCmd("Track", groupLabels[gnum], "", 0, 0, [this, gnum] { m_s.setTrackGroup(m_selTrack, gnum); m_modelDirty = true; }, trk);
+    }
     addCmd("Track", "Mute Track", "Shift+M", 'M', S, [this] { m_s.setMute(m_selTrack, !m_tracks[size_t(m_selTrack)].mute); }, trk);
     addCmd("Track", "Solo Track", "Shift+S", 'S', S, [this] { m_s.setSolo(m_selTrack, !m_tracks[size_t(m_selTrack)].solo); }, trk);
     addCmd("Track", "Select Previous Track", "Up", KeyUp, 0, [this] { m_selTrack = std::max(0, m_selTrack - 1); m_selRegion = -1; }, trk);

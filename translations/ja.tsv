@@ -755,3 +755,15 @@ Back	戻る
 Next	次へ
 Done	完了
 Try it	試してみる
+No Group	グループなし
+Mixer Group	ミキサーグループ
+Group A	グループ A
+Group B	グループ B
+Group C	グループ C
+Group D	グループ D
+Group E	グループ E
+Group F	グループ F
+Group G	グループ G
+Group H	グループ H
+Track %1 is in this group now.	トラック%1をこのグループに入れました。
+Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	ミキサーグループ: 同じグループのトラックはフェーダー、パン、センド、ミュート、ソロが一緒に動きます(Altを押すと1つだけ変わります)

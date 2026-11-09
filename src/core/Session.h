@@ -61,6 +61,11 @@ public:
     int addTrack(TrackType type, const std::string& name = {});
     void removeTrack(int i);
     void renameTrack(int i, const std::string& name);
+    /// Mixer groups: tracks with the same group number (1..8, 0 = none) follow each other. A volume change keeps the ratio between
+    /// the members, pan and sends keep their difference, mute and solo are shared. One undo step.
+    void setTrackGroup(int track, int group);
+    /// While false the setters below change only the track they are called for (the UI turns it off while Alt is held).
+    void setGroupLinking(bool on) { m_groupLink = on; }
     void setVolume(int i, float v);
     void setPan(int i, float p);
     void setSendA(int i, float v);
@@ -334,6 +339,7 @@ private:
     std::atomic<bool> m_playing{false}, m_recording{false}, m_recAudio{false};
     std::atomic<bool> m_metro{false}, m_countIn{false}, m_loopOn{false}, m_dirty{false};
     std::atomic<std::uint64_t> m_rev{0};
+    std::atomic<bool> m_groupLink{true};
     std::atomic<int> m_flush{0};   // bit 0: release synth notes, bit 1: reset every effect
     std::atomic<float> m_master{0.9f};
     std::atomic<int> m_recOffsetMs{0};

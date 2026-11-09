@@ -22,10 +22,31 @@ Studio::Studio(core::Session& session, Host host) : m_s(session), m_host(std::mo
     registerCommands();
     for (const std::string& fid : dsp::insertEffectIds()) { auto fx = dsp::createEffect(fid); m_effectNames.emplace_back(fid, fx ? fx->displayName() : fid); }
     m_tempo = m_s.tempoMap();
-    m_showBrowser = m_host.settings.count("showBrowser") ? m_host.settings["showBrowser"] != "0" : true;
-    m_showInspector = m_host.settings.count("showInspector") ? m_host.settings["showInspector"] != "0" : true;
+    applyLayout(m_host.settings);
+    m_lastLayout = layoutSettings();
     if (m_host.settings.count("scaleRoot")) m_scaleRoot = std::atoi(m_host.settings["scaleRoot"].c_str()) % 12;
     if (m_host.settings.count("scaleType")) m_scaleType = std::clamp(std::atoi(m_host.settings["scaleType"].c_str()), 0, int(core::ScaleParams::Count) - 1);
+}
+
+std::map<std::string, std::string> Studio::layoutSettings() const {
+    auto num = [](double v) { char b[32]; std::snprintf(b, sizeof b, "%.1f", v); return std::string(b); };
+    return {{"showBrowser", m_showBrowser ? "1" : "0"}, {"showInspector", m_showInspector ? "1" : "0"}, {"showDock", m_showDock ? "1" : "0"},
+            {"dockTab", std::to_string(int(m_dock))}, {"dockH", num(m_dockH)}, {"browserW", num(m_browserW)}, {"inspectorW", num(m_inspectorW)},
+            {"trackH", num(m_trackH)}, {"zoom", num(m_ppb)}, {"snap", m_snapOn ? "1" : "0"}, {"follow", m_follow ? "1" : "0"}};
+}
+
+void Studio::applyLayout(const std::map<std::string, std::string>& s) {
+    auto has = [&](const char* k) { return s.count(k) != 0; };
+    auto flag = [&](const char* k, bool& v) { if (has(k)) v = s.at(k) != "0"; };
+    auto val = [&](const char* k, float& v, float lo, float hi) { if (has(k)) v = std::clamp(float(std::atof(s.at(k).c_str())), lo, hi); };
+    flag("showBrowser", m_showBrowser); flag("showInspector", m_showInspector); flag("showDock", m_showDock);
+    flag("snap", m_snapOn); flag("follow", m_follow);
+    val("dockH", m_dockH, 120.f, 900.f); val("browserW", m_browserW, 160.f, 500.f); val("inspectorW", m_inspectorW, 180.f, 500.f);
+    val("trackH", m_trackH, 28.f, 200.f);
+    if (has("zoom")) m_ppb = std::clamp(std::atof(s.at("zoom").c_str()), 2.0, 400.0);
+    if (has("dockTab")) m_dock = DockTab(std::clamp(std::atoi(s.at("dockTab").c_str()), 0, int(DockTab::Drummer)));
+    if (has("scaleRoot")) m_scaleRoot = std::atoi(s.at("scaleRoot").c_str()) % 12;
+    if (has("scaleType")) m_scaleType = std::clamp(std::atoi(s.at("scaleType").c_str()), 0, int(core::ScaleParams::Count) - 1);
 }
 
 const std::string& Studio::tr(const std::string& s) const {
@@ -110,7 +131,7 @@ void Studio::refreshModel() {
 }
 
 bool Studio::wantsFrame() const {
-    return m_s.isPlaying() || m_s.isRecording() || m_meterL > 0.004f || m_meterR > 0.004f || m_time - m_toastAt < 3.4 || m_payActive || m_auditionPitch >= 0 || m_modelDirty.load();
+    return m_s.isPlaying() || m_s.isRecording() || m_meterL > 0.004f || m_meterR > 0.004f || m_time - m_toastAt < 3.4 || m_autoScrolling || m_panning || m_payActive || m_auditionPitch >= 0 || m_modelDirty.load();
 }
 
 void Studio::layout(float w, float h) {
@@ -168,6 +189,7 @@ void Studio::frame(Gui& g, double time) {
     m_dl = &g.dl();
     m_time = time;
     if (!g.translate) g.translate = [this](const std::string& s) -> const std::string& { return tr(s); };
+    m_s.setGroupLinking(!g.alt());   // Alt+drag changes only the track you touch, even when it belongs to a mixer group
     refreshModel();
     layout(m_dl->width(), m_dl->height());
     m_hint.clear();
@@ -398,14 +420,31 @@ void Studio::drawOverlays() {
     g.setInputEnabled(!menuUp);
     if (m_helpOpen) drawHelpSheet();
     if (m_tutOpen) drawTutorial();
+    if (m_host.storeSettings && !g.mouseDown(0) && m_time - m_layoutCheck > 0.5) {   // remember the layout between sessions
+        m_layoutCheck = m_time;
+        const auto now = layoutSettings();
+        if (now != m_lastLayout) { m_lastLayout = now; m_host.storeSettings(now); }
+    }
     if (m_paletteOpen) drawPalette();
     if (m_dlg.open) drawDialog();
     drawToast();
 }
 
 void Studio::drawToast() {
-    // the status bar shows messages; a short floating note also appears for important ones near the bottom
-    (void)m_toast;
+    // a floating note above the status bar: it fades in, stays about three seconds and fades out
+    const double age = m_time - m_toastAt;
+    if (m_toast.empty() || age < 0 || age >= 3.4) return;
+    DrawList& dl = *m_dl;
+    const float a = float(std::clamp(std::min(age / 0.15, (3.4 - age) / 0.4), 0.0, 1.0));
+    const std::string str = tr(m_toast);
+    const float w = std::min(dl.width() - 80.f, dl.textWidth(str, normal) + 44.f), h = 34.f;
+    const Rect r{(dl.width() - w) / 2, m_rStatus.y - h - 20.f + (1.f - a) * 8.f, w, h};
+    dl.rrect({r.x, r.y + 3, r.w, r.h}, 17, withAlpha(rgb(0, 0, 0), uint8_t(70 * a)));
+    dl.rrect(r, 17, withAlpha(bg2, uint8_t(240 * a)));
+    dl.rrectStroke(r, 17, 1, withAlpha(border, uint8_t(255 * a)));
+    dl.pushClip(r);
+    dl.textIn(r, str, withAlpha(text, uint8_t(255 * a)), normal, Align::Center);
+    dl.popClip();
 }
 
 void Studio::drawPalette() {

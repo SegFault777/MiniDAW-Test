@@ -149,12 +149,62 @@ void Session::renameTrack(int i, const std::string& name) {
 }
 
 #define TRACK_SET(...) { std::lock_guard<std::mutex> l(m_mutex); if (i < 0 || i >= int(m_tracks.size())) return; Track& t = m_tracks[size_t(i)]; __VA_ARGS__; } markDirty();
-void Session::setVolume(int i, float v) { TRACK_SET(t.volume = std::clamp(v, 0.f, 1.5f)) }
-void Session::setPan(int i, float p) { TRACK_SET(t.pan = std::clamp(p, -1.f, 1.f)) }
-void Session::setSendA(int i, float v) { TRACK_SET(t.sendA = std::clamp(v, 0.f, 1.f)) }
-void Session::setSendB(int i, float v) { TRACK_SET(t.sendB = std::clamp(v, 0.f, 1.f)) }
-void Session::setMute(int i, bool on) { TRACK_SET(t.mute = on) }
-void Session::setSolo(int i, bool on) { TRACK_SET(t.solo = on) }
+namespace {
+struct MixBefore { float volume, pan, sendA, sendB; };
+// Runs f on the track and on every other member of its mixer group (when linking is on). f(track, before, isPrimary).
+template <class F> void forGroup(std::vector<Track>& tracks, int i, bool linked, F f) {
+    if (i < 0 || i >= int(tracks.size())) return;
+    const Track& p = tracks[size_t(i)];
+    const MixBefore before{p.volume, p.pan, p.sendA, p.sendB};
+    const int group = p.group;
+    for (int j = 0; j < int(tracks.size()); ++j)
+        if (j == i || (linked && group > 0 && tracks[size_t(j)].group == group)) f(tracks[size_t(j)], before, j == i);
+}
+}  // namespace
+
+void Session::setVolume(int i, float v) {
+    { std::lock_guard<std::mutex> l(m_mutex);
+      const float nv = std::clamp(v, 0.f, 1.5f);
+      forGroup(m_tracks, i, m_groupLink, [&](Track& t, const MixBefore& b, bool primary) {
+          if (primary || b.volume < 1e-4f) t.volume = nv; else t.volume = std::clamp(t.volume * (nv / b.volume), 0.f, 1.5f);
+      }); }
+    markDirty();
+}
+void Session::setPan(int i, float p) {
+    { std::lock_guard<std::mutex> l(m_mutex);
+      const float np = std::clamp(p, -1.f, 1.f);
+      forGroup(m_tracks, i, m_groupLink, [&](Track& t, const MixBefore& b, bool primary) { t.pan = primary ? np : std::clamp(t.pan + (np - b.pan), -1.f, 1.f); }); }
+    markDirty();
+}
+void Session::setSendA(int i, float v) {
+    { std::lock_guard<std::mutex> l(m_mutex);
+      const float nv = std::clamp(v, 0.f, 1.f);
+      forGroup(m_tracks, i, m_groupLink, [&](Track& t, const MixBefore& b, bool primary) { t.sendA = primary ? nv : std::clamp(t.sendA + (nv - b.sendA), 0.f, 1.f); }); }
+    markDirty();
+}
+void Session::setSendB(int i, float v) {
+    { std::lock_guard<std::mutex> l(m_mutex);
+      const float nv = std::clamp(v, 0.f, 1.f);
+      forGroup(m_tracks, i, m_groupLink, [&](Track& t, const MixBefore& b, bool primary) { t.sendB = primary ? nv : std::clamp(t.sendB + (nv - b.sendB), 0.f, 1.f); }); }
+    markDirty();
+}
+void Session::setMute(int i, bool on) {
+    { std::lock_guard<std::mutex> l(m_mutex); forGroup(m_tracks, i, m_groupLink, [&](Track& t, const MixBefore&, bool) { t.mute = on; }); }
+    markDirty();
+}
+void Session::setSolo(int i, bool on) {
+    { std::lock_guard<std::mutex> l(m_mutex); forGroup(m_tracks, i, m_groupLink, [&](Track& t, const MixBefore&, bool) { t.solo = on; }); }
+    markDirty();
+}
+void Session::setTrackGroup(int i, int group) {
+    {
+        std::lock_guard<std::mutex> l(m_mutex);
+        if (i < 0 || i >= int(m_tracks.size())) return;
+    }
+    checkpoint();
+    { std::lock_guard<std::mutex> l(m_mutex); m_tracks[size_t(i)].group = std::clamp(group, 0, 8); }
+    changed(false);
+}
 #undef TRACK_SET
 
 void Session::setArmed(int i, bool on) {

@@ -612,6 +612,7 @@ int main() {
         for (const auto& l : core::findLanguages(app.exeDir + "\\translations")) v.emplace_back(l.code, l.name);
         return v;
     };
+    host.storeSettings = [&app](const std::map<std::string, std::string>& s) { for (const auto& kv : s) app.settings[kv.first] = kv.second; saveSettings(app); };
     host.applySettings = [&app](const std::map<std::string, std::string>& s) { app.settings = s; saveSettings(app); applySettings(app); };
     app.studio = std::make_unique<vkui::Studio>(app.session, host);
     if (table) app.studio->setTranslations(table);

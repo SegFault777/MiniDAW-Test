@@ -875,6 +875,59 @@ static void testV012() {
 }
 
 
+
+static void testMixerGroups() {
+    Session s;
+    const int a = s.addTrack(TrackType::Instrument, "A"), b = s.addTrack(TrackType::Instrument, "B"), c = s.addTrack(TrackType::Instrument, "C");
+    s.setVolume(a, 0.8f); s.setVolume(b, 0.4f); s.setVolume(c, 0.6f);
+    s.setPan(a, 0.f); s.setPan(b, 0.2f);
+    s.setTrackGroup(a, 1); s.setTrackGroup(b, 1);                     // c stays out of the group
+    // volume keeps the ratio between the members: a 0.8 -> 0.4 halves b too
+    s.setVolume(a, 0.4f);
+    CHECK(std::fabs(s.snapshot()[size_t(a)].volume - 0.4f) < 1e-6f && std::fabs(s.snapshot()[size_t(b)].volume - 0.2f) < 1e-6f);
+    CHECK(std::fabs(s.snapshot()[size_t(c)].volume - 0.6f) < 1e-6f);
+    // pan keeps the difference, and is clamped
+    s.setPan(a, 0.5f);
+    CHECK(std::fabs(s.snapshot()[size_t(b)].pan - 0.7f) < 1e-6f);
+    s.setPan(a, 1.0f);
+    CHECK(std::fabs(s.snapshot()[size_t(b)].pan - 1.0f) < 1e-6f);
+    // sends, mute and solo are shared
+    s.setSendA(a, 0.3f);
+    CHECK(std::fabs(s.snapshot()[size_t(b)].sendA - 0.3f) < 1e-6f && s.snapshot()[size_t(c)].sendA == 0.f);
+    s.setMute(b, true);
+    CHECK(s.snapshot()[size_t(a)].mute && s.snapshot()[size_t(b)].mute && !s.snapshot()[size_t(c)].mute);
+    s.setSolo(a, true);
+    CHECK(s.snapshot()[size_t(b)].solo && !s.snapshot()[size_t(c)].solo);
+    // a member at zero cannot be scaled: it is set to the same value
+    s.setVolume(b, 0.f);
+    CHECK(s.snapshot()[size_t(a)].volume == 0.f);
+    s.setVolume(a, 0.5f);
+    CHECK(std::fabs(s.snapshot()[size_t(b)].volume - 0.5f) < 1e-6f);
+    // linking off: only the track itself
+    s.setGroupLinking(false);
+    s.setVolume(a, 0.9f); s.setMute(a, false);
+    CHECK(std::fabs(s.snapshot()[size_t(b)].volume - 0.5f) < 1e-6f && s.snapshot()[size_t(b)].mute && !s.snapshot()[size_t(a)].mute);
+    s.setGroupLinking(true);
+    // out-of-range numbers are clamped; undo restores the group
+    s.setTrackGroup(c, 99);
+    CHECK(s.snapshot()[size_t(c)].group == 8);
+    s.undo();
+    CHECK(s.snapshot()[size_t(c)].group == 0);
+    // groups are saved with the project
+    const std::string file = tmpDir() + "/groups.mdaw";
+    std::string err;
+    CHECK(s.saveProject(file, &err));
+    Session t;
+    CHECK(t.loadProject(file, &err));
+    CHECK(t.snapshot().size() == s.snapshot().size() && t.snapshot()[size_t(a)].group == 1 && t.snapshot()[size_t(b)].group == 1 && t.snapshot()[size_t(c)].group == 0);
+    // a mix snapshot recall is not a group edit: it restores every track exactly
+    s.setGroupLinking(true);
+    const int snap = s.saveMixSnapshot();
+    s.setVolume(a, 0.2f);
+    s.recallMixSnapshot(snap);
+    CHECK(std::fabs(s.snapshot()[size_t(a)].volume - 0.9f) < 1e-6f && std::fabs(s.snapshot()[size_t(b)].volume - 0.5f) < 1e-6f);
+}
+
 static void testRevisionAndPeaks() {
     Session s;
     const int t = s.addTrack(TrackType::Instrument, "R");
@@ -973,7 +1026,7 @@ static void testMoveRegions() {
 int main() {
     testJson(); testText(); testWav(); testSaveLoad(); testUndo(); testClipboardAndDuplicate(); testAutosave();
     testExport(); testBounce(); testAutomationPan(); testMidiOps(); testMidiOps2(); testSessionRegions(); testSessionTransforms();
-    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testMoveRegions(); testRevisionAndPeaks();
+    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups();
     std::printf("core fails=%d\n", fails);
     return fails;
 }

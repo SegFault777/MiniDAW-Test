@@ -92,6 +92,7 @@ struct Track {
     TrackType type = TrackType::Audio;
     float volume = 0.8f, pan = 0.f, sendA = 0.f, sendB = 0.f;
     bool mute = false, solo = false, armed = false;
+    int group = 0;                                 ///< mixer group: 0 = none, 1..8 = A..H. Grouped tracks move their faders, pans, sends, mute and solo together
     std::vector<Region> regions;
     DrumPattern steps{};
     std::vector<std::shared_ptr<dsp::Effect>> inserts;

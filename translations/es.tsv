@@ -755,3 +755,15 @@ Back	Atrás
 Next	Siguiente
 Done	Hecho
 Try it	Probar
+No Group	Sin grupo
+Mixer Group	Grupo de mezcla
+Group A	Grupo A
+Group B	Grupo B
+Group C	Grupo C
+Group D	Grupo D
+Group E	Grupo E
+Group F	Grupo F
+Group G	Grupo G
+Group H	Grupo H
+Track %1 is in this group now.	La pista %1 está ahora en este grupo.
+Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	Grupo de mezcla: las pistas del mismo grupo mueven juntas sus faders, panoramas, envíos, silencio y solo (mantén Alt para cambiar solo una)

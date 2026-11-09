@@ -531,6 +531,42 @@ void Studio::laneInteraction() {
     Gui& g = *m_g;
     const Id lid = id("lanes");
     const Interact it = g.interact(lid, m_rLanes);
+    // middle mouse button: drag the view like a hand (Ableton Live, Logic Pro)
+    {
+        const bool mid = g.mouseDown(2);
+        if (mid && !m_midPrev && g.hovering(m_rLanes)) m_panning = true;
+        if (!mid) m_panning = false;
+        m_midPrev = mid;
+        if (m_panning) {
+            g.setCursor(Cursor::Hand);
+            m_scrollX = std::max(0.0, m_scrollX - double(g.mouseX() - m_panX) / m_ppb);
+            m_scrollY = std::max(0.f, m_scrollY - (g.mouseY() - m_panY));
+        }
+        m_panX = g.mouseX(); m_panY = g.mouseY();
+    }
+    // dragging regions or a rubber band against the edge of the lanes scrolls the view
+    m_autoScrolling = false;
+    if (g.mouseDown(0) && (m_drag == Drag::MoveRegion || m_drag == Drag::Rubber || m_drag == Drag::Create)) {
+        const float edgeZone = 36.f;
+        auto frac = [&](float over) { return std::clamp(over / edgeZone, 0.f, 2.f); };
+        const float fr = frac(g.mouseX() - (m_rLanes.right() - edgeZone));
+        const float fl = m_scrollX > 0 ? frac((m_rLanes.x + edgeZone) - g.mouseX()) : 0.f;
+        const float fd = m_drag == Drag::Create ? 0.f : frac(g.mouseY() - (m_rLanes.bottom() - edgeZone));
+        const float fu = m_drag == Drag::Create || m_scrollY <= 0 ? 0.f : frac((m_rLanes.y + edgeZone) - g.mouseY());
+        const float speed = 900.f * std::min(g.dt(), 0.05f);   // pixels per frame at full speed
+        const float dxPx = (fr - fl) * speed, dyPx = (fd - fu) * speed;
+        if (dxPx != 0.f || dyPx != 0.f) {
+            m_autoScrolling = true;
+            const double before = m_scrollX;
+            m_scrollX = std::clamp(m_scrollX + double(dxPx) / m_ppb, 0.0, std::max(0.0, m_s.projectEndBeats() + 64.0));
+            const float movedX = float((m_scrollX - before) * m_ppb);
+            const float before_y = m_scrollY;
+            m_scrollY = std::max(0.f, m_scrollY + dyPx);
+            const float movedY = m_scrollY - before_y;   // the upper limit is applied by the layout on the next frame
+            if (m_drag == Drag::MoveRegion) m_dragOrigX -= movedX;   // the regions follow the mouse, not the screen
+            if (m_drag == Drag::Rubber) { m_rubX0 -= movedX; m_rubY0 -= movedY; }
+        }
+    }
     const double mouseBeat = xToBeat(g.mouseX());
     int ht = -1, hr = -1;
     bool edge = false;
@@ -729,8 +765,11 @@ std::vector<MenuItem> Studio::itemsFor(const std::vector<std::string>& labels) {
 }
 
 void Studio::trackHeaderMenu(int track) {
-    (void)track;
-    m_g->openMenu(m_g->mouseX(), m_g->mouseY(), itemsFor({"Rename Track...", "Duplicate Track", "Delete Track", "-", "Move Track Up", "Move Track Down", "-", "Arm Record", "Mute Track", "Solo Track", "-", "Bounce in Place", "Track Color: Next"}));
+    auto items = itemsFor({"Rename Track...", "Duplicate Track", "Delete Track", "-", "Move Track Up", "Move Track Down", "-", "Arm Record", "Mute Track", "Solo Track", "-", "Bounce in Place", "Track Color: Next"});
+    MenuItem grp; grp.label = "Mixer Group"; grp.children = groupMenuItems(track);
+    items.push_back(MenuItem::sep());
+    items.push_back(grp);
+    m_g->openMenu(m_g->mouseX(), m_g->mouseY(), std::move(items));
 }
 
 void Studio::regionMenu(int track, int region) {

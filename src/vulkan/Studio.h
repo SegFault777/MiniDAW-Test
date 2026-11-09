@@ -39,6 +39,7 @@ struct Host {
     std::function<bool(const std::shared_ptr<dsp::ParamSet>&)> openPluginEditor;
     std::function<std::vector<std::pair<std::string, std::string>>()> languages;
     std::function<void(const std::map<std::string, std::string>&)> applySettings;
+    std::function<void(const std::map<std::string, std::string>&)> storeSettings;   // merge + save a few keys (the layout) without re-applying the audio settings
     std::string dataDir;
     bool portable = false;
 };
@@ -129,6 +130,10 @@ public:
     Rect arrangementRect() const { return m_rArr; }
     Rect dockRect() const { return m_rDock; }
     int fullSnapshotCount() const { return m_fullSnapshots; }
+    /// The layout the user arranged (panels, sizes, zoom, snap...): saved between sessions through Host::storeSettings.
+    std::map<std::string, std::string> layoutSettings() const;
+    void applyLayout(const std::map<std::string, std::string>& s);
+    bool autoScrolling() const { return m_autoScrolling; }
     Rect browserRect() const { return m_rBrowser; }
     Rect inspectorRect() const { return m_rInspector; }
     Rect transportRect() const { return m_rTransport; }
@@ -227,8 +232,14 @@ private:
     void drawSteps(const Rect& r);
     void drawAutomation(const Rect& r);
     void drawDrummer(const Rect& r);
+    std::vector<MenuItem> groupMenuItems(int ti);   // the Group submenu of a track: No Group, A .. H
+    static Color groupColor(int group);
     bool m_drumCkpt = false;   // one undo point per slider drag
     bool m_wasRunning = false, m_peaksLive = false;
+    bool m_panning = false, m_midPrev = false, m_autoScrolling = false;   // middle-mouse pan, edge scrolling while dragging
+    float m_panX = 0, m_panY = 0;
+    std::map<std::string, std::string> m_lastLayout;
+    double m_layoutCheck = 0;
     std::uint64_t m_lastRev = ~std::uint64_t(0);
     std::vector<std::pair<float, float>> m_peakScratch;
     int m_fullSnapshots = 0;   // how many whole-model copies were taken (tests)

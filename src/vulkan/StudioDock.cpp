@@ -209,7 +209,19 @@ void Studio::drawChannel(const Rect& c, int ti) {
         dl.rrect({c.x, c.y, c.w, 22}, 8, mix(bg3, col, 0.65f));
         dl.rect({c.x, c.y + 12, c.w, 10}, mix(bg3, col, 0.65f));
         static const char* kind[] = {"Audio", "Inst", "Drums", "Drummer"};
-        dl.textIn({c.x + 4, c.y, c.w - 8, 22}, std::to_string(ti + 1) + (narrow ? "" : "  " + tr(kind[int(t.type)])), rgb(255, 255, 255), bold, Align::Center);
+        dl.textIn({c.x + 4, c.y, c.w - 28, 22}, std::to_string(ti + 1) + (narrow ? "" : "  " + tr(kind[int(t.type)])), rgb(255, 255, 255), bold, Align::Center);   // leaves room for the group badge
+        // mixer group badge (Pro Tools / Logic Pro groups): click for the menu, Alt while changing a control bypasses the group
+        const Rect gb{c.right() - 20, c.y + 3, 16, 16};
+        const Interact gi = g.interact(g.id("ch-group", t.id), gb, false);
+        if (t.group > 0) {
+            dl.circle(gb.cx(), gb.cy(), 8, groupColor(t.group));
+            const char letter[2] = {char('A' + t.group - 1), 0};
+            dl.textIn(gb, letter, rgb(20, 22, 28), bold, Align::Center);
+        } else {
+            dl.ring(gb.cx(), gb.cy(), 7, 1.2f, withAlpha(rgb(255, 255, 255), gi.hovered ? 200 : 70));
+        }
+        if (gi.hovered) setHint("Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)");
+        if (gi.clicked) { m_selTrack = ti; g.openMenu(gb.x, gb.bottom(), groupMenuItems(ti)); }
     }
     float y = c.y + 26;
     // inserts: a fixed number of rows so that all faders line up
@@ -682,6 +694,27 @@ void Studio::drawBrowser(const Rect& r) {
     }
     if (items.empty()) dl.textIn({list.x, list.y + 20, list.w, 24}, tr("Nothing found."), textMute, normal, Align::Center);
     dl.popClip();
+}
+
+Color Studio::groupColor(int group) {
+    static const Color cols[8] = {rgb(0xff, 0x7a, 0x7a), rgb(0xff, 0xb4, 0x5c), rgb(0xf2, 0xe0, 0x5a), rgb(0x7a, 0xe0, 0x8a),
+                                  rgb(0x5c, 0xd6, 0xe6), rgb(0x6c, 0x9c, 0xff), rgb(0xb2, 0x8c, 0xff), rgb(0xff, 0x8c, 0xd4)};
+    return cols[std::clamp(group, 1, 8) - 1];
+}
+
+std::vector<MenuItem> Studio::groupMenuItems(int ti) {
+    std::vector<MenuItem> items;
+    const int cur = ti >= 0 && ti < int(m_tracks.size()) ? m_tracks[size_t(ti)].group : 0;
+    MenuItem none; none.label = "No Group"; none.checked = cur == 0;
+    none.action = [this, ti] { m_s.setTrackGroup(ti, 0); m_modelDirty = true; };
+    items.push_back(none);
+    items.push_back(MenuItem::sep());
+    for (int gnum = 1; gnum <= 8; ++gnum) {
+        MenuItem m; m.label = std::string("Group ") + char('A' + gnum - 1); m.checked = cur == gnum;
+        m.action = [this, ti, gnum] { m_s.setTrackGroup(ti, gnum); m_modelDirty = true; message(fmt("Track %1 is in this group now.", std::to_string(ti + 1))); };
+        items.push_back(m);
+    }
+    return items;
 }
 
 }  // namespace vkui

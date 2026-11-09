@@ -231,6 +231,7 @@ bool Session::writeProject(const std::string& path, bool autosave, std::string* 
         o["sendB"] = double(t.sendB);
         o["mute"] = t.mute;
         o["solo"] = t.solo;
+        if (t.group > 0) o["group"] = t.group;
         if (t.type == TrackType::Drums) {
             Json rows = Json::array();
             for (const auto& row : t.steps) {
@@ -462,6 +463,7 @@ bool Session::loadProject(const std::string& path, std::string* error) {
             t.sendB = float(o["sendB"].toDouble(0));
             t.mute = o["mute"].toBool();
             t.solo = o["solo"].toBool();
+            t.group = std::clamp(int(o["group"].toInt(0)), 0, 8);
             if (t.type == TrackType::Drums) {
                 const auto& rows = o["steps"].items();
                 for (size_t r = 0; r < size_t(kDrumRows) && r < rows.size(); ++r) {

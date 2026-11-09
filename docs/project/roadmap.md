@@ -6,7 +6,7 @@ In order of priority. This list is a direction, not a promise.
 1. **Build and run the Vulkan interface on Windows.** `VkMain.cpp`, `VkRenderer.cpp`, the shaders and the new `build.sh` / CI parts were only written and syntax-checked on Linux. Fix the errors, then compare a real GPU's output with the CPU screenshots.
 2. **Check CI and stabilise.** Compile the Native build (especially VST3) and the `win32` changes (portable paths, folder dialog) on Windows for the first time.
 3. **Finish the translations:** about 150 new English texts need `ko`, `ja`, `zh_CN` and `es` entries.
-4. **Vulkan interface gaps:** a sample editor for audio regions, mixer groups, IME composition in text input.
+4. **Vulkan interface gaps:** a sample editor for audio regions, IME composition in text input.
 5. ~~Performance~~ done: playback refreshes only the meters; the whole project is copied when it changes.
 6. **Project file compatibility:** the `snapshots` field is new (older versions ignore it); decide whether to raise the file version.
 7. **Decide the future of the Qt version** once nothing exists only in Qt (the Native and Vulkan versions already have its features).
