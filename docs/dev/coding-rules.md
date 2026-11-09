@@ -31,6 +31,7 @@
 | `error C2628: 'TextStyle' followed by 'char'` | `<windows.h>` (rpcndr.h) defines `small` as a macro for `char`. `src/vulkan/Theme.h` does `#undef small`; do the same if you name something `small`, `near` or `far` |
 | `std::min` / `std::max` with `LONG` and `int` | The types must match: write `std::min<int>(a, b)` when mixing Windows types (`LONG`, `DWORD`) with `int` |
 | `warning C4005: 'NOMINMAX': macro redefinition` | The build already passes `-DNOMINMAX`; use `#ifndef NOMINMAX` before defining it in a file |
+| The window is black while its edge is dragged | Windows runs a modal loop while sizing, so the main loop does not render. `VkMain.cpp` draws from `WM_SIZE` / `WM_PAINT` (`renderNow`); keep that when you change the window code |
 | Vulkan: a struct field that does not exist | `tests/mock/vulkan/vulkan.h` is only a stand-in; check the field against the real Khronos header |
 
 ## Commit messages and versions

@@ -371,6 +371,18 @@ void renderFrame(App& a) {
     a.inFrame = false;
 }
 
+// While the user drags a window edge, Windows runs its own message loop and the main loop below does not run, so the new area
+// would stay black until the mouse button is released. The window therefore draws itself from WM_SIZE and WM_PAINT: the content
+// follows the edge while it is dragged (like Discord or a browser). A second pass is made when the swap chain had to be rebuilt.
+void renderNow(App& a) {
+    if (a.inFrame || !a.studio || !a.renderer || !a.hwnd || IsIconic(a.hwnd)) return;
+    for (int tries = 0; tries < 2; ++tries) {
+        a.dirty = false;
+        renderFrame(a);
+        if (!a.dirty) break;
+    }
+}
+
 LPCWSTR cursorFor(vkui::Cursor c) {
     switch (c) {
     case vkui::Cursor::Hand: return IDC_HAND;
@@ -398,9 +410,15 @@ LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     auto px = [&](LPARAM lp, bool x) { return float(x ? GET_X_LPARAM(lp) : GET_Y_LPARAM(lp)) / std::max(0.75f, a->dpiScale * a->userScale); };
     auto feed = [&] { a->gui.setMods(mods()); a->dirty = true; };
     switch (m) {
-    case WM_SIZE: a->dirty = true; return 0;
+    case WM_SIZE:
+        if (w == SIZE_MINIMIZED) return 0;
+        a->dirty = true;
+        renderNow(*a);   // draw at the new size right now, not later in the main loop (which is blocked while the edge is dragged)
+        return 0;
+    case WM_ENTERSIZEMOVE: a->dirty = true; return 0;
+    case WM_EXITSIZEMOVE: a->dirty = true; return 0;
     case WM_ERASEBKGND: return 1;
-    case WM_PAINT: { PAINTSTRUCT ps; BeginPaint(h, &ps); EndPaint(h, &ps); a->dirty = true; return 0; }
+    case WM_PAINT: { PAINTSTRUCT ps; BeginPaint(h, &ps); EndPaint(h, &ps); renderNow(*a); return 0; }
     case WM_DPICHANGED: {
         a->dpiScale = float(HIWORD(w)) / 96.f;
         const RECT* r = reinterpret_cast<const RECT*>(l);
