@@ -20,7 +20,7 @@ channel strips with insert effects and sends, **VST3 plug-ins**, **tempo and tim
 | Executable | What it is |
 |---|---|
 | `MiniDAW.exe` | **Native** - software-rendered, no Qt; installer and portable zip |
-| `MiniDAWVulkan.exe` | **Vulkan** - a new interface drawn by the GPU: workspaces (`F5` / `F6` / `F7`), command palette (`Ctrl+K`), Logic / Ableton-style piano roll. Portable zip. See [docs/user/vulkan-interface.md](docs/user/vulkan-interface.md). *Its Windows / GPU parts are still being verified.* |
+| `MiniDAWVulkan.exe` | **Vulkan** - installer and portable zip; a new interface drawn by the GPU: workspaces (`F5` / `F6` / `F7`), command palette (`Ctrl+K`), Logic / Ableton-style piano roll. Portable zip. See [docs/user/vulkan-interface.md](docs/user/vulkan-interface.md). *Its Windows / GPU parts are still being verified.* |
 | `MiniDAWQt.exe` | The old **Qt** version, kept as a portable zip for comparison |
 
 All three open the same `.mdaw` projects. Native and Vulkan run **portable** when a file named `MiniDAW.portable` lies next to the executable: settings, autosave and plug-ins are then kept in `data\` beside it (the portable zips already contain the marker).
@@ -229,7 +229,7 @@ export VST3_SDK_DIR=C:/dev/vst3sdk     # optional: git clone --recurse-submodule
 ./build.sh all              # Qt + Native + Vulkan (SKIP_VULKAN=1 leaves out Vulkan)
 ./build.sh native-release   # build + portable folder / ZIP + installer -> installer-out/MiniDAW-<version>-setup.exe
 ./build.sh native           # only build/MiniDAW.exe
-./build.sh vulkan-release   # build/MiniDAWVulkan.exe + portable ZIP (needs the Vulkan headers and glslc, see docs/dev/building.md)
+./build.sh vulkan-release   # build/MiniDAWVulkan.exe + portable ZIP + installer (needs the Vulkan headers, glslc and Inno Setup, see docs/dev/building.md)
 ./build.sh qt               # the old Qt version as build/MiniDAWQt.exe and a portable ZIP (needs QT_DIR)
 ./build.sh clean
 ```

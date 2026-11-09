@@ -17,8 +17,9 @@
 #   native-release  native + native-deploy + installer             (CI: needs only MSVC and Inno Setup)
 #   shaders         compile the GLSL shaders                       -> build/shaders/ui.vert.spv, ui.frag.spv
 #   vulkan          shaders + compile + link the Vulkan version    -> build/MiniDAWVulkan.exe
-#   vulkan-deploy   portable folder and zip                        -> dist-vulkan/MiniDAW, MiniDAW-Vulkan-windows-x64-portable.zip
-#   vulkan-release  vulkan + vulkan-deploy
+#   vulkan-deploy   install folder, portable folder and zip        -> dist-vulkan/MiniDAW (installer payload), dist-vulkan-portable/MiniDAW, MiniDAW-Vulkan-windows-x64-portable.zip
+#   vulkan-installer Inno Setup for the Vulkan version             -> installer-out/MiniDAW-Vulkan-<version>-setup.exe
+#   vulkan-release  vulkan + vulkan-deploy + vulkan-installer
 #   build           moc + compile + link the Qt version           -> build/MiniDAWQt.exe
 #   deploy          windeployqt                                    -> dist/MiniDAWQt, MiniDAW-Qt-windows-x64-portable.zip
 #   qt              build + deploy;   qt-installer: Inno Setup for the Qt version
@@ -48,6 +49,7 @@ DIST="$ROOT/dist/MiniDAWQt"
 DIST_NATIVE="$ROOT/dist-native/MiniDAW"
 DIST_PORTABLE="$ROOT/dist-portable/MiniDAW"
 DIST_VULKAN="$ROOT/dist-vulkan/MiniDAW"
+DIST_VULKAN_PORTABLE="$ROOT/dist-vulkan-portable/MiniDAW"
 VERSION="${MINIDAW_VERSION:-0.12}"
 JOBS="${JOBS:-$(nproc 2>/dev/null || echo 4)}"
 TARGET="${1:-build}"
@@ -62,7 +64,7 @@ qt_root() {
 }
 
 do_clean() {
-    rm -rf "$BUILD" "$ROOT/dist" "$ROOT/dist-native" "$ROOT/dist-portable" "$ROOT/dist-vulkan" "$ROOT/installer-out" "$ROOT"/MiniDAW-*portable.zip
+    rm -rf "$BUILD" "$ROOT/dist" "$ROOT/dist-native" "$ROOT/dist-portable" "$ROOT/dist-vulkan" "$ROOT/dist-vulkan-portable" "$ROOT/installer-out" "$ROOT"/MiniDAW-*portable.zip
 }
 
 # Compiles the given sources in parallel into $BUILD/<dir>/ and appends the object paths to OBJS.
@@ -387,7 +389,7 @@ copy_payload() {
 make_portable_marker() {
     local to="$1"
     mkdir -p "$to/data"
-    echo "This file turns MiniDAW into a portable program: settings, autosaves and your plug-ins are kept in the 'data' folder next to MiniDAW.exe. Delete it to use %LOCALAPPDATA%\\MiniDAW again." > "$to/MiniDAW.portable"
+    echo "This file turns MiniDAW into a portable program: settings, autosaves and your plug-ins are kept in the 'data' folder next to the program. Delete it to use %LOCALAPPDATA%\\MiniDAW again." > "$to/MiniDAW.portable"
     cat > "$to/PORTABLE.txt" <<'TXT'
 MiniDAW - portable edition
 
@@ -417,17 +419,20 @@ do_native_deploy() {
     echo "deployed: dist-native/MiniDAW (installer payload), dist-portable/MiniDAW and MiniDAW-windows-x64-portable.zip"
 }
 
+# Like the Native version: an install folder (no marker, the installer payload), then a portable copy with the marker.
 do_vulkan_deploy() {
     [ -f "$BUILD/MiniDAWVulkan.exe" ] || die "build first: ./build.sh vulkan"
     [ -f "$BUILD/shaders/ui.vert.spv" ] || die "shaders missing: ./build.sh shaders"
-    rm -rf "$ROOT/dist-vulkan"
+    rm -rf "$ROOT/dist-vulkan" "$ROOT/dist-vulkan-portable"
     mkdir -p "$DIST_VULKAN/shaders"
     cp "$BUILD/MiniDAWVulkan.exe" "$DIST_VULKAN/MiniDAWVulkan.exe"
     cp "$BUILD"/shaders/*.spv "$DIST_VULKAN/shaders/"
     copy_payload "$DIST_VULKAN"
-    make_portable_marker "$DIST_VULKAN"
-    zip_dir "$ROOT/dist-vulkan/MiniDAW" "MiniDAW-Vulkan-windows-x64-portable.zip"
-    echo "deployed to dist-vulkan/MiniDAW and MiniDAW-Vulkan-windows-x64-portable.zip"
+    mkdir -p "$DIST_VULKAN_PORTABLE"
+    cp -r "$DIST_VULKAN"/. "$DIST_VULKAN_PORTABLE"/
+    make_portable_marker "$DIST_VULKAN_PORTABLE"
+    zip_dir "$ROOT/dist-vulkan-portable/MiniDAW" "MiniDAW-Vulkan-windows-x64-portable.zip"
+    echo "deployed: dist-vulkan/MiniDAW (installer payload), dist-vulkan-portable/MiniDAW and MiniDAW-Vulkan-windows-x64-portable.zip"
 }
 
 find_iscc() {
@@ -444,6 +449,12 @@ do_installer() {
     [ -d "$DIST_NATIVE" ] || die "deploy first: ./build.sh native-deploy"
     "$(find_iscc)" "/DMyAppVersion=$VERSION" "$(cygpath -w "$ROOT/installer/MiniDAW.iss")"
     echo "installer written to installer-out/"
+}
+
+do_vulkan_installer() {
+    [ -d "$DIST_VULKAN" ] || die "deploy first: ./build.sh vulkan-deploy"
+    "$(find_iscc)" "/DMyAppVersion=$VERSION" "$(cygpath -w "$ROOT/installer/MiniDAW-Vulkan.iss")"
+    echo "Vulkan installer written to installer-out/"
 }
 
 # The old Qt version is only shipped as a portable zip; this builds an installer for it if somebody still wants one.
@@ -464,7 +475,8 @@ case "$TARGET" in
     shaders) do_shaders ;;
     vulkan) do_vulkan ;;
     vulkan-deploy) do_vulkan_deploy ;;
-    vulkan-release) do_vulkan; do_vulkan_deploy ;;
+    vulkan-installer) do_vulkan_installer ;;
+    vulkan-release) do_vulkan; do_vulkan_deploy; do_vulkan_installer ;;
     qt) do_build; do_deploy ;;
     all)
         do_build; do_deploy
@@ -472,5 +484,5 @@ case "$TARGET" in
         if [ "${SKIP_VULKAN:-0}" = 1 ]; then warn "SKIP_VULKAN=1: the Vulkan version is not built"; else do_vulkan; do_vulkan_deploy; fi
         ;;
     clean) do_clean ;;
-    *) die "unknown target '$TARGET' (all | qt | native | vulkan | native-release | vulkan-release | native-deploy | vulkan-deploy | shaders | installer | build | deploy | qt-installer | clean)" ;;
+    *) die "unknown target '$TARGET' (all | qt | native | vulkan | native-release | vulkan-release | native-deploy | vulkan-deploy | vulkan-installer | shaders | installer | build | deploy | qt-installer | clean)" ;;
 esac

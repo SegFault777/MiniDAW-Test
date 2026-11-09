@@ -29,7 +29,7 @@ bash build.sh all              # Qt + Native + Vulkan   (SKIP_VULKAN=1 leaves ou
 | `installer` | Inno Setup | `installer-out/MiniDAW-<version>-setup.exe` |
 | `native-release` | The three above in order | |
 | `shaders` | Compile `src/vulkan/shaders/ui.vert\|frag` to SPIR-V | `build/shaders/*.spv` |
-| `vulkan`, `vulkan-deploy`, `vulkan-release` | Build, package and both for the Vulkan interface | `build/MiniDAWVulkan.exe`, `dist-vulkan/MiniDAW/`, `MiniDAW-Vulkan-windows-x64-portable.zip` |
+| `vulkan`, `vulkan-deploy`, `vulkan-installer`, `vulkan-release` | Build; package (install folder, portable folder, zip); Inno Setup; all three | `build/MiniDAWVulkan.exe`, `dist-vulkan/MiniDAW/` (installer payload), `dist-vulkan-portable/MiniDAW/`, `MiniDAW-Vulkan-windows-x64-portable.zip`, `installer-out/MiniDAW-Vulkan-<version>-setup.exe` |
 | `qt`, `build`, `deploy`, `qt-installer` | The old Qt version | `dist/MiniDAWQt/`, `MiniDAW-Qt-windows-x64-portable.zip` |
 | `all` | `qt` + `native-release` + `vulkan-release` | |
 | `clean` | Delete the products | |
@@ -57,7 +57,7 @@ A file that includes `windows.h` must have `NOMINMAX` defined **before** it (mem
 | --- | --- | --- |
 | `tests` | ubuntu | `bash tests/run.sh` |
 | `native` | windows | Download the VST3 SDK (continue on failure), install Inno Setup, `build.sh native-release`, upload the installer and the portable zip, release on a tag |
-| `vulkan` | windows | Clone Vulkan-Headers, install a GLSL compiler (LunarG Vulkan SDK from Chocolatey, else glslang built from source), `build.sh vulkan-release`, upload the Vulkan portable zip |
+| `vulkan` | windows | Clone Vulkan-Headers, install a GLSL compiler (LunarG Vulkan SDK from Chocolatey, else glslang built from source), install Inno Setup, `build.sh vulkan-release`, upload the Vulkan installer and portable zip |
 | `qt` | windows | Install Qt, `build.sh qt`, upload the Qt portable zip |
 
 A release is made by pushing a `v<version>` tag (for example `v0.12`, `v0.10_1`).

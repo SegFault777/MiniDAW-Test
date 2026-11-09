@@ -11,6 +11,10 @@
 
 If an older Qt version is installed, the same installer **upgrades it in place** and removes the Qt files that are no longer needed.
 
+## The Vulkan version has an installer too
+`MiniDAW-Vulkan-<version>-setup.exe` installs the Vulkan version (`MiniDAWVulkan.exe`) as **MiniDAW Vulkan**, in its own folder and with its own Start menu entry, so it can sit next to the
+Native version. Associating `.mdaw` files with it is off by default because the Native version may already use them. Both versions open the same projects.
+
 ## Portable editions (no installation)
 | Download | Contents |
 | --- | --- |
