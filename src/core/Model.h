@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "Id3.h"
 #include "../dsp/AudioOps.h"
 #include "../dsp/DrumKit.h"
 #include "../dsp/Drummer.h"
@@ -131,7 +132,14 @@ struct MixSnapshot {
     std::vector<MixChannel> channels;
 };
 
+/// The file type of an export. MP3 needs an encoder from the platform layer (Session::Hooks::encodeMp3).
+enum class ExportContainer { Wav, Aiff, Mp3 };
+
 struct ExportOptions {
+    ExportContainer container = ExportContainer::Wav;
+    int sampleRate = 44100;                              ///< 44100, 48000, 88200 or 96000 (MP3: 44100 or 48000).
+    int mp3Kbps = 192;                                   ///< 128, 160, 192, 224, 256 or 320.
+    Id3Tags tags;                                        ///< title / artist / album / year / comment of an MP3 file.
     bool cycleOnly = false;                              ///< Bounce only the cycle range instead of the whole project.
     dsp::WavFormat format = dsp::WavFormat::Pcm16;       ///< 16-bit, 24-bit or 32-bit float.
     bool normalize = false;                              ///< Scale the result so that its peak reaches 'normalizeDb'.

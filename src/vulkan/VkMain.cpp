@@ -35,6 +35,7 @@
 #include "../native/Vst3Native.h"
 #include "../platform/Audio.h"
 #include "../platform/Decode.h"
+#include "../platform/Mp3Encode.h"
 #include "../platform/Midi.h"
 #include "../platform/PluginHost.h"
 #include "Studio.h"
@@ -399,12 +400,8 @@ LPCWSTR cursorFor(vkui::Cursor c) {
     }
 }
 
-void importDropped(App& a, const std::string& path) {
-    const std::string lower = [&] { std::string s = path; std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return char(std::tolower(c)); }); return s; }();
-    if (lower.size() > 5 && lower.compare(lower.size() - 5, 5, ".mdaw") == 0) { a.studio->openFile(path); return; }
-    a.studio->message("Importing " + path);
-    a.session.importAudio(path, -1, a.session.positionBeats());
-}
+// Dropped files and the file given on the command line ("open with"): projects, audio files and MIDI files are all accepted.
+void importDropped(App& a, const std::string& path) { a.studio->openAny(path); }
 
 LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     App* a = gApp;
@@ -579,6 +576,7 @@ int main() {
     core::Session::Hooks hooks;
     hooks.changed = [&app](bool) { if (app.studio) app.studio->invalidate(); if (app.hwnd) PostMessageW(app.hwnd, kWake, 0, 0); };
     hooks.message = [&app](const std::string& s) { if (app.studio) app.studio->message(s); };
+    hooks.encodeMp3 = [](const std::vector<float>& pcm, int rate, int kbps, const std::string& path, std::string* err) { return platform::encodeMp3(pcm, rate, kbps, path, err); };
     hooks.decode = [&app](const std::string& path, core::Session::DecodeDone done) {
         ++app.decoding;
         std::thread([&app, path, done = std::move(done)]() mutable {
@@ -686,7 +684,7 @@ int main() {
     {
         int argc = 0;
         wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-        if (argv && argc >= 2) app.studio->openFile(narrow(argv[1]));
+        if (argv && argc >= 2) app.studio->openAny(narrow(argv[1]));
         if (argv) LocalFree(argv);
     }
     SetTimer(app.hwnd, 1, 250, nullptr);

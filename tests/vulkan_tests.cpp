@@ -1,5 +1,8 @@
 // Tests and screenshots of the Vulkan user interface (src/vulkan) rendered by the CPU twin of its shader: no GPU needed.
+#include <chrono>
+#include <fstream>
 #include <cmath>
+#include <thread>
 #include <cstdio>
 #include <string>
 #include "../src/core/Files.h"
@@ -408,6 +411,74 @@ int main(int argc, char** argv) {
         framep(3);
         softRender(dlp, *fontsp, theme::bg0).savePpm("/tmp/vk_prefs.ppm");
         CHECK(stp.dialogOpen());
+    }
+
+    // ---- opening other file types: File > Open / drag and drop / "open with" accept projects, audio and MIDI files
+    {
+        std::string err;
+        CHECK(s.exportMidiFile("/tmp/vk_open.mid", &err));
+        CHECK(s.saveProject("/tmp/vk_open.mdaw", &err));
+        std::vector<float> pcm(2 * 4410, 0.1f);
+        CHECK(core::writeWavFile("/tmp/vk_open.wav", pcm, &err));
+        // the picker offers every supported type
+        std::string seenFilter;
+        core::Session sx;
+        Host hx; hx.loopFolder = "../loops";
+        hx.fileDialog = [&](const std::string&, const std::string& filter, bool) { seenFilter = filter; return std::string("/tmp/vk_open.mid"); };
+        Studio stx(sx, hx);
+        Gui gx; DrawList dlx; auto fontsx = std::make_shared<Fonts>(makeBuiltinFontSource());
+        double tx = 1.0;
+        auto framex = [&](int n) { for (int i = 0; i < n; ++i) { dlx.begin(1440, 900, 1.0f, fontsx.get()); gx.beginFrame(dlx, tx); stx.frame(gx, tx); gx.endFrame(); tx += 0.05; } };
+        framex(3);
+        const int base = sx.trackCount();
+        stx.openAny("/tmp/notes.txt");                                    // unsupported: a clear message, nothing happens
+        CHECK(stx.toastText().find("not supported") != std::string::npos && sx.trackCount() == base);
+        CHECK(stx.runCommand("Open..."));                                 // the dialog returns a .mid file: it is imported
+        framex(2);
+        CHECK(seenFilter.find("*.mp3") != std::string::npos && seenFilter.find("*.mdaw") != std::string::npos && seenFilter.find("*.mid") != std::string::npos);
+        CHECK(sx.trackCount() > base);
+        // an audio file is imported (decoded in the background)
+        const int before = sx.trackCount();
+        stx.openAny("/tmp/vk_open.wav");
+        for (int i = 0; i < 200 && sx.trackCount() == before; ++i) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); framex(1); }
+        CHECK(sx.trackCount() == before + 1);
+        // a project opens in place of the current one (a clean session is not asked)
+        core::Session sy;
+        Host hy; hy.loopFolder = "../loops";
+        Studio sty(sy, hy);
+        sty.openAny("/tmp/vk_open.mdaw");
+        CHECK(sy.trackCount() == s.trackCount());
+        // ... and a session with unsaved changes asks first
+        stx.openAny("/tmp/vk_open.mdaw");
+        CHECK(stx.dialogOpen());
+    }
+
+    // ---- Bounce / Export: the dialog offers the formats, the file gets the right extension
+    {
+        core::Session sb;
+        buildDemo(sb);
+        std::string seenFilter;
+        Host hb; hb.loopFolder = "../loops";
+        hb.fileDialog = [&](const std::string&, const std::string& filter, bool) { seenFilter = filter; return std::string("/tmp/vk_bounce_out"); };
+        std::remove("/tmp/vk_bounce_out.wav");
+        Studio stb(sb, hb);
+        Gui gb; DrawList dlb; auto fontsb = std::make_shared<Fonts>(makeBuiltinFontSource());
+        double tb = 1.0;
+        auto frameb = [&](int n) { for (int i = 0; i < n; ++i) { dlb.begin(1440, 900, 1.0f, fontsb.get()); gb.beginFrame(dlb, tb); stb.frame(gb, tb); gb.endFrame(); tb += 0.05; } };
+        frameb(3);
+        CHECK(stb.runCommand("Bounce / Export Audio..."));
+        frameb(3);
+        CHECK(stb.dialogOpen());
+        softRender(dlb, *fontsb, theme::bg0).savePpm("/tmp/vk_bounce_dialog.ppm");
+        stb.acceptDialog();                                       // defaults: WAV 24-bit, 44.1 kHz
+        frameb(2);
+        CHECK(seenFilter.find("*.wav") != std::string::npos);
+        std::ifstream f("/tmp/vk_bounce_out.wav", std::ios::binary);                  // ".wav" was added to the name
+        CHECK(bool(f));
+        unsigned char h[44] = {0};
+        f.read(reinterpret_cast<char*>(h), 44);
+        CHECK(h[0] == 'R' && h[1] == 'I' && h[34] == 24);                              // a 24-bit WAV, as the dialog said
+        CHECK(stb.toastText().find("Bounced") != std::string::npos);
     }
 
     // ---- scissors, eraser, mute tool, pencil

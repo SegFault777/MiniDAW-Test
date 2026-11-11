@@ -6,6 +6,8 @@
 #include <cstdio>
 #include "../dsp/AudioOps.h"
 #include "Icons.h"
+#include "../core/ExportFormats.h"
+#include "../core/FileTypes.h"
 #include "Studio.h"
 #include "Theme.h"
 
@@ -125,6 +127,32 @@ void Studio::openFile(const std::string& p) {
     m_modelDirty = true;
 }
 
+void Studio::importAudioFile(const std::string& p) {
+    const bool audio = m_selTrack >= 0 && m_selTrack < int(m_tracks.size()) && m_tracks[size_t(m_selTrack)].type == core::TrackType::Audio;
+    m_s.importAudio(p, audio ? m_selTrack : -1, m_s.positionBeats());
+    message(fmt("Importing %1", p));
+    m_modelDirty = true;
+}
+
+void Studio::openAny(const std::string& p) {
+    switch (core::classifyFile(p)) {
+    case core::FileKind::Project: guardUnsaved([this, p] { openFile(p); }); break;
+    case core::FileKind::Audio: importAudioFile(p); break;
+    case core::FileKind::Midi: {
+        std::string err;
+        if (m_s.importMidiFile(p, &err)) message(fmt("Imported %1", p));
+        else message(fmt("Could not import: %1", err));
+        m_modelDirty = true;
+        break;
+    }
+    default: {
+        const std::string e = core::fileExtension(p);
+        message(fmt("This file type is not supported (%1). Supported: %2", e.empty() ? std::string("no extension") : e, core::supportedExtensionsText()));
+        break;
+    }
+    }
+}
+
 void Studio::guardUnsaved(std::function<void()> proceed) {
     if (!m_s.isDirty()) { proceed(); return; }
     openDialog("Unsaved changes", {DlgField::note("Save changes to the project before continuing?")}, [this, proceed](const std::vector<DlgField>&) {
@@ -143,10 +171,10 @@ void Studio::doFile(const std::string& what) {
     std::string err;
     const char* kProject = "MiniDAW project|*.mdaw";
     if (what == "new") { guardUnsaved([this] { doFile("newnow"); }); return; }
-    if (what == "open") { guardUnsaved([this] { doFile("opennow"); }); return; }
+    if (what == "open") { const std::string p = ask("Open", core::openFilter().c_str(), false); if (!p.empty()) openAny(p); return; }
     if (what == "recover") { guardUnsaved([this] { doFile("recovernow"); }); return; }
     if (what == "newnow") { m_s.newProject(); m_selTrack = 0; m_selRegion = -1; message("New project."); }
-    else if (what == "opennow") { const std::string p = ask("Open Project", kProject, false); if (!p.empty()) openFile(p); }
+    else if (what == "opennow") { const std::string p = ask("Open", core::openFilter().c_str(), false); if (!p.empty()) openAny(p); }
     else if (what == "recovernow") {
         if (!m_s.hasAutosave()) message("There is no autosaved project to recover.");
         else if (m_s.loadProject(m_s.autosavePath(), &err)) { m_s.markRecovered(); m_selTrack = 0; m_selRegion = -1; message("Recovered the autosaved project. Please save it."); }
@@ -156,10 +184,10 @@ void Studio::doFile(const std::string& what) {
         if (p.empty()) p = ask("Save Project", kProject, true);
         if (!p.empty()) { if (p.find('.') == std::string::npos) p += ".mdaw"; if (m_s.saveProject(p, &err)) { message("Saved " + p); addRecent(p); } else message("Could not save: " + err); }
     } else if (what == "import") {
-        const std::string p = ask("Import Audio", "Audio files|*.wav;*.mp3;*.m4a;*.aac;*.flac;*.wma", false);
-        if (!p.empty()) { const bool audio = m_selTrack >= 0 && m_selTrack < int(m_tracks.size()) && m_tracks[size_t(m_selTrack)].type == core::TrackType::Audio; m_s.importAudio(p, audio ? m_selTrack : -1, m_s.positionBeats()); message("Importing " + p); }
+        const std::string p = ask("Import Audio", core::audioFilter().c_str(), false);
+        if (!p.empty()) importAudioFile(p);
     } else if (what == "importmidi") {
-        const std::string p = ask("Import MIDI File", "MIDI files|*.mid;*.midi", false);
+        const std::string p = ask("Import MIDI File", core::midiFilter().c_str(), false);
         if (!p.empty()) { if (m_s.importMidiFile(p, &err)) message("Imported " + p); else message("Could not import: " + err); }
     } else if (what == "exportmidi") {
         std::string p = ask("Export MIDI File", "MIDI files|*.mid", true);
@@ -368,16 +396,38 @@ void Studio::dlgTimeSignature() {
     });
 }
 void Studio::dlgBounce() {
-    openDialog("Bounce / Export Audio", {DlgField::choice("Format", {"WAV 16-bit", "WAV 24-bit", "WAV 32-bit float"}, 0), DlgField::check("Only the cycle range", false), DlgField::check("Normalize", false), DlgField::number("Normalize to", -1, -24, 0, 0.5, 1, " dB"), DlgField::check("Dither (16-bit)", false), DlgField::check("Add a 2 s tail for reverb and echo", true)}, [this](const std::vector<DlgField>& v) {
+    // File types for other DAWs: WAV / AIFF (16, 24-bit, 32-bit float WAV) at 44.1 - 96 kHz, MP3 with tags, or one file per track (stems)
+    openDialog("Bounce / Export Audio",
+               {DlgField::choice("Format", core::exportFormatNames(), 1), DlgField::choice("Sample rate", core::exportRateNames(), 0),
+                DlgField::choice("MP3 bit rate", core::exportMp3RateNames(), 2), DlgField::check("Only the cycle range", false),
+                DlgField::check("Normalize", false), DlgField::number("Normalize to", -1, -24, 0, 0.5, 1, " dB"),
+                DlgField::check("Dither (16-bit)", false), DlgField::check("Add a 2 s tail for reverb and echo", true),
+                DlgField::check("One file for every track (stems, all the same length)", false),
+                DlgField::input("Title (MP3)", ""), DlgField::input("Artist (MP3)", ""), DlgField::input("Album (MP3)", ""),
+                DlgField::note("Stems start at the same point and have the same length."),
+                DlgField::note("Drop them into Logic Pro, Ableton Live or Cubase at bar 1.")},
+               [this](const std::vector<DlgField>& v) {
         core::ExportOptions o;
-        o.format = v[0].index == 0 ? dsp::WavFormat::Pcm16 : v[0].index == 1 ? dsp::WavFormat::Pcm24 : dsp::WavFormat::Float32;
-        o.cycleOnly = v[1].checked; o.normalize = v[2].checked; o.normalizeDb = float(v[3].value); o.dither = v[4].checked; o.tail = v[5].checked;
+        core::applyExportChoices(o, v[0].index, v[1].index, v[2].index);
+        o.cycleOnly = v[3].checked; o.normalize = v[4].checked; o.normalizeDb = float(v[5].value); o.dither = v[6].checked; o.tail = v[7].checked;
+        const bool stems = v[8].checked;
+        o.tags.title = v[9].text; o.tags.artist = v[10].text; o.tags.album = v[11].text;
+        o.tags.comment = "Made with MiniDAW";
         if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
-        std::string p = m_host.fileDialog("Bounce to WAV", "WAV audio|*.wav", true);
-        if (p.empty()) return;
-        if (p.find('.') == std::string::npos) p += ".wav";
         std::string err;
-        message(m_s.exportAudio(p, o, &err) ? "Bounced " + p : "Bounce failed: " + err);
+        if (stems) {
+            if (!m_host.folderDialog) { message("File dialogs are not available here."); return; }
+            const std::string folder = m_host.folderDialog("Export every track to a folder");
+            if (folder.empty()) return;
+            std::vector<std::string> files;
+            if (m_s.exportStems(folder, o, &files, &err)) message(fmt("Exported %1 files.", std::to_string(files.size())));
+            else message(fmt("Bounce failed: %1", err));
+            return;
+        }
+        std::string p = m_host.fileDialog("Bounce / Export Audio", core::exportFilter(o.container), true);
+        if (p.empty()) return;
+        p = core::withExportExtension(p, o.container);
+        if (m_s.exportAudio(p, o, &err)) message(fmt("Bounced %1", p)); else message(fmt("Bounce failed: %1", err));
     }, "Bounce");
 }
 void Studio::dlgRenameTrack(int t) {

@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cstdio>
 #include <string>
+#include "../core/FileTypes.h"
 #include "Ui.h"
 
 namespace ui {
@@ -231,6 +232,24 @@ bool NativeUi::previewOnClick() const {
     return it == m_host.settings.end() || it->second != "0";
 }
 
+void NativeUi::openAny(const std::string& p) {
+    switch (core::classifyFile(p)) {
+    case core::FileKind::Project: guardUnsaved([this, p] { openProject(p); m_dirty = true; }); break;
+    case core::FileKind::Audio: m_s.importAudio(p, m_selTrack, m_s.positionBeats()); message(msg("Importing %1", p)); break;
+    case core::FileKind::Midi: {
+        std::string err;
+        if (m_s.importMidiFile(p, &err)) message(msg("Imported %1", p)); else message(msg("Could not import: %1", err));
+        break;
+    }
+    default: {
+        const std::string e = core::fileExtension(p);
+        message(msg("This file type is not supported (%1). Supported: %2", e.empty() ? std::string("no extension") : e, core::supportedExtensionsText()));
+        break;
+    }
+    }
+    m_dirty = true;
+}
+
 void NativeUi::doFile(const std::string& what) {
     auto ask = [&](const char* title, const char* filter, bool save) -> std::string {
         if (!m_host.fileDialog) { message("File dialogs are not available here."); return {}; }
@@ -239,12 +258,12 @@ void NativeUi::doFile(const std::string& what) {
     std::string err;
     const char* kProject = "MiniDAW project|*.mdaw";
     if (what == "new") { guardUnsaved([this] { doFile("newnow"); }); return; }
-    else if (what == "open") { guardUnsaved([this] { doFile("opennow"); }); return; }
+    else if (what == "open") { const std::string p = ask("Open", core::openFilter().c_str(), false); if (!p.empty()) openAny(p); return; }
     else if (what == "recover") { guardUnsaved([this] { doFile("recovernow"); }); return; }
     else if (what == "newnow") { m_s.newProject(); m_selTrack = m_selRegion = -1; message("New project."); }
     else if (what == "opennow") {
-        const std::string p = ask("Open Project", kProject, false);
-        if (!p.empty()) openProject(p);
+        const std::string p = ask("Open", core::openFilter().c_str(), false);
+        if (!p.empty()) openAny(p);
     } else if (what == "recovernow") {
         if (!m_s.hasAutosave()) message("There is no autosaved project to recover.");
         else if (m_s.loadProject(m_s.autosavePath(), &err)) { m_s.markRecovered(); m_selTrack = m_selRegion = -1; message("Recovered the autosaved project. Please save it."); }
@@ -254,10 +273,10 @@ void NativeUi::doFile(const std::string& what) {
         if (p.empty()) p = ask("Save Project", kProject, true);
         if (!p.empty()) { if (p.find('.') == std::string::npos) p += ".mdaw"; if (m_s.saveProject(p, &err)) { message(msg("Saved %1", p)); addRecent(p); } else message(msg("Could not save: %1", err)); }
     } else if (what == "import") {
-        const std::string p = ask("Import Audio", "Audio files|*.wav;*.mp3;*.m4a;*.aac;*.flac;*.wma", false);
+        const std::string p = ask("Import Audio", core::audioFilter().c_str(), false);
         if (!p.empty()) { m_s.importAudio(p, m_selTrack, m_s.positionBeats()); message(msg("Importing %1", p)); }
     } else if (what == "importmidi") {
-        const std::string p = ask("Import MIDI File", "MIDI files|*.mid;*.midi", false);
+        const std::string p = ask("Import MIDI File", core::midiFilter().c_str(), false);
         if (!p.empty()) { if (m_s.importMidiFile(p, &err)) message(msg("Imported %1", p)); else message(msg("Could not import: %1", err)); }
     } else if (what == "exportmidi") {
         std::string p = ask("Export MIDI File", "MIDI files|*.mid", true);

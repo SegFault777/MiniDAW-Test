@@ -4,6 +4,11 @@
 #include <cstdio>
 #include <fstream>
 #include "../src/core/AppPaths.h"
+#include "../src/core/ExportFormats.h"
+#include "../src/core/FileTypes.h"
+#include "../src/core/Id3.h"
+#include "../src/dsp/MidiFile.h"
+#include "aiff_util.h"
 #include "../src/core/Files.h"
 #include "../src/dsp/AudioAnalysis.h"
 #include "../src/dsp/TempoDetect.h"
@@ -876,6 +881,251 @@ static void testV012() {
 
 
 
+
+// root-mean-square difference between two interleaved buffers over their common length, relative to the RMS of 'a'
+static double relDiff(const std::vector<float>& a, const std::vector<float>& b) {
+    const size_t n = std::min(a.size(), b.size());
+    double d = 0, e = 0;
+    for (size_t i = 0; i < n; ++i) { d += double(a[i] - b[i]) * double(a[i] - b[i]); e += double(a[i]) * double(a[i]); }
+    return e > 0 ? std::sqrt(d / e) : 1.0;
+}
+
+static void testResampler() {
+    // a 1 kHz sine keeps its frequency and level through 44.1 -> 96 -> 44.1 kHz
+    std::vector<float> sine(44100 * 2);
+    for (size_t i = 0; i < sine.size() / 2; ++i) sine[2 * i] = sine[2 * i + 1] = 0.5f * float(std::sin(2 * 3.14159265358979 * 1000.0 * double(i) / 44100.0));
+    const auto up = core::resampleStereo(sine, 44100, 96000);
+    CHECK(up.size() > 2 * 96000 - 8 && up.size() < 2 * 96000 + 8);
+    double peak = 0; for (size_t i = 4000; i + 4000 < up.size(); i += 2) peak = std::max(peak, double(std::fabs(up[i])));
+    CHECK(std::fabs(peak - 0.5) < 0.01);
+    const auto back = core::resampleStereo(up, 96000, 44100);
+    CHECK(back.size() > sine.size() - 8 && back.size() < sine.size() + 8);
+    std::vector<float> a(sine.begin() + 8000, sine.end() - 8000), b(back.begin() + 8000, back.end() - 8000);
+    CHECK(relDiff(a, b) < 0.01);
+    // going down removes what the lower rate cannot hold: 30 kHz at 96 kHz disappears at 44.1 kHz (no aliasing)
+    std::vector<float> hi(96000 * 2);
+    for (size_t i = 0; i < hi.size() / 2; ++i) hi[2 * i] = hi[2 * i + 1] = 0.5f * float(std::sin(2 * 3.14159265358979 * 30000.0 * double(i) / 96000.0));
+    const auto lo = core::resampleStereo(hi, 96000, 44100);
+    double lopeak = 0; for (size_t i = 4000; i + 4000 < lo.size(); ++i) lopeak = std::max(lopeak, double(std::fabs(lo[i])));
+    CHECK(lopeak < 0.01);
+    CHECK(core::resampleStereo(sine, 44100, 44100) == sine);                   // same rate: unchanged
+}
+
+static void testId3() {
+    core::Id3Tags t;
+    t.title = "Song"; t.artist = "Artist \xEC\x9D\x8C\xEC\x95\x85"; t.album = "Album"; t.year = "2026"; t.comment = "Made with MiniDAW";   // Korean letters in UTF-8
+    const auto tag = core::id3v2Tag(t);
+    CHECK(tag.size() > 40 && tag[0] == 'I' && tag[1] == 'D' && tag[2] == '3' && tag[3] == 3);
+    CHECK(core::id3v2Size(tag.data(), tag.size()) == tag.size());
+    // the frames are in there
+    const std::string raw(tag.begin(), tag.end());
+    CHECK(raw.find("TIT2") != std::string::npos && raw.find("TPE1") != std::string::npos && raw.find("TALB") != std::string::npos && raw.find("TYER") != std::string::npos && raw.find("COMM") != std::string::npos);
+    // empty tags still carry the encoder name; a size that is not synch-safe is not a tag
+    CHECK(core::id3v2Tag(core::Id3Tags{}).size() > 10);
+    std::vector<std::uint8_t> bad = {'I', 'D', '3', 3, 0, 0, 0x80, 0, 0, 0, 0, 0};
+    CHECK(core::id3v2Size(bad.data(), bad.size()) == 0);
+    // prepending replaces an existing tag and keeps the audio bytes
+    const std::string path = tmpDir() + "/tagged.mp3";
+    { std::ofstream f(path, std::ios::binary); f.write("\xFF\xFB\x90\x00" "AUDIO-BYTES", 15); }
+    std::string err;
+    CHECK(core::prependId3v2(path, t, &err));
+    t.title = "Second";
+    CHECK(core::prependId3v2(path, t, &err));
+    std::ifstream in(path, std::ios::binary);
+    const std::string all((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    CHECK(all.size() > 20 && all.compare(all.size() - 15, 15, std::string("\xFF\xFB\x90\x00" "AUDIO-BYTES", 15)) == 0);
+    CHECK(all.find("ID3", 3) == std::string::npos);                              // exactly one tag
+    CHECK(!core::prependId3v2(tmpDir() + "/missing-dir/none.mp3", t, &err));
+}
+
+static void testExportFormats() {
+    const std::string wav = makeWav("exportsrc.wav", 330, 44100 * 3);
+    Session s;
+    buildProject(s, wav);
+    s.setLoop(false, 0, 0);
+    const std::string dir = tmpDir() + "/export";
+    makeDirs(dir);
+    std::string err;
+    ExportOptions o;
+    o.tail = false;
+    CHECK(s.exportAudio(dir + "/base.wav", o, &err));
+    std::vector<float> base;
+    CHECK(core::readWavFile(dir + "/base.wav", base, &err) && base.size() > 44100);
+    // WAV 24-bit at 48 kHz: the file says 48 kHz and holds the same music
+    o.format = dsp::WavFormat::Pcm24; o.sampleRate = 48000;
+    CHECK(s.exportAudio(dir + "/w48.wav", o, &err));
+    {
+        std::ifstream f(dir + "/w48.wav", std::ios::binary);
+        unsigned char h[44]; f.read(reinterpret_cast<char*>(h), 44);
+        const std::uint32_t rate = h[24] | h[25] << 8 | h[26] << 16 | std::uint32_t(h[27]) << 24;
+        CHECK(rate == 48000 && h[34] == 24);
+    }
+    // the 24-bit samples in the file are the 44.1 kHz mix converted to 48 kHz (the reference is the 16-bit export, so a little quantization noise remains) (decoded here by hand: 44 byte header, little-endian)
+    auto raw24 = [&](const std::string& file, size_t header, bool bigEndian) {
+        std::ifstream f(file, std::ios::binary);
+        const std::string all((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+        std::vector<float> v;
+        for (size_t i = header; i + 3 <= all.size(); i += 3) {
+            const unsigned char* p = reinterpret_cast<const unsigned char*>(all.data() + i);
+            int x = bigEndian ? (p[0] << 16 | p[1] << 8 | p[2]) : (p[2] << 16 | p[1] << 8 | p[0]);
+            if (x & 0x800000) x -= 0x1000000;
+            v.push_back(float(x / 8388608.0));
+        }
+        return v;
+    };
+    std::vector<float> got = raw24(dir + "/w48.wav", 44, false);
+    const auto want48 = core::resampleStereo(base, 44100, 48000);
+    CHECK(got.size() == want48.size() && relDiff(want48, got) < 0.005);
+    CHECK(std::llabs(i64(got.size()) - i64(want48.size())) == 0);
+    // AIFF 24-bit at 96 kHz and 16-bit at 44.1 kHz read back through our own AIFF reader
+    o.container = ExportContainer::Aiff; o.sampleRate = 96000;
+    CHECK(s.exportAudio(dir + "/a96.aiff", o, &err));
+    got = raw24(dir + "/a96.aiff", 54, true);                                  // AIFF: 12 + (8 + 18) + (8 + 8) = 54 byte header, big-endian
+    const auto want96 = core::resampleStereo(base, 44100, 96000);
+    CHECK(got.size() == want96.size() && relDiff(want96, got) < 0.005);
+    CHECK(core::readAiffFile(dir + "/a96.aiff", got, &err) && std::llabs(i64(got.size()) - i64(base.size())) < 16);   // our reader converts it back to 44.1 kHz
+    o.format = dsp::WavFormat::Pcm16; o.sampleRate = 44100;
+    CHECK(s.exportAudio(dir + "/a44.aif", o, &err));
+    CHECK(core::readAiffFile(dir + "/a44.aif", got, &err) && got.size() == base.size() && relDiff(base, got) < 0.002);
+    // plain AIFF has no 32-bit float; unsupported rates are refused
+    o.format = dsp::WavFormat::Float32;
+    CHECK(!s.exportAudio(dir + "/bad.aiff", o, &err) && !err.empty());
+    o.container = ExportContainer::Wav; o.format = dsp::WavFormat::Pcm16; o.sampleRate = 12345;
+    CHECK(!s.exportAudio(dir + "/bad.wav", o, &err));
+}
+
+static void testExportMp3AndStems() {
+    const std::string wav = makeWav("exportsrc2.wav", 330, 44100 * 3);
+    Session s;
+    buildProject(s, wav);
+    s.setLoop(false, 0, 0);
+    const std::string dir = tmpDir() + "/export2";
+    makeDirs(dir);
+    std::string err;
+    ExportOptions o;
+    o.tail = false;
+    o.container = ExportContainer::Mp3;
+    o.tags.title = "My Song"; o.tags.artist = "Me";
+    // no encoder: a clear message
+    CHECK(!s.exportAudio(dir + "/x.mp3", o, &err) && !err.empty());
+    // with an encoder (a fake one here): rate, bitrate (snapped to a legal one) and the tag arrive
+    int gotRate = 0, gotKbps = 0;
+    size_t gotSamples = 0;
+    Session::Hooks hk;
+    hk.encodeMp3 = [&](const std::vector<float>& pcm, int rate, int kbps, const std::string& path, std::string*) {
+        gotRate = rate; gotKbps = kbps; gotSamples = pcm.size();
+        std::ofstream f(path, std::ios::binary); f.write("\xFF\xFB\x90\x00" "FAKE-MP3-FRAMES", 19);
+        return true;
+    };
+    s.setHooks(hk);
+    o.sampleRate = 48000; o.mp3Kbps = 200;
+    CHECK(s.exportAudio(dir + "/y.mp3", o, &err));
+    CHECK(gotRate == 48000 && gotKbps == 192 && gotSamples > 48000);
+    {
+        std::ifstream in(dir + "/y.mp3", std::ios::binary);
+        const std::string all((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        CHECK(all.compare(0, 3, "ID3") == 0 && all.find("My Song") == std::string::npos);   // text is UTF-16: not plain
+        CHECK(all.find(std::string("M\0y\0", 4)) != std::string::npos);
+        CHECK(all.compare(all.size() - 15, 15, "FAKE-MP3-FRAMES") == 0);
+    }
+    o.sampleRate = 96000;                                   // MP3 cannot be 96 kHz
+    CHECK(!s.exportAudio(dir + "/z.mp3", o, &err));
+    o.sampleRate = 44100; o.mp3Kbps = 5000;
+    CHECK(s.exportAudio(dir + "/hi.mp3", o, &err) && gotKbps == 320);
+    // stems: one file per track that makes sound, all the same length, solo / mute untouched afterwards
+    const auto before = s.snapshot();
+    ExportOptions so;
+    so.tail = false;
+    std::vector<std::string> files;
+    CHECK(s.exportStems(dir + "/stems", so, &files, &err));
+    CHECK(files.size() >= 3);
+    size_t len = 0;
+    bool same = true;
+    for (const auto& f : files) {
+        std::vector<float> pcm;
+        CHECK(core::readWavFile(f, pcm, &err));
+        if (!len) len = pcm.size(); else if (pcm.size() != len) same = false;
+    }
+    CHECK(same && len > 44100);
+    CHECK(files[0].find("/01 ") != std::string::npos && files[0].find(".wav") != std::string::npos);
+    const auto after = s.snapshot();
+    bool restored = before.size() == after.size();
+    for (size_t i = 0; restored && i < before.size(); ++i) restored = before[i].mute == after[i].mute && before[i].solo == after[i].solo;
+    CHECK(restored);
+    // a project with nothing in it has nothing to export
+    Session empty;
+    for (int i = 0; i < empty.trackCount(); ++i) empty.setMute(i, true);       // everything muted: nothing to export
+    CHECK(!empty.exportStems(dir + "/none", so, nullptr, &err) && !err.empty());
+}
+
+
+static void testExportFormats2() {
+    using core::ExportContainer;
+    CHECK(core::exportFormatNames().size() == 6 && core::exportRateNames().size() == 4 && core::exportMp3RateNames().size() == 6);
+    ExportOptions o;
+    core::applyExportChoices(o, 4, 3, 5);       // AIFF 24-bit, 96 kHz, 320 kbps
+    CHECK(o.container == ExportContainer::Aiff && o.format == dsp::WavFormat::Pcm24 && o.sampleRate == 96000 && o.mp3Kbps == 320);
+    core::applyExportChoices(o, 2, 1, 0);       // WAV 32-bit float, 48 kHz, 128 kbps
+    CHECK(o.container == ExportContainer::Wav && o.format == dsp::WavFormat::Float32 && o.sampleRate == 48000 && o.mp3Kbps == 128);
+    core::applyExportChoices(o, 5, 0, 2);       // MP3
+    CHECK(o.container == ExportContainer::Mp3 && o.sampleRate == 44100 && o.mp3Kbps == 192);
+    core::applyExportChoices(o, 99, -4, 77);    // nonsense is clamped
+    CHECK(o.container == ExportContainer::Mp3 && o.sampleRate == 44100 && o.mp3Kbps == 320);
+    CHECK(core::exportExtension(ExportContainer::Aiff) == ".aiff" && core::exportFilter(ExportContainer::Mp3).find("*.mp3") != std::string::npos);
+    CHECK(core::withExportExtension("C:\\out\\song", ExportContainer::Wav) == "C:\\out\\song.wav");
+    CHECK(core::withExportExtension("song.wav", ExportContainer::Mp3) == "song.mp3");          // another audio extension is replaced
+    CHECK(core::withExportExtension("song.aif", ExportContainer::Aiff) == "song.aif");        // .aif is fine for AIFF
+    CHECK(core::withExportExtension("song.MP3", ExportContainer::Mp3) == "song.MP3");
+    CHECK(core::withExportExtension("my.take.2", ExportContainer::Wav) == "my.take.2.wav");    // a dot inside the name is not an extension
+}
+
+
+static void testMidiInterchange() {
+    // the file layer: tempo map, time signature changes and markers survive a write / read
+    dsp::MidiSong song;
+    song.tempos = {{0, 100}, {8, 140}, {16, 90}};
+    song.meters = {{0, 4, 4}, {8, 3, 4}, {17, 6, 8}};
+    song.markers = {{0, "Intro"}, {8, "Verse"}, {16.5, "Chorus"}};
+    dsp::MidiTrack t; t.name = "Piano"; t.notes.push_back({0, 60, 100, 0, 1}); t.notes.push_back({0, 64, 90, 9.5, 2});
+    song.tracks.push_back(t);
+    const auto bytes = dsp::writeMidiFile(song);
+    dsp::MidiSong back; std::string err;
+    CHECK(dsp::readMidiFile(bytes, back, err));
+    CHECK(back.tempos.size() == 3 && std::fabs(back.tempos[1].beat - 8) < 1e-6 && std::fabs(back.tempos[1].bpm - 140) < 0.01 && std::fabs(back.bpm - 100) < 0.01);
+    CHECK(back.meters.size() == 3 && back.meters[1].num == 3 && back.meters[1].den == 4 && back.meters[2].num == 6 && back.meters[2].den == 8 && std::fabs(back.meters[2].beat - 17) < 1e-6);
+    CHECK(back.markers.size() == 3 && back.markers[0].name == "Intro" && back.markers[2].name == "Chorus" && std::fabs(back.markers[2].beat - 16.5) < 1e-6);
+    CHECK(back.tracks.size() == 1 && back.tracks[0].name == "Piano" && back.tracks[0].notes.size() == 2);
+    // the conductor track is first and carries the name "Temp"; a file without any of these still reads (and writes the start values)
+    dsp::MidiSong plain; plain.bpm = 87; plain.num = 7; plain.den = 8; plain.tracks.push_back(t);
+    dsp::MidiSong plainBack;
+    CHECK(dsp::readMidiFile(dsp::writeMidiFile(plain), plainBack, err) && std::fabs(plainBack.bpm - 87) < 0.01 && plainBack.num == 7 && plainBack.den == 8 && plainBack.markers.empty());
+
+    // the session layer: export from a project with tempo changes, import into an empty project
+    Session a;
+    const int ti = a.addTrack(TrackType::Instrument, "Lead");
+    const int ri = a.addMidiRegion(ti, 0, 16);
+    a.setRegionNotes(ti, ri, {{60, 0, 1, 100}, {62, 12, 2, 90}});
+    a.setTempoPoints({{0, 110, false}, {8, 150, false}, {16, 95, true}, {24, 120, false}}, false);
+    a.setMeterPoints({{1, 4, 4}, {3, 3, 4}});
+    a.addMarker(0, "Start"); a.addMarker(8, "Drop");
+    const std::string file = tmpDir() + "/interchange.mid";
+    std::string e2;
+    CHECK(a.exportMidiFile(file, &e2));
+    Session b;
+    for (int i = b.trackCount() - 1; i >= 0; --i) b.removeTrack(i);               // an empty project adopts the tempo map
+    CHECK(b.importMidiFile(file, &e2));
+    const auto tp = b.tempoMap()->tempoPoints();
+    CHECK(tp.size() >= 4 && std::fabs(tp[0].bpm - 110) < 0.01);
+    bool has150 = false, has95 = false;
+    for (const auto& p : tp) { has150 |= std::fabs(p.beat - 8) < 1e-6 && std::fabs(p.bpm - 150) < 0.01; has95 |= std::fabs(p.beat - 16) < 1e-6 && std::fabs(p.bpm - 95) < 0.01; }
+    CHECK(has150 && has95);
+    CHECK(std::fabs(b.tempoMap()->bpmAt(20) - a.tempoMap()->bpmAt(20)) < 0.5);                           // the glide became steps: close to the original
+    const auto mp = b.tempoMap()->meterPoints();
+    CHECK(mp.size() == 2 && mp[1].bar == 3 && mp[1].num == 3 && mp[1].den == 4);
+    const auto mk = b.markers();
+    CHECK(mk.size() == 2 && mk[0].name == "Start" && mk[1].name == "Drop" && std::fabs(mk[1].beat - 8) < 1e-6);
+}
+
 static void testMixerGroups() {
     Session s;
     const int a = s.addTrack(TrackType::Instrument, "A"), b = s.addTrack(TrackType::Instrument, "B"), c = s.addTrack(TrackType::Instrument, "C");
@@ -939,6 +1189,49 @@ static void testRevisionAndPeaks() {
     s.trackPeaks(pk);
     CHECK(pk.size() == size_t(s.trackCount()) && pk[size_t(t)].first == 0.f && pk[size_t(t)].second == 0.f);
     CHECK(s.revision() == r1);                      // reading peaks does not count as a change
+}
+
+
+static void testFileTypes() {
+    using core::FileKind;
+    CHECK(core::classifyFile("C:\\music\\Song.MP3") == FileKind::Audio);
+    CHECK(core::classifyFile("/home/me/take 1.wav") == FileKind::Audio);
+    CHECK(core::classifyFile("loop.AIFF") == FileKind::Audio && core::classifyFile("a.flac") == FileKind::Audio && core::classifyFile("a.m4a") == FileKind::Audio);
+    CHECK(core::classifyFile("a.ogg") == FileKind::Audio && core::classifyFile("a.opus") == FileKind::Audio);
+    CHECK(core::classifyFile("song.mdaw") == FileKind::Project && core::classifyFile("SONG.MDAW") == FileKind::Project);
+    CHECK(core::classifyFile("tune.mid") == FileKind::Midi && core::classifyFile("tune.MIDI") == FileKind::Midi && core::classifyFile("k.kar") == FileKind::Midi);
+    CHECK(core::classifyFile("notes.txt") == FileKind::Unknown && core::classifyFile("noextension") == FileKind::Unknown);
+    CHECK(core::classifyFile("dir.mp3/file") == FileKind::Unknown && core::classifyFile("trailingdot.") == FileKind::Unknown);   // the dot must belong to the file name
+    CHECK(core::fileExtension("a.b/c.TXT") == ".txt" && core::fileExtension("a.b\\c") == "");
+    // the filters list every kind, the 'all supported' entry first
+    const std::string all = core::openFilter();
+    CHECK(all.rfind("All supported files|", 0) == 0);
+    CHECK(all.find("*.mdaw") != std::string::npos && all.find("*.mp3") != std::string::npos && all.find("*.mid") != std::string::npos && all.find("*.aiff") != std::string::npos);
+    CHECK(core::audioFilter().find("*.mdaw") == std::string::npos && core::audioFilter().find("*.flac") != std::string::npos);
+    CHECK(core::midiFilter().find("*.midi") != std::string::npos);
+    CHECK(core::supportedExtensionsText().find("mp3") != std::string::npos && core::supportedExtensionsText().find("mdaw") == 0);
+    // every audio extension of the list is accepted by the classifier
+    for (const auto& e : core::audioExtensions()) CHECK(core::classifyFile("x" + e) == FileKind::Audio);
+}
+
+static void testAiff() {
+    const std::string dir = tmpDir();
+    makeDirs(dir);
+    std::vector<float> pcm;
+    std::string err;
+    // big-endian AIFF at 44.1 kHz: values and length survive
+    CHECK(core::readAiffFile(writeTestAiff(dir + "/a.aif", false, false, 44100, 1000), pcm, &err));
+    CHECK(pcm.size() == 2000 && std::fabs(pcm[200] - 0.25f) < 1e-4f && std::fabs(pcm[201] + 0.25f) < 1e-4f);
+    // AIFF-C 'sowt' (little-endian samples)
+    CHECK(core::readAiffFile(writeTestAiff(dir + "/b.aifc", true, true, 44100, 500), pcm, &err));
+    CHECK(pcm.size() == 1000 && std::fabs(pcm[100] - 0.25f) < 1e-4f && std::fabs(pcm[101] + 0.25f) < 1e-4f);
+    // another sample rate is resampled to 44.1 kHz: half the rate -> twice the frames
+    CHECK(core::readAiffFile(writeTestAiff(dir + "/c.aif", false, false, 22050, 1000), pcm, &err));
+    CHECK(pcm.size() > 3900 && pcm.size() < 4100);
+    // not an AIFF file / missing file
+    CHECK(!core::readAiffFile(dir + "/a.aif.missing", pcm, &err));
+    { std::ofstream f(dir + "/junk.aif", std::ios::binary); f << "this is not an aiff file at all"; }
+    CHECK(!core::readAiffFile(dir + "/junk.aif", pcm, &err) && !err.empty());
 }
 
 static void testMoveRegions() {
@@ -1026,7 +1319,7 @@ static void testMoveRegions() {
 int main() {
     testJson(); testText(); testWav(); testSaveLoad(); testUndo(); testClipboardAndDuplicate(); testAutosave();
     testExport(); testBounce(); testAutomationPan(); testMidiOps(); testMidiOps2(); testSessionRegions(); testSessionTransforms();
-    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups();
+    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems();
     std::printf("core fails=%d\n", fails);
     return fails;
 }

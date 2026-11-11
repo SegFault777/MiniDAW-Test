@@ -6,6 +6,7 @@
 #include <cmath>
 #include "../core/MidiOps.h"
 #include "../dsp/Drummer.h"
+#include "../core/ExportFormats.h"
 #include "Ui.h"
 
 namespace ui {
@@ -194,20 +195,36 @@ void NativeUi::dlgTempo() {
 
 void NativeUi::dlgBounce() {
     m_s.pause();
-    openDialog(std::make_unique<Dialog>("Bounce", Dialog::Values{Field::choice("Range", {"Whole project", "Cycle range"}, m_s.loopOn() ? 1 : int(last("bRange", 0))), Field::choice("Format", {"16-bit PCM", "24-bit PCM", "32-bit float"}, int(last("bFormat", 0))), Field::check("Dither (16-bit)", last("bDither", 1) > 0), Field::check("Normalize", last("bNorm", 0) > 0), Field::number("Normalize level", last("bLevel", -1), -12, 0, 0.5, 1, " dBFS"), Field::check("Add reverb / echo tail (2 s)", last("bTail", 1) > 0)}, [this](const Dialog::Values& v) {
-        m_last["bRange"] = v[0].index; m_last["bFormat"] = v[1].index; m_last["bDither"] = v[2].checked; m_last["bNorm"] = v[3].checked; m_last["bLevel"] = v[4].value; m_last["bTail"] = v[5].checked;
-        if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
-        std::string path = m_host.fileDialog("Bounce to WAV", "WAV|*.wav", true);
-        if (path.empty()) return;
-        if (path.find('.') == std::string::npos) path += ".wav";
+    openDialog(std::make_unique<Dialog>("Bounce", Dialog::Values{Field::choice("Range", {"Whole project", "Cycle range"}, m_s.loopOn() ? 1 : int(last("bRange", 0))),
+        Field::choice("Format", core::exportFormatNames(), int(last("bFormat", 1))), Field::choice("Sample rate", core::exportRateNames(), int(last("bRate", 0))),
+        Field::choice("MP3 bit rate", core::exportMp3RateNames(), int(last("bKbps", 2))), Field::check("Dither (16-bit)", last("bDither", 0) != 0),
+        Field::check("Normalize", last("bNorm", 0) != 0), Field::number("Normalize to", last("bLevel", -1), -24, 0, 0.5, 1, " dB"),
+        Field::check("Add a 2 s tail for reverb and echo", last("bTail", 1) != 0), Field::check("One file for every track (stems)", false),
+        Field::input("Title (MP3)", ""), Field::input("Artist (MP3)", ""), Field::input("Album (MP3)", "")},
+        [this](const Dialog::Values& v) {
+        m_last["bRange"] = v[0].index; m_last["bFormat"] = v[1].index; m_last["bRate"] = v[2].index; m_last["bKbps"] = v[3].index;
+        m_last["bDither"] = v[4].checked; m_last["bNorm"] = v[5].checked; m_last["bLevel"] = v[6].value; m_last["bTail"] = v[7].checked;
         core::ExportOptions opt;
+        core::applyExportChoices(opt, v[1].index, v[2].index, v[3].index);
         opt.cycleOnly = v[0].index == 1;
-        opt.format = dsp::WavFormat(v[1].index);
-        opt.dither = v[2].checked && opt.format == dsp::WavFormat::Pcm16;
-        opt.normalize = v[3].checked;
-        opt.normalizeDb = float(v[4].value);
-        opt.tail = v[5].checked;
+        opt.dither = v[4].checked && opt.format == dsp::WavFormat::Pcm16;
+        opt.normalize = v[5].checked;
+        opt.normalizeDb = float(v[6].value);
+        opt.tail = v[7].checked;
+        opt.tags.title = v[9].text; opt.tags.artist = v[10].text; opt.tags.album = v[11].text; opt.tags.comment = "Made with MiniDAW";
         std::string err;
+        if (v[8].checked) {   // stems
+            if (!m_host.folderDialog) { message("File dialogs are not available here."); return; }
+            const std::string folder = m_host.folderDialog("Export every track to a folder");
+            if (folder.empty()) return;
+            std::vector<std::string> files;
+            if (m_s.exportStems(folder, opt, &files, &err)) message(msg("Exported %1 files.", std::to_string(files.size()))); else message(msg("Could not bounce: %1", err));
+            return;
+        }
+        if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
+        std::string path = m_host.fileDialog("Bounce / Export Audio", core::exportFilter(opt.container), true);
+        if (path.empty()) return;
+        path = core::withExportExtension(path, opt.container);
         message(m_s.exportAudio(path, opt, &err) ? msg("Bounced to %1", path) : msg("Could not bounce: %1", err));
     }, "Bounce"));
 }

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Decode.h"
+#include "../core/FileTypes.h"
 
 #include <algorithm>
 #include <cctype>
@@ -107,6 +108,13 @@ bool decodeMediaFoundation(const std::string& path, std::vector<float>& pcm, std
 bool decodeFile(const std::string& path, std::vector<float>& pcm, std::string* error) {
     const std::string ext = lowerExtension(path);
     if (ext == ".wav" || ext == ".wave") return core::readWavFile(path, pcm, error);
+    if (ext == ".aif" || ext == ".aiff" || ext == ".aifc") {   // our own reader: no codec needed, and Media Foundation is not sure about AIFF
+        std::string aerr;
+        if (core::readAiffFile(path, pcm, &aerr)) return true;
+#ifndef _WIN32
+        return core::fail(error, aerr);
+#endif
+    }
 #ifdef _WIN32
     return decodeMediaFoundation(path, pcm, error);
 #else
@@ -118,9 +126,9 @@ bool decodeFile(const std::string& path, std::vector<float>& pcm, std::string* e
 
 std::vector<std::string> decodableExtensions() {
 #ifdef _WIN32
-    return {".wav", ".mp3", ".m4a", ".aac", ".flac", ".wma"};
+    return core::audioExtensions();   // the operating system decodes what it has a codec for; a failure is reported per file
 #else
-    return {".wav"};
+    return {".wav", ".wave", ".aif", ".aiff", ".aifc"};   // read by the core without a codec
 #endif
 }
 

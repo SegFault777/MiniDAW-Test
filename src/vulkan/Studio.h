@@ -90,6 +90,10 @@ public:
     void invalidate() { m_modelDirty = true; }   // the session changed (may be called from any thread)
     void message(const std::string& text);
     void openFile(const std::string& path);
+    /// Opens any supported file: a project (after the unsaved-changes question), an audio file or a MIDI file (imported into the
+    /// current project). Used by File > Open, drag and drop and "open with".
+    void openAny(const std::string& path);
+    void importAudioFile(const std::string& path);
     int selectedTrack() const { return m_selTrack; }
     bool quitRequested() const { return m_quit; }
     core::Session& session() { return m_s; }

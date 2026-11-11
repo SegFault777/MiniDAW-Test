@@ -26,3 +26,4 @@ Both `MiniDAW.exe` and `MiniDAWVulkan.exe` have a **portable** edition: unzip it
 12. [Troubleshooting](troubleshooting.md)
 
 > Short version: [quickstart-en.md](quickstart-en.md)
+- [Working with other programs](exchange-with-other-daws.md) - open and export MP3, WAV, AIFF, MIDI and stems for Logic Pro, Ableton Live, Cubase and others

@@ -1,6 +1,7 @@
 // Tests and screenshots of the Qt-free user interface (src/ui) on a fake project, rendered headless.
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <string>
 #include "../src/core/Files.h"
 #include "../src/core/Session.h"
@@ -328,6 +329,31 @@ int main(int argc, char** argv) {
     clickAt(60, laneY0 + 2 * 60 + 20);
     CHECK(!u.typingOn());
     CHECK(u.key(ui::KeyEscape, 0) || true);
+    // -- opening other file types (Native): MIDI is imported, unknown types get a clear message
+    {
+        std::string err;
+        core::Session sm;                                               // a project with one MIDI note to export
+        const int mt = sm.addTrack(core::TrackType::Instrument, "Keys");
+        const int mr = sm.addMidiRegion(mt, 0, 4);
+        sm.setRegionNotes(mt, mr, {{60, 0.0, 1.0, 100}});
+        CHECK(sm.exportMidiFile("/tmp/ui_open.mid", &err));
+        core::Session sx;
+        ui::Host hx;
+        hx.loopFolder = "../loops";
+        ui::NativeUi ux(sx, hx);
+        ux.resize(1280, 780);
+        ui::Canvas cx(1280, 780);
+        ux.paint(cx);
+        const int base = sx.trackCount();
+        ux.openAny("/tmp/readme.txt");
+        CHECK(ux.lastMessage().find("not supported") != std::string::npos && sx.trackCount() == base);
+        ux.openAny("/tmp/ui_open.mid");
+        CHECK(sx.trackCount() > base);
+        { std::ifstream in("/tmp/ui_open.mid", std::ios::binary); std::ofstream out("/tmp/ui_open_upper.MID", std::ios::binary); out << in.rdbuf(); }
+        ux.openAny("/tmp/ui_open_upper.MID");                           // the extension is case-insensitive
+        CHECK(ux.lastMessage().find("Imported") != std::string::npos);
+    }
+
     std::printf("ui fails=%d\n", fails);
     return fails ? 1 : 0;
 }

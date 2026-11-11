@@ -33,6 +33,7 @@
 #include "../platform/Audio.h"
 #include "../core/I18n.h"
 #include "../platform/Decode.h"
+#include "../platform/Mp3Encode.h"
 #include "../platform/Midi.h"
 #include "../platform/PluginHost.h"
 #include "../ui/Ui.h"
@@ -230,10 +231,8 @@ std::string folderDialog(HWND owner, const std::string& title) {
     return ok ? narrow(path) : std::string();
 }
 
-void importDropped(App& a, const std::string& path) {
-    a.ui->message("Importing " + path);
-    a.session.importAudio(path, -1, a.session.positionBeats());
-}
+// Dropped files and the file given on the command line ("open with"): projects, audio files and MIDI files are all accepted.
+void importDropped(App& a, const std::string& path) { a.ui->openAny(path); }
 
 LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
     App* a = gApp;
@@ -484,6 +483,7 @@ int main() {
     core::Session::Hooks hooks;
     hooks.changed = [&app](bool) { if (app.ui) app.ui->invalidate(); };
     hooks.message = [&app](const std::string& s) { if (app.ui) app.ui->message(s); };
+    hooks.encodeMp3 = [](const std::vector<float>& pcm, int rate, int kbps, const std::string& path, std::string* err) { return platform::encodeMp3(pcm, rate, kbps, path, err); };
     hooks.decode = [&app](const std::string& path, core::Session::DecodeDone done) {
         ++app.decoding;
         std::thread([&app, path, done = std::move(done)]() mutable {
@@ -578,7 +578,7 @@ int main() {
     {   // "MiniDAW.exe project.mdaw" (file association, drag a file onto the program)
         int argc = 0;
         wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-        if (argv && argc >= 2) app.ui->openFile(narrow(argv[1]));
+        if (argv && argc >= 2) app.ui->openAny(narrow(argv[1]));
         if (argv) LocalFree(argv);
     }
     SetTimer(app.hwnd, 1, 33, nullptr);

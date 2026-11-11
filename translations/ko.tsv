@@ -845,3 +845,39 @@ Track %1 is in this group now.	트랙 %1이(가) 이 그룹에 들어갔습니�
 Mixer group: tracks in the same group move their faders, pans, sends, mute and solo together (hold Alt to change only one)	믹서 그룹: 같은 그룹의 트랙은 페이더, 팬, 센드, 음소거, 솔로가 함께 움직입니다(Alt를 누르면 하나만 바뀝니다)
 Settings are kept in %1.	설정은 %1에 저장됩니다.
 Portable mode: settings are kept in %1.	휴대용 모드: 설정은 %1에 저장됩니다.
+# Export and file types
+WAV 16-bit	WAV 16비트
+WAV 24-bit	WAV 24비트
+WAV 32-bit float	WAV 32비트 부동소수점
+AIFF 16-bit	AIFF 16비트
+AIFF 24-bit	AIFF 24비트
+MP3	MP3
+Sample rate	샘플레이트
+MP3 bit rate	MP3 비트레이트
+Title (MP3)	제목 (MP3)
+Artist (MP3)	아티스트 (MP3)
+Album (MP3)	앨범 (MP3)
+One file for every track (stems, all the same length)	트랙마다 파일 하나씩 (스템, 길이 모두 동일)
+One file for every track (stems)	트랙마다 파일 하나씩 (스템)
+Stems start at the same point and have the same length.	스템은 같은 지점에서 시작하고 길이가 같습니다.
+Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Logic Pro, Ableton Live, Cubase의 1마디에 끌어다 놓으세요.
+Exported %1 files.	%1개 파일을 내보냈습니다.
+Export every track to a folder	모든 트랙을 폴더로 내보내기
+128 kbps	128 kbps
+160 kbps	160 kbps
+192 kbps	192 kbps
+224 kbps	224 kbps
+256 kbps	256 kbps
+320 kbps	320 kbps
+44.1 kHz	44.1 kHz
+48 kHz	48 kHz
+88.2 kHz	88.2 kHz
+96 kHz	96 kHz
+This file type is not supported (%1). Supported: %2	지원하지 않는 파일 형식입니다 (%1). 지원 형식: %2
+no extension	확장자 없음
+MP3 export is not available on this system.	이 컴퓨터에서는 MP3 내보내기를 쓸 수 없습니다.
+MP3 files can be 44.1 or 48 kHz.	MP3 파일은 44.1kHz 또는 48kHz만 가능합니다.
+The MP3 encoder failed.	MP3 인코더가 실패했습니다.
+This sample rate is not supported.	이 샘플레이트는 지원하지 않습니다.
+AIFF files are 16-bit or 24-bit.	AIFF 파일은 16비트 또는 24비트입니다.
+The project is too long to export in this format (90 minutes at most).	프로젝트가 너무 길어 이 형식으로 내보낼 수 없습니다(최대 90분).

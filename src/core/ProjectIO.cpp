@@ -120,12 +120,31 @@ bool Session::importMidiFile(const std::string& path, std::string* error) {
         std::lock_guard<std::mutex> l(m_mutex);
         for (const Track& t : m_tracks) empty = empty && t.regions.empty();
     }
-    if (empty) {   // adopt the tempo and time signature of the file into an empty project
+    if (empty) {   // adopt the tempo map and the time signatures of the file into an empty project
         auto tm = std::make_shared<dsp::TempoMap>(*tempoMap());
-        tm->setTempo({{0, song.bpm, false}});
-        tm->setMeter({{1, song.num, song.den}});
+        std::vector<dsp::TempoPoint> tp;
+        for (const auto& t : song.tempos) {
+            if (!tp.empty() && std::fabs(tp.back().bpm - t.bpm) < 1e-6) continue;   // a repeated tempo is not a change
+            if (!tp.empty() && std::fabs(tp.back().beat - t.beat) < 1e-9) tp.back().bpm = t.bpm;
+            else tp.push_back({t.beat, t.bpm, false});
+        }
+        if (tp.empty()) tp.push_back({0, song.bpm, false});
+        tm->setTempo(tp);
+        std::vector<dsp::MeterPoint> mp;   // meter changes are given in beats: find the bar of each one
+        int bar = 1, num = song.num, den = song.den;
+        double at = 0;
+        mp.push_back({1, num, den});
+        for (const auto& m : song.meters) {
+            if (m.beat <= 1e-9) { mp.front() = {1, m.num, m.den}; num = m.num; den = m.den; continue; }
+            const double barLen = double(num) * 4.0 / double(den);
+            bar += int(std::llround((m.beat - at) / barLen));
+            at = m.beat; num = m.num; den = m.den;
+            if (mp.back().bar == bar) mp.back() = {bar, num, den}; else mp.push_back({bar, num, den});
+        }
+        tm->setMeter(mp);
         setTempoMap(tm, false);
     }
+    for (const auto& mk : song.markers) addMarker(mk.beat, mk.name);
     const auto tm = tempoMap();
     {
         std::lock_guard<std::mutex> l(m_mutex);
@@ -160,6 +179,17 @@ bool Session::exportMidiFile(const std::string& path, std::string* error) {
     song.bpm = tm->bpmAt(0);
     song.num = tm->meterAtBeat(0).num;
     song.den = tm->meterAtBeat(0).den;
+    {   // the tempo map: a glide (ramp) has no MIDI event, so it is written as one step per beat
+        const auto& pts = tm->tempoPoints();
+        for (size_t i = 0; i < pts.size(); ++i) {
+            song.tempos.push_back({pts[i].beat, pts[i].bpm});
+            if (pts[i].ramp && i + 1 < pts.size())
+                for (double b = pts[i].beat + 1.0; b < pts[i + 1].beat - 1e-9; b += 1.0)
+                    song.tempos.push_back({b, tm->bpmAt(b)});
+        }
+        for (const dsp::MeterPoint& mp : tm->meterPoints()) song.meters.push_back({tm->barStart(mp.bar), mp.num, mp.den});
+        for (const Marker& mk : markers()) song.markers.push_back({mk.beat, mk.name});
+    }
     for (const Track& t : snapshot()) {
         if (t.type != TrackType::Instrument && t.type != TrackType::Drummer) continue;
         dsp::MidiTrack mt;
@@ -629,8 +659,6 @@ bool Session::exportAudio(const std::string& path, const ExportOptions& opt, std
     const i64 end = i64(std::llround(tempo->beatToFrame(endBeat))) + (opt.tail ? i64(kSampleRate) * 2 : 0);   // tail for reverb / echo
     const i64 total = end - first;
 
-    std::ofstream out(toPath(path), std::ios::binary | std::ios::trunc);   // streamed: long projects need no memory
-    if (!out) return fail(error, "cannot write " + path);
     constexpr int kBlock = 4096;
     ensureScratch(size_t(kBlock) * 2);
     // Renders [first, end) through the whole signal path and hands every block to 'sink'.
@@ -654,18 +682,114 @@ bool Session::exportAudio(const std::string& path, const ExportOptions& opt, std
         gain = dsp::normalizeGain(peak, opt.normalizeDb);
     }
 
-    const auto header = dsp::wavHeader(opt.format, kSampleRate, std::uint64_t(total));
+    const bool fast = opt.container == ExportContainer::Wav && opt.sampleRate == kSampleRate;
+    if (fast) {   // the usual case: WAV at 44.1 kHz is streamed, so long projects need no memory
+        std::ofstream out(toPath(path), std::ios::binary | std::ios::trunc);
+        if (!out) return fail(error, "cannot write " + path);
+        const auto header = dsp::wavHeader(opt.format, kSampleRate, std::uint64_t(total));
+        out.write(reinterpret_cast<const char*>(header.data()), std::streamsize(header.size()));
+        std::vector<std::uint8_t> bytes;
+        std::uint32_t seed = 12345u;
+        pass([&](const float* b, int n) {
+            bytes.clear();
+            dsp::encodeSamples(b, size_t(n), opt.format, gain, opt.dither, seed, bytes);
+            out.write(reinterpret_cast<const char*>(bytes.data()), std::streamsize(bytes.size()));
+            return bool(out);
+        });
+        out.flush();
+        if (!out) return fail(error, "cannot write " + path);
+        return true;
+    }
+
+    // Other formats / sample rates: render into memory, convert, then write.
+    static const int kRates[] = {44100, 48000, 88200, 96000};
+    if (std::find(std::begin(kRates), std::end(kRates), opt.sampleRate) == std::end(kRates)) return fail(error, tr("This sample rate is not supported."));
+    if (opt.container == ExportContainer::Aiff && opt.format == dsp::WavFormat::Float32) return fail(error, tr("AIFF files are 16-bit or 24-bit."));
+    int kbps = opt.mp3Kbps;
+    if (opt.container == ExportContainer::Mp3) {
+        if (!m_hooks.encodeMp3) return fail(error, tr("MP3 export is not available on this system."));
+        if (opt.sampleRate != 44100 && opt.sampleRate != 48000) return fail(error, tr("MP3 files can be 44.1 or 48 kHz."));
+        static const int kRatesMp3[] = {128, 160, 192, 224, 256, 320};
+        int best = kRatesMp3[0];
+        for (int r : kRatesMp3) if (std::abs(r - kbps) < std::abs(best - kbps)) best = r;
+        kbps = best;
+    }
+    if (total > i64(kSampleRate) * 60 * 90) return fail(error, tr("The project is too long to export in this format (90 minutes at most)."));
+    std::vector<float> mix;
+    mix.reserve(size_t(total) * 2);
+    pass([&](const float* b, int n) { mix.insert(mix.end(), b, b + size_t(n) * 2); return true; });
+    if (gain != 1.f) for (float& v : mix) v *= gain;
+    if (opt.sampleRate != kSampleRate) mix = resampleStereo(mix, kSampleRate, opt.sampleRate);
+    const std::uint64_t frames = mix.size() / 2;
+
+    if (opt.container == ExportContainer::Mp3) {
+        std::string eerr;
+        if (!m_hooks.encodeMp3(mix, opt.sampleRate, kbps, path, &eerr)) return fail(error, eerr.empty() ? std::string(tr("The MP3 encoder failed.")) : eerr);
+        std::string terr;
+        if (!prependId3v2(path, opt.tags, &terr)) return fail(error, terr);
+        return true;
+    }
+    std::ofstream out(toPath(path), std::ios::binary | std::ios::trunc);
+    if (!out) return fail(error, "cannot write " + path);
+    const bool aiff = opt.container == ExportContainer::Aiff;
+    const auto header = aiff ? dsp::aiffHeader(opt.format, opt.sampleRate, frames) : dsp::wavHeader(opt.format, opt.sampleRate, frames);
     out.write(reinterpret_cast<const char*>(header.data()), std::streamsize(header.size()));
     std::vector<std::uint8_t> bytes;
     std::uint32_t seed = 12345u;
-    pass([&](const float* b, int n) {
+    constexpr size_t kChunk = 1 << 16;
+    for (size_t at = 0; at < frames; at += kChunk) {
+        const size_t n = std::min<size_t>(kChunk, size_t(frames) - at);
         bytes.clear();
-        dsp::encodeSamples(b, size_t(n), opt.format, gain, opt.dither, seed, bytes);
+        dsp::encodeSamples(mix.data() + at * 2, n, opt.format, 1.f, opt.dither, seed, bytes);
+        if (aiff) dsp::swapSampleBytes(bytes, dsp::bytesPerSample(opt.format));
         out.write(reinterpret_cast<const char*>(bytes.data()), std::streamsize(bytes.size()));
-        return bool(out);
-    });
+    }
     out.flush();
     if (!out) return fail(error, "cannot write " + path);
+    return true;
+}
+
+bool Session::exportStems(const std::string& folder, const ExportOptions& optIn, std::vector<std::string>* written, std::string* error) {
+    ExportOptions opt = optIn;
+    opt.cycleOnly = optIn.cycleOnly;
+    const auto tracks = snapshot();
+    std::vector<int> audible;   // tracks that have something to play
+    for (int i = 0; i < int(tracks.size()); ++i) {
+        const Track& t = tracks[size_t(i)];
+        bool content = !t.regions.empty();
+        if (t.type == TrackType::Drums) for (const auto& row : t.steps) for (bool b : row) content |= b;
+        if (content && !t.mute) audible.push_back(i);
+    }
+    if (audible.empty()) return fail(error, tr("There is nothing to bounce."));
+    makeDirs(folder);
+    const char* ext = opt.container == ExportContainer::Mp3 ? ".mp3" : opt.container == ExportContainer::Aiff ? ".aiff" : ".wav";
+    // every stem has the length of the whole project, so the files line up: the length is decided once from the whole mix
+    std::vector<std::pair<bool, bool>> saved;   // original mute / solo
+    for (const Track& t : tracks) saved.emplace_back(t.mute, t.solo);
+    auto restore = [&] { std::lock_guard<std::mutex> l(m_mutex); for (size_t i = 0; i < m_tracks.size() && i < saved.size(); ++i) { m_tracks[i].mute = saved[i].first; m_tracks[i].solo = saved[i].second; } };
+    bool ok = true;
+    std::string firstError;
+    int number = 0;
+    for (int idx : audible) {
+        {
+            std::lock_guard<std::mutex> l(m_mutex);
+            for (size_t i = 0; i < m_tracks.size(); ++i) { m_tracks[i].solo = int(i) == idx; m_tracks[i].mute = false; }
+        }
+        std::string name = tracks[size_t(idx)].name;
+        for (char& c : name) if (std::string("\\/:*?\"<>|").find(c) != std::string::npos) c = '_';
+        char num[16];
+        std::snprintf(num, sizeof num, "%02d ", ++number);
+        const std::string file = folder + "/" + num + name + ext;
+        std::string err;
+        ExportOptions o = opt;
+        o.normalize = false;   // stems keep their level relative to each other
+        if (opt.container == ExportContainer::Mp3 && o.tags.title.empty()) o.tags.title = name;
+        if (exportAudio(file, o, &err)) { if (written) written->push_back(file); }
+        else { ok = false; if (firstError.empty()) firstError = err; }
+    }
+    restore();
+    changed(false);
+    if (!ok) return fail(error, firstError);
     return true;
 }
 

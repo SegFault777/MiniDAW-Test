@@ -78,14 +78,19 @@ public:
 
     void message(const std::string& text);
     /// A translatable message with one placeholder: msg("Saved %1", path).
-    static std::string msg(const std::string& pattern, const std::string& arg = {}) {
+    static std::string msg(const std::string& pattern, const std::string& arg = {}, const std::string& arg2 = {}) {
         std::string t = Canvas::translate(pattern);
         const size_t at = t.find("%1");
         if (at != std::string::npos) t.replace(at, 2, arg);
+        const size_t at2 = t.find("%2");
+        if (at2 != std::string::npos) t.replace(at2, 2, arg2);
         return t;
     }
     /// Opens a project file (used for "open with" and file associations).
     void openFile(const std::string& path) { openProject(path); m_dirty = true; }
+    /// Opens any supported file: a project (after the unsaved-changes question), an audio file or a MIDI file (imported). Used by
+    /// File > Open, drag and drop and "open with".
+    void openAny(const std::string& path);
     void openAuxDialog(int bus) { dlgAux(bus); m_dirty = true; }   // View menu: Aux A: Reverb / Aux B: Echo
     void setDeviceStatus(const std::string& text) { m_device = text; m_dirty = true; }
     void invalidate() { m_dirty = true; }

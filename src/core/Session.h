@@ -38,6 +38,8 @@ public:
         std::function<std::string(dsp::ParamSet&)> saveState;         ///< plug-in state as base64 text
         std::function<void(dsp::ParamSet&, const std::string&)> loadState;
         std::function<void(const std::string& path, DecodeDone)> decode;   ///< decodes any audio file asynchronously
+        /// Encodes interleaved stereo float samples to an MP3 file (no tags: the session adds them). Returns false with a message.
+        std::function<bool(const std::vector<float>& stereo, int sampleRate, int kbps, const std::string& path, std::string* error)> encodeMp3;
         std::function<void()> startInput, stopInput;                  ///< microphone capture for audio recording
     };
 
@@ -276,6 +278,10 @@ public:
 
     bool exportWav(const std::string& path, std::string* error);
     bool exportAudio(const std::string& path, const ExportOptions& opt, std::string* error);
+    /// Exports every track that makes sound as its own file in 'folder' (stems, "01 Name.wav"). All files start at the same point and
+    /// have the same length, so they line up when they are dropped into another DAW at bar 1. Mute / solo are restored afterwards.
+    /// 'written' (optional) receives the file names. Returns false when nothing could be exported.
+    bool exportStems(const std::string& folder, const ExportOptions& opt, std::vector<std::string>* written, std::string* error);
 
     // ---- Called by the audio threads ----
     void fillInt16(std::int16_t* out, int frames);
