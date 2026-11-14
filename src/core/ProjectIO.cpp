@@ -12,6 +12,7 @@
 #include "Files.h"
 #include "Internal.h"
 #include "Json.h"
+#include "Mp3Gapless.h"
 #include "Session.h"
 
 namespace core {
@@ -102,6 +103,31 @@ void Session::importAudio(const std::string& path, int track, double startBeat) 
             std::lock_guard<std::mutex> l(m_mutex);
             if (t >= int(m_tracks.size())) return;
             m_tracks[size_t(t)].regions.push_back(r);
+        }
+        changed(false);
+    });
+}
+
+void Session::importAudioPlacements(const std::string& path, const std::vector<AudioPlacement>& places) {
+    if (places.empty()) return;
+    decodeAsync(path, [this, places](std::shared_ptr<AudioData> data, std::string err) {
+        if (!data) { message(err); return; }
+        const i64 total = data->frames();
+        {
+            std::lock_guard<std::mutex> l(m_mutex);
+            for (const AudioPlacement& p : places) {
+                if (p.track < 0 || p.track >= int(m_tracks.size()) || m_tracks[size_t(p.track)].type != TrackType::Audio) continue;
+                Region r;
+                r.name = data->name;
+                r.start = std::max(0.0, p.startBeat);
+                r.source = r.audio = data;
+                const i64 off = std::clamp<i64>(p.srcOffset, 0, total);
+                const i64 len = p.frames > 0 ? std::min<i64>(p.frames, total - off) : total - off;
+                if (len <= 0) continue;
+                r.offset = r.srcOffset = off;
+                r.frames = r.srcFrames = len;
+                m_tracks[size_t(p.track)].regions.push_back(r);
+            }
         }
         changed(false);
     });
@@ -726,6 +752,7 @@ bool Session::exportAudio(const std::string& path, const ExportOptions& opt, std
         std::string eerr;
         if (!m_hooks.encodeMp3(mix, opt.sampleRate, kbps, path, &eerr)) return fail(error, eerr.empty() ? std::string(tr("The MP3 encoder failed.")) : eerr);
         std::string terr;
+        if (!addGaplessHeader(path, frames, kMp3EncoderDelay, &terr)) return fail(error, terr);   // gapless: delay / padding in an Info frame
         if (!prependId3v2(path, opt.tags, &terr)) return fail(error, terr);
         return true;
     }

@@ -1,4 +1,5 @@
 // Tests and screenshots of the Vulkan user interface (src/vulkan) rendered by the CPU twin of its shader: no GPU needed.
+#include "../src/core/LogicProjectData.h"
 #include <chrono>
 #include <fstream>
 #include <cmath>
@@ -442,6 +443,65 @@ int main(int argc, char** argv) {
         stx.openAny("/tmp/vk_open.wav");
         for (int i = 0; i < 200 && sx.trackCount() == before; ++i) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); framex(1); }
         CHECK(sx.trackCount() == before + 1);
+        // a Logic Pro package (.logicx folder): one track per recording, with an honest message about the arrangement
+        {
+            auto sh = [](const std::string& c) { const int rc = std::system(c.c_str()); (void)rc; };
+            sh("rm -rf /tmp/vk_logic && mkdir -p '/tmp/vk_logic/Night Drive.logicx/Alternatives/000' '/tmp/vk_logic/Night Drive.logicx/Media/Audio Files'");
+            sh("echo x > '/tmp/vk_logic/Night Drive.logicx/Alternatives/000/ProjectData'");
+            for (const char* n : {"Drums#01", "Bass#01", "Lead Vox#01"})
+                sh(std::string("cp /tmp/vk_open.wav '/tmp/vk_logic/Night Drive.logicx/Media/Audio Files/") + n + ".wav'");
+            const int b0 = sx.trackCount();
+            stx.openAny("/tmp/vk_logic/Night Drive.logicx");
+            for (int i = 0; i < 300 && sx.trackCount() < b0 + 3; ++i) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); framex(1); }
+            CHECK(sx.trackCount() == b0 + 3);
+            CHECK(stx.toastText().find("Night Drive") != std::string::npos && stx.toastText().find("not read") != std::string::npos);
+            framex(2);
+            softRender(dlx, *fontsx, theme::bg0).savePpm("/tmp/vk_logicx_import.ppm");
+            {   // the full pipeline with a stand-in decoder: tracks, an audio region at bar 3, a MIDI region with notes, tempo
+                (void)0;
+                sh("echo 'FAKE-LAYOUT-0123456789' > '/tmp/vk_logic/Night Drive.logicx/Alternatives/000/ProjectData'");
+                core::registerProjectDataDecoder([](const std::uint8_t* d, std::size_t n, core::LogicProject& out, std::string& name) {
+                    if (n < 4 || std::string(reinterpret_cast<const char*>(d), 4) != "FAKE") return false;
+                    name = "stand-in decoder";
+                    out.tempo = {{0, 96, false}};
+                    core::LogicTrack v; v.name = "Lead Vox"; v.audio.push_back({"Lead Vox", "Lead Vox#01.wav", 8.0, 0});
+                    core::LogicTrack k; k.name = "Keys"; k.kind = core::LogicTrackKind::Software;
+                    core::LogicMidiRegion mr; mr.startBeat = 0; mr.lengthBeats = 8;
+                    for (int i = 0; i < 8; ++i) mr.notes.push_back({48 + (i * 3) % 12 + (i % 2) * 7, i * 1.0, 0.9, 90});
+                    k.midi.push_back(mr);
+                    out.tracks = {v, k};
+                    return true;
+                });
+                const int b1 = sx.trackCount();
+                stx.openAny("/tmp/vk_logic/Night Drive.logicx");
+                for (int i = 0; i < 300 && sx.trackCount() < b1 + 2; ++i) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); framex(1); }
+                for (int i = 0; i < 100; ++i) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); framex(1); }
+                CHECK(sx.trackCount() == b1 + 2 && std::fabs(sx.tempoMap()->bpmAt(0) - 96) < 1e-6);
+                framex(2);
+                softRender(dlx, *fontsx, theme::bg0).savePpm("/tmp/vk_logicx_pipeline.ppm");
+                core::clearProjectDataDecoders();
+            }
+            if (const char* real = std::getenv("MINIDAW_LOGICX_SAMPLE")) {   // a real project, when one is at hand (screenshots only)
+                core::Session sr; Host hr; hr.loopFolder = "../loops";
+                Studio str(sr, hr);
+                Gui gr; DrawList dlr; auto fontsr = std::make_shared<Fonts>(makeBuiltinFontSource());
+                double tr = 1.0;
+                auto framer = [&](int n) { for (int i = 0; i < n; ++i) { dlr.begin(1440, 900, 1.0f, fontsr.get()); gr.beginFrame(dlr, tr); str.frame(gr, tr); gr.endFrame(); tr += 0.05; } };
+                framer(3);
+                const int r0 = sr.trackCount();
+                str.openAny(real);
+                auto placed = [&] { int c = 0; for (const auto& t : sr.snapshot()) c += int(t.regions.size()); return c; };
+                for (int i = 0; i < 12000 && placed() < 255 + 28; ++i) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); framer(1); }
+                std::fprintf(stderr, "real studio import: tracks +%d, regions %d, bpm %g\n", sr.trackCount() - r0, placed(), sr.tempoMap()->bpmAt(0));
+                CHECK(placed() == 255 + 28 && sr.trackCount() == r0 + 81 && std::fabs(sr.tempoMap()->bpmAt(0) - 82.0) < 1e-6);
+                CHECK(str.runCommand("Zoom to Fit Project")); framer(3);
+                softRender(dlr, *fontsr, theme::bg0).savePpm("/tmp/vk_logicx_real_import.ppm");
+                CHECK(str.runCommand("Show Mixer")); framer(3); softRender(dlr, *fontsr, theme::bg0).savePpm("/tmp/vk_logicx_real_mixer.ppm");
+                CHECK(str.runCommand("Show Editor")); framer(3); softRender(dlr, *fontsr, theme::bg0).savePpm("/tmp/vk_logicx_real_editor.ppm");
+            }
+            CHECK(stx.runCommand("Import Logic Pro Project Folder..."));   // no folder dialog in this host: a clear message
+            CHECK(stx.toastText().find("not available") != std::string::npos);
+        }
         // a project opens in place of the current one (a clean session is not asked)
         core::Session sy;
         Host hy; hy.loopFolder = "../loops";
@@ -596,7 +656,8 @@ int main(int argc, char** argv) {
         st.runCommand("Show Snapshots"); r.frame(2); r.shot("/tmp/vk_snapshots.ppm");
         st.runCommand("Show Devices"); r.frame(2); r.shot("/tmp/vk_devices.ppm");
         r.key(KeyF1); CHECK(st.helpOpen()); r.frame(2); r.shot("/tmp/vk_help.ppm"); r.key(KeyF1); CHECK(!st.helpOpen());
-        r.key('K', ModCtrl); r.type("snap"); r.frame(2); r.shot("/tmp/vk_palette.ppm"); r.key(KeyEscape); CHECK(!st.paletteOpen());
+        r.key('K', ModCtrl); r.type("snap"); r.frame(2); r.shot("/tmp/vk_palette.ppm");
+        r.key(KeyEscape); r.key('K', ModCtrl); r.type("logic"); r.frame(2); r.shot("/tmp/vk_logicx_palette.ppm"); r.key(KeyEscape); CHECK(!st.paletteOpen());
         st.runCommand("Workspace: Arrange"); r.frame(2);
     }
     // ---- step sequencer

@@ -7,6 +7,14 @@
 #include "../src/core/ExportFormats.h"
 #include "../src/core/FileTypes.h"
 #include "../src/core/Id3.h"
+#include <chrono>
+#include <map>
+#include <thread>
+#include "../src/core/Mp3Gapless.h"
+#include "../src/core/LogicImport.h"
+#include "../src/core/LogicProjectData.h"
+#include "../src/core/Bplist.h"
+#include "../src/core/LogicArrangement.h"
 #include "../src/dsp/MidiFile.h"
 #include "aiff_util.h"
 #include "../src/core/Files.h"
@@ -994,6 +1002,326 @@ static void testExportFormats() {
     CHECK(!s.exportAudio(dir + "/bad.wav", o, &err));
 }
 
+
+// builds a fake CBR stream of 128 kbit/s 44.1 kHz stereo MPEG-1 layer 3 frames (silence bodies)
+static std::string fakeMp3Frames(int frames, int rateIdx = 0) {
+    const int rate = rateIdx == 1 ? 48000 : 44100;
+    std::string out;
+    for (int i = 0; i < frames; ++i) {
+        const int pad = (rate == 44100 && i % 3 == 0) ? 1 : 0;   // 417 / 418 bytes like a real 44.1 kHz stream
+        std::string f(size_t(144 * 128000 / rate + pad), '\0');
+        f[0] = char(0xFF); f[1] = char(0xFB); f[2] = char(0x90 | (rateIdx << 2) | (pad << 1)); f[3] = 0x00;
+        out += f;
+    }
+    return out;
+}
+
+static void testMp3Gapless() {
+    const std::string dir = tmpDir() + "/gapless";
+    makeDirs(dir);
+    const std::string path = dir + "/g.mp3";
+    {   std::string f = fakeMp3Frames(100); std::string e; CHECK(writeFile(path, f, &e)); }
+    // no header yet
+    CHECK(!core::readGaplessHeader(path).valid);
+    std::string err;
+    const std::uint64_t music = 100 * 1152 - 576 - 700;           // 700 samples of padding
+    CHECK(core::addGaplessHeader(path, music, 576, &err));
+    auto g = core::readGaplessHeader(path);
+    CHECK(g.valid && g.frames == 100 && g.delay == 576 && g.padding == 700 && g.sampleRate == 44100 && g.musicSamples() == music);
+    // adding twice changes nothing
+    std::string once; readFile(path, once);
+    CHECK(core::addGaplessHeader(path, music, 576, &err));
+    std::string twice; readFile(path, twice);
+    CHECK(once == twice);
+    // the Info frame is one more frame of the same size, in front of the audio
+    CHECK(once.size() == fakeMp3Frames(100).size() + 417);
+    CHECK(once.compare(36, 4, "Info") == 0 && once.compare(52, 9, "LAME-MDAW") == 0);
+    // an ID3 tag in front is skipped when reading
+    core::Id3Tags t; t.title = "x";
+    CHECK(core::prependId3v2(path, t, &err));
+    g = core::readGaplessHeader(path);
+    CHECK(g.valid && g.delay == 576 && g.padding == 700);
+    // more padding than a frame holds is clamped to the 12 bits that exist
+    const std::string p2 = dir + "/g2.mp3";
+    { std::string f = fakeMp3Frames(20, 1); std::string e; writeFile(p2, f, &e); }
+    CHECK(core::addGaplessHeader(p2, 100, 576, &err));
+    g = core::readGaplessHeader(p2);
+    CHECK(g.valid && g.sampleRate == 48000 && g.padding == 4095 && g.delay == 576);
+    // not MP3 / no frames: left alone, no error
+    const std::string p3 = dir + "/g3.mp3";
+    { std::string e; writeFile(p3, std::string("hello"), &e); }
+    CHECK(core::addGaplessHeader(p3, 10, 576, &err));
+    std::string h3; readFile(p3, h3);
+    CHECK(h3 == "hello");
+    CHECK(!core::readGaplessHeader(dir + "/missing.mp3").valid);
+
+    // trimming decoded audio: a decoder that kept the delay ...
+    core::Mp3Gapless info; info.valid = true; info.frames = 100; info.delay = 576; info.padding = 700; info.sampleRate = 44100;
+    std::vector<float> pcm(size_t(100 * 1152) * 2);
+    for (size_t i = 0; i < pcm.size() / 2; ++i) pcm[2 * i] = float(i);
+    CHECK(core::trimMp3Decoded(pcm, info, 44100));
+    CHECK(pcm.size() / 2 == info.musicSamples() && pcm[0] == float(576 + 529));
+    // ... and one that already did (length is about the music length): untouched
+    const size_t n = pcm.size();
+    CHECK(!core::trimMp3Decoded(pcm, info, 44100) && pcm.size() == n);
+    // other output rate: delay and length scale
+    std::vector<float> pcm48(size_t(double(100 * 1152) * 48000 / 44100) * 2, 0.f);
+    CHECK(core::trimMp3Decoded(pcm48, info, 48000));
+    CHECK(std::abs(double(pcm48.size() / 2) - double(info.musicSamples()) * 48000 / 44100) < 2.0);
+    core::Mp3Gapless none;
+    CHECK(!core::trimMp3Decoded(pcm48, none, 48000));
+}
+
+
+
+static void testBplistAndLogicChunks() {
+    // binary plist written by plistlib: {BeatsPerMinute: 82.0, NumberOfTracks: 111, LastSavedFrom: "Logic Pro X 10.5.0 (5283)", Unicode: "Gr\u00f6\u00dfe \u97f3", Flag: true, List: ["a", 2, 3.5]}
+    const std::uint8_t bp[] = {0x62, 0x70, 0x6c, 0x69, 0x73, 0x74, 0x30, 0x30, 0xd6, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0e, 0x0f, 0x5e, 0x42, 0x65, 0x61, 0x74, 0x73, 0x50, 0x65, 0x72, 0x4d, 0x69, 0x6e, 0x75, 0x74, 0x65, 0x54, 0x46, 0x6c, 0x61, 0x67, 0x5d, 0x4c, 0x61, 0x73, 0x74, 0x53, 0x61, 0x76, 0x65, 0x64, 0x46, 0x72, 0x6f, 0x6d, 0x54, 0x4c, 0x69, 0x73, 0x74, 0x5e, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x4f, 0x66, 0x54, 0x72, 0x61, 0x63, 0x6b, 0x73, 0x57, 0x55, 0x6e, 0x69, 0x63, 0x6f, 0x64, 0x65, 0x23, 0x40, 0x54, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x5f, 0x10, 0x19, 0x4c, 0x6f, 0x67, 0x69, 0x63, 0x20, 0x50, 0x72, 0x6f, 0x20, 0x58, 0x20, 0x31, 0x30, 0x2e, 0x35, 0x2e, 0x30, 0x20, 0x28, 0x35, 0x32, 0x38, 0x33, 0x29, 0xa3, 0x0b, 0x0c, 0x0d, 0x51, 0x61, 0x10, 0x02, 0x23, 0x40, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x6f, 0x67, 0x00, 0x47, 0x00, 0x72, 0x00, 0xf6, 0x00, 0xdf, 0x00, 0x65, 0x00, 0x20, 0x97, 0xf3, 0x08, 0x15, 0x24, 0x29, 0x37, 0x3c, 0x4b, 0x53, 0x5c, 0x5d, 0x79, 0x7d, 0x7f, 0x81, 0x8a, 0x8c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x9b};
+    core::PlistValue v; std::string err;
+    CHECK(core::parseBplist(bp, sizeof bp, v, &err));
+    CHECK(v.type == core::PlistValue::Type::Dict && v.find("BeatsPerMinute") && v.find("BeatsPerMinute")->number() == 82.0);
+    CHECK(v.find("NumberOfTracks")->number() == 111 && v.find("LastSavedFrom")->text() == "Logic Pro X 10.5.0 (5283)");
+    CHECK(v.find("Unicode")->text() == "Gr\xC3\xB6\xC3\x9F" "e \xE9\x9F\xB3" && v.find("Flag")->b);
+    CHECK(v.find("List")->array.size() == 3 && v.find("List")->array[2].number() == 3.5 && !v.find("Missing"));
+    // damaged / wrong input never crashes
+    CHECK(!core::parseBplist(bp, 20, v, &err) && !core::parseBplist(nullptr, 0, v, &err));
+    std::vector<std::uint8_t> bad(bp, bp + sizeof bp);
+    for (size_t i = 8; i + 32 < bad.size(); i += 3) { auto c = bad; c[i] ^= 0xFF; core::PlistValue w; core::parseBplist(c.data(), c.size(), w, nullptr); }
+    // chunk reader on a synthetic file in the layout found in a real Logic Pro X 10.5 project
+    auto chunk = [](const char* tag, const std::string& payload) {
+        std::string c(36, '\0');
+        for (int i = 0; i < 4; ++i) c[size_t(i)] = tag[3 - i];            // type written backwards
+        const std::uint32_t n = std::uint32_t(payload.size());
+        for (int i = 0; i < 4; ++i) c[size_t(28 + i)] = char(n >> (8 * i));
+        return c + payload;
+    };
+    auto fileEntry = [](const std::string& name) {
+        std::string p(8, '\0'); p[0] = char(0xE8); p[1] = 3;
+        const std::uint16_t n = std::uint16_t(name.size());
+        p += char(n & 0xFF); p += char(n >> 8);
+        for (char ch : name) { p += ch; p += '\0'; }
+        return p + std::string(30, '\0');
+    };
+    std::string body = chunk("Song", std::string(60, 'x')) + chunk("AuFl", fileEntry("Kick.wav")) + chunk("AuFl", fileEntry("Vox 1.aif")) + chunk("Trak", "");
+    std::string file(24, '\0');
+    file[0] = 0x23; file[1] = 0x47; file[2] = char(0xC0); file[3] = char(0xAB);
+    file += body;
+    auto pr = core::parseProjectData(reinterpret_cast<const std::uint8_t*>(file.data()), file.size());
+    CHECK(pr.decoded && pr.project.mediaPool.size() == 2 && pr.project.mediaPool[0] == "Kick.wav" && pr.project.mediaPool[1] == "Vox 1.aif");
+    CHECK(pr.note.find("end of the file") != std::string::npos);
+    bool song = false; for (auto& kv : pr.project.chunkCounts) if (kv.first == "Song" && kv.second == 1) song = true;
+    CHECK(song);
+    // truncated file: the chain stops early but nothing breaks
+    auto pt = core::parseProjectData(reinterpret_cast<const std::uint8_t*>(file.data()), file.size() - 10);
+    CHECK(pt.decoded && pt.note.find("stops early") != std::string::npos);
+    // a file that does not start with the magic is not this format
+    std::string other = file; other[0] = 0;
+    CHECK(!core::parseProjectData(reinterpret_cast<const std::uint8_t*>(other.data()), other.size()).decoded);
+
+    // a real project, when one is at hand (not part of the repository): MINIDAW_LOGICX_SAMPLE=<path of the .logicx folder>
+    if (const char* real = std::getenv("MINIDAW_LOGICX_SAMPLE")) {
+        const std::string pdFile = core::findProjectDataFile(real);
+        std::string raw;
+        CHECK(!pdFile.empty() && readFile(pdFile, raw));
+        auto rr = core::parseProjectData(reinterpret_cast<const std::uint8_t*>(raw.data()), raw.size());
+        std::fprintf(stderr, "real sample: %s | pool %zu\n", rr.note.c_str(), rr.project.mediaPool.size());
+        CHECK(rr.decoded && rr.note.find("end of the file") != std::string::npos && !rr.project.mediaPool.empty());
+        // numbers of the reference decoder (LogicProFormatWriter session_model) on the Logic Pro X 10.5 sample
+        CHECK(rr.note.find("255 audio and 28 MIDI regions, 912 notes, 1 tempo point(s), 1 marker(s)") != std::string::npos);
+        core::LogicProject lp = rr.project;
+        core::readLogicMetadata(real, lp);
+        std::fprintf(stderr, "real sample: creator='%s' bpm=%g sr=%d tracks=%d\n", lp.creator.c_str(), lp.tempo.empty() ? 0.0 : lp.tempo[0].bpm, lp.sampleRate, lp.trackCountHint);
+        CHECK(!lp.creator.empty() && !lp.tempo.empty() && lp.sampleRate == 44100 && lp.trackCountHint > 0);
+        // the whole pipeline on it: tempo from the plist, recordings as tracks, an honest message
+        Session ps; std::string msg;
+        const int n = core::importLogicPackage(ps, real, &msg);
+        std::fprintf(stderr, "real sample import: %d files | %s\n", n, msg.c_str());
+        CHECK(n == 255 + 28 && msg.find("tempo map") != std::string::npos && std::fabs(ps.tempoMap()->bpmAt(0) - 82.0) < 1e-6);
+        // wait for the (once per file) decoding, then compare with what Logic shows (WindowImage.jpg of the sample): track 43 plays
+        // VFB_kit4_drop_vocal at bar 9 and bar 33, the marker sits at bar 9
+        auto audioCount = [&] { int c = 0; for (const auto& t : ps.snapshot()) if (t.type == TrackType::Audio) c += int(t.regions.size()); return c; };
+        for (int i = 0; i < 12000 && audioCount() < 255; ++i) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::fprintf(stderr, "real sample regions placed: %d of 255\n", audioCount());
+        CHECK(audioCount() == 255);
+        bool bar9 = false, bar33 = false;
+        for (const auto& t : ps.snapshot()) {
+            if (t.name != "vox") continue;
+            for (const auto& r : t.regions) {
+                if (r.name.find("drop_vocal") == std::string::npos) continue;
+                if (std::fabs(r.start - 32.0) < 1e-6 && r.frames == 1677952) bar9 = true;
+                if (std::fabs(r.start - 128.0) < 1e-6) bar33 = true;
+            }
+        }
+        CHECK(bar9 && bar33);
+        {   // track names as Logic shows them (WindowImage.jpg) for tracks that carry regions: 1 CH_digital_piano, 43 vox, 44 ending, 60 KSHMR Clock 05 - Countdown,
+            // 64 Studio Violins 2 (only tracks that carry regions are created)
+            std::map<std::string, int> have;
+            for (const auto& t : ps.snapshot()) ++have[t.name];
+            CHECK(have.count("vox") && have.count("ending") && have.count("Studio Violins 2") && have.count("KSHMR Clock 05 - Countdown") && have.count("CH_digital_piano [NICKY ROMERO]"));
+            bool voxHasRegions = false;
+            for (const auto& t : ps.snapshot()) if (t.name == "vox") voxHasRegions = voxHasRegions || t.regions.size() == 2;
+            CHECK(voxHasRegions);
+        }
+        const auto marks = ps.markers();
+        CHECK(marks.size() == 1 && std::fabs(marks[0].beat - 32.0) < 1e-6);
+    }
+}
+
+
+// Cross-check against the reference decoder (LogicProFormatWriter, session_model) on its own fixtures. tests/data/logicx_reference.tsv holds
+// what the reference returns per fixture: name, audio regions, MIDI regions, notes, tempo points, markers, meter points, take folders.
+// Needs the fixtures: MINIDAW_LOGICX_FIXTURES=<root folder of LogicProFormatWriter>. Skipped without it.
+static void testLogicFixtures() {
+    const char* root = std::getenv("MINIDAW_LOGICX_FIXTURES");
+    if (!root) return;
+    std::string table;
+    if (!readFile("../tests/data/logicx_reference.tsv", table) && !readFile("tests/data/logicx_reference.tsv", table)) { CHECK(false); return; }
+    int rows = 0, bad = 0, meterDiff = 0;
+    size_t pos = 0;
+    while (pos < table.size()) {
+        size_t e = table.find('\n', pos);
+        if (e == std::string::npos) e = table.size();
+        const std::string line = table.substr(pos, e - pos);
+        pos = e + 1;
+        if (line.empty()) continue;
+        std::vector<std::string> f;
+        for (size_t a = 0, b; a <= line.size(); a = b + 1) { b = line.find('\t', a); if (b == std::string::npos) b = line.size(); f.push_back(line.substr(a, b - a)); }
+        if (f.size() < 8) continue;
+        std::string raw;
+        if (!readFile(std::string(root) + "/" + f[0] + "/Alternatives/000/ProjectData", raw)) continue;
+        ++rows;
+        core::LogicProject lp;
+        const auto st = core::decodeLogicArrangement(reinterpret_cast<const std::uint8_t*>(raw.data()), raw.size(), lp);
+        const int audio = st.audioRegions + st.unresolvedAudio;
+        const bool ok = audio == std::stoi(f[1]) && st.midiRegions == std::stoi(f[2]) && st.notes == std::stoi(f[3]) &&
+                        st.tempoPoints == std::stoi(f[4]) && st.markers == std::stoi(f[5]);
+        if (!ok) {
+            ++bad;
+            std::fprintf(stderr, "fixture mismatch %s: audio %d/%s midi %d/%s notes %d/%s tempo %d/%s markers %d/%s\n", f[0].c_str(), audio, f[1].c_str(), st.midiRegions, f[2].c_str(),
+                         st.notes, f[3].c_str(), st.tempoPoints, f[4].c_str(), st.markers, f[5].c_str());
+        }
+        if (st.meterPoints != std::stoi(f[6])) ++meterDiff;
+    }
+    std::fprintf(stderr, "logic fixtures: %d compared, %d mismatches, %d meter-count differences\n", rows, bad, meterDiff);
+    CHECK(rows > 50 && bad == 0);
+}
+
+
+// Track names against the logicxkit reader (tests/data/logicx_tracknames.tsv: fixture, NumberOfTracks, names of the arrange rows joined by 0x1F).
+static void testLogicTrackNames() {
+    const char* root = std::getenv("MINIDAW_LOGICX_FIXTURES");
+    if (!root) return;
+    std::string table;
+    if (!readFile("../tests/data/logicx_tracknames.tsv", table) && !readFile("tests/data/logicx_tracknames.tsv", table)) { CHECK(false); return; }
+    int rows = 0, bad = 0, names = 0;
+    size_t pos = 0;
+    while (pos < table.size()) {
+        size_t e = table.find('\n', pos);
+        if (e == std::string::npos) e = table.size();
+        const std::string line = table.substr(pos, e - pos);
+        pos = e + 1;
+        const size_t t1 = line.find('\t'), t2 = t1 == std::string::npos ? t1 : line.find('\t', t1 + 1);
+        if (t2 == std::string::npos) continue;
+        std::string raw;
+        if (!readFile(std::string(root) + "/" + line.substr(0, t1) + "/Alternatives/000/ProjectData", raw)) continue;
+        std::vector<std::string> want;
+        for (size_t a = t2 + 1, b; a <= line.size(); a = b + 1) { b = line.find('\x1f', a); if (b == std::string::npos) b = line.size(); want.push_back(line.substr(a, b - a)); }
+        const auto got = core::readLogicTrackNames(reinterpret_cast<const std::uint8_t*>(raw.data()), raw.size(), std::stoi(line.substr(t1 + 1, t2 - t1 - 1)));
+        ++rows;
+        bool ok = got.size() == want.size();
+        for (size_t i = 0; ok && i < want.size(); ++i) { if (!want[i].empty()) { ++names; if (got[i] != want[i]) ok = false; } }
+        if (!ok) { ++bad; std::fprintf(stderr, "track names differ in %s (%zu/%zu rows)\n", line.substr(0, t1).c_str(), got.size(), want.size()); }
+    }
+    std::fprintf(stderr, "logic track names: %d projects, %d names compared, %d projects differ\n", rows, names, bad);
+    CHECK(rows > 50 && bad == 0);
+}
+
+static void testLogicPackage() {
+    const std::string root = tmpDir() + "/logic";
+    removeTree(root);
+    const std::string pkg = root + "/My Song.logicx";
+    makeDirs(pkg + "/Alternatives/000");
+    makeDirs(pkg + "/Media/Audio Files");
+    makeDirs(pkg + "/Media/Bounces");
+    { std::string e; writeFile(pkg + "/Alternatives/000/ProjectData", std::string("binary"), &e); }
+    const std::string a = makeWav("lg_a.wav", 220, 44100), b = makeWav("lg_b.wav", 330, 44100);
+    { std::string d; readFile(a, d); std::string e; writeFile(pkg + "/Media/Audio Files/Guitar#01.wav", d, &e); readFile(b, d); writeFile(pkg + "/Media/Audio Files/Bass#01.wav", d, &e); writeFile(pkg + "/Media/Bounces/Mix.wav", d, &e); }
+    { std::string e; writeFile(pkg + "/Media/Audio Files/Old.caf", std::string("caff"), &e); writeFile(pkg + "/Media/Audio Files/notes.txt", std::string("x"), &e); }
+    CHECK(core::isLogicPath(pkg) && core::isLogicPath("X.LOGICX") && !core::isLogicPath("x.mdaw"));
+    CHECK(core::classifyFile(pkg) == core::FileKind::Logic);
+    auto pk = core::scanLogicPackage(pkg);
+    CHECK(pk.found && pk.name == "My Song" && pk.hasProjectData);
+    CHECK(pk.audioFiles.size() == 2 && pk.bounces.size() == 1 && pk.skippedUnreadable == 1);
+    CHECK(pk.audioFiles[0].find("Bass#01.wav") != std::string::npos);            // sorted
+    CHECK(core::scanLogicPackage(pkg + "/Media/Bounces/Mix.wav").found == false);   // a file is not a package
+    CHECK(core::scanLogicPackage(root + "/missing.logicx").found == false);
+    // a trailing slash is fine
+    CHECK(core::scanLogicPackage(pkg + "/").name == "My Song");
+    // no recordings: bounces are used
+    const std::string pkg2 = root + "/Only Bounce.logicx";
+    makeDirs(pkg2 + "/Media/Bounces");
+    { std::string d, e; readFile(a, d); writeFile(pkg2 + "/Media/Bounces/B.wav", d, &e); }
+    // import
+    Session s;
+    const int base = s.trackCount();
+    std::string msg;
+    CHECK(core::importLogicPackage(s, pkg, &msg) == 2 && msg.find("My Song") != std::string::npos && msg.find("not read") != std::string::npos);
+    for (int i = 0; i < 400 && s.trackCount() < base + 2; ++i) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    CHECK(s.trackCount() == base + 2);
+    CHECK(core::importLogicPackage(s, pkg, &msg, 1) == 1 && msg.find("1 more") != std::string::npos);
+    CHECK(core::importLogicPackage(s, pkg2, &msg) == 1 && msg.find("bounce") != std::string::npos);
+    const std::string empty = root + "/Empty.logicx";
+    makeDirs(empty);
+    CHECK(core::importLogicPackage(s, empty, &msg) == 0 && msg.find("no audio") != std::string::npos);
+    CHECK(core::importLogicPackage(s, root + "/plain", &msg) == 0 && msg.find("not a Logic") != std::string::npos);
+    // limit
+    CHECK(core::importLogicPackage(s, pkg, &msg, 0) == 1);   // at least one
+
+    // ---- the pipeline: ProjectData decoder -> model -> session (the decoder here is a stand-in with an invented layout, it only
+    // proves the stages around it; real Logic files need a real decoder)
+    {
+        core::clearProjectDataDecoders();
+        // survey + choice of the ProjectData file
+        makeDirs(pkg + "/Alternatives/001");
+        { std::string e; writeFile(pkg + "/Alternatives/001/ProjectData", std::string("FAKE-layout 0123456789 TRAK TRAK TRAK TRAK \x01\x02"), &e); }
+        CHECK(core::findProjectDataFile(pkg) == pkg + "/Alternatives/001/ProjectData");
+        CHECK(core::findProjectDataFile(root + "/Empty.logicx").empty());
+        std::string raw; readFile(pkg + "/Alternatives/001/ProjectData", raw);
+        auto pr = core::parseProjectData(reinterpret_cast<const std::uint8_t*>(raw.data()), raw.size());
+        CHECK(!pr.decoded && pr.note.find("No decoder") != std::string::npos);
+        CHECK(pr.survey.size == raw.size() && !pr.survey.fourCCs.empty() && pr.survey.fourCCs[0].first == "TRAK" && pr.survey.fourCCs[0].second == 4);
+        CHECK(!pr.survey.strings.empty());
+        CHECK(!core::parseProjectData(nullptr, 0).decoded);
+        CHECK(!core::registerProjectDataDecoder({}));
+        core::registerProjectDataDecoder([](const std::uint8_t* d, std::size_t n, core::LogicProject& out, std::string& name) {
+            if (n < 4 || std::string(reinterpret_cast<const char*>(d), 4) != "FAKE") return false;
+            name = "test decoder";
+            out.name = "Night";
+            out.tempo = {{0, 100, false}, {8, 140, false}};
+            core::LogicTrack a; a.name = "Guitar"; a.kind = core::LogicTrackKind::Audio;
+            a.audio.push_back({"Guitar", "Guitar#01.wav", 4.0, 0});
+            a.audio.push_back({"Gone", "NotThere.wav", 8.0, 0});
+            core::LogicTrack k; k.name = "Keys"; k.kind = core::LogicTrackKind::Software;
+            core::LogicMidiRegion mr; mr.startBeat = 2; mr.lengthBeats = 4; mr.notes = {{60, 0, 1, 100}, {64, 1, 1, 90}};
+            k.midi.push_back(mr);
+            core::LogicTrack x; x.name = "Skipped"; x.kind = core::LogicTrackKind::Other;
+            out.tracks = {a, k, x};
+            return true;
+        });
+        Session ps;
+        const int b = ps.trackCount();
+        CHECK(core::importLogicPackage(ps, pkg, &msg) == 2);       // one audio + one MIDI region
+        CHECK(msg.find("2 track") != std::string::npos && msg.find("1 MIDI") != std::string::npos && msg.find("1 audio file(s) were not found") != std::string::npos);
+        for (int i = 0; i < 400; ++i) { const auto sn = ps.snapshot(); if (sn.size() == size_t(b + 2) && !sn[size_t(b)].regions.empty()) break; std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+        const auto sn = ps.snapshot();
+        CHECK(sn.size() == size_t(b + 2) && sn[size_t(b)].name == "Guitar" && sn[size_t(b + 1)].name == "Keys");
+        CHECK(sn[size_t(b)].regions.size() == 1 && std::fabs(sn[size_t(b)].regions[0].start - 4.0) < 1e-9);
+        CHECK(sn[size_t(b + 1)].regions.size() == 1 && std::fabs(sn[size_t(b + 1)].regions[0].start - 2.0) < 1e-9 && sn[size_t(b + 1)].regions[0].notes.size() == 2);
+        CHECK(std::fabs(ps.tempoMap()->bpmAt(0) - 100) < 1e-6 && std::fabs(ps.tempoMap()->bpmAt(9) - 140) < 1e-6);
+        core::clearProjectDataDecoders();
+    }
+}
+
 static void testExportMp3AndStems() {
     const std::string wav = makeWav("exportsrc2.wav", 330, 44100 * 3);
     Session s;
@@ -1027,6 +1355,21 @@ static void testExportMp3AndStems() {
         CHECK(all.compare(0, 3, "ID3") == 0 && all.find("My Song") == std::string::npos);   // text is UTF-16: not plain
         CHECK(all.find(std::string("M\0y\0", 4)) != std::string::npos);
         CHECK(all.compare(all.size() - 15, 15, "FAKE-MP3-FRAMES") == 0);
+    }
+    {   // a stream of real frames gets the gapless header on export
+        Session::Hooks hk2;
+        size_t sent = 0;
+        hk2.encodeMp3 = [&](const std::vector<float>& pcm, int, int, const std::string& path, std::string*) {
+            sent = pcm.size() / 2;
+            std::string f = fakeMp3Frames(int(pcm.size() / 2 / 1152) + 1, 1);
+            std::ofstream out(path, std::ios::binary); out.write(f.data(), std::streamsize(f.size()));
+            return true;
+        };
+        s.setHooks(hk2);
+        CHECK(s.exportAudio(dir + "/gap.mp3", o, &err));
+        const auto g = core::readGaplessHeader(dir + "/gap.mp3");
+        CHECK(g.valid && g.delay == 576 && g.sampleRate == 48000 && g.musicSamples() == sent);   // decodes to exactly the project length
+        s.setHooks(hk);
     }
     o.sampleRate = 96000;                                   // MP3 cannot be 96 kHz
     CHECK(!s.exportAudio(dir + "/z.mp3", o, &err));
@@ -1319,7 +1662,7 @@ static void testMoveRegions() {
 int main() {
     testJson(); testText(); testWav(); testSaveLoad(); testUndo(); testClipboardAndDuplicate(); testAutosave();
     testExport(); testBounce(); testAutomationPan(); testMidiOps(); testMidiOps2(); testSessionRegions(); testSessionTransforms();
-    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems();
+    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems(); testMp3Gapless(); testLogicPackage(); testBplistAndLogicChunks(); testLogicFixtures(); testLogicTrackNames();
     std::printf("core fails=%d\n", fails);
     return fails;
 }

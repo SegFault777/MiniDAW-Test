@@ -42,6 +42,20 @@ Tips for the other program:
 
 Importing reads the same things back. Logic Pro, Ableton Live, Cubase, Pro Tools, FL Studio and others read and write these files, including their tempo and marker tracks.
 
+## Logic Pro projects (.logicx)
+
+A `.logicx` file is really a folder (a macOS "package"). MiniDAW reads **the arrangement of a Logic Pro project**:
+
+1. On the Mac, copy the whole `.logicx` folder (or compress it to a zip and unzip it on Windows) so that the folder keeps its name ending in `.logicx`.
+2. In MiniDAW choose **File > Import Logic Pro Project Folder...**, or drop the folder on the window, or give it on the command line.
+3. You get: the track names, the tempo and time signatures, the markers, every audio region on its track at its position (with the start and length that Logic shows),
+   and every MIDI region with its notes. Audio files come from the project's `Media` folder; files in `.caf` format cannot be read (convert them to WAV or AIFF in Logic first).
+
+What is **not** carried over: fades and region gain, Flex, take folders and comps,
+software instruments and plug-ins, the mixer and automation. MIDI regions are made as long as their notes (rounded up to whole bars).
+For a more complete move, also export **MIDI** (File > Export > All Tracks as MIDI File) and **stems** (File > Export > All Tracks as Audio Files) from Logic and open those here.
+Logic's file format is not documented by Apple; this reader is based on community reverse engineering and was checked with Logic Pro X 10.5 and 11/12 test projects.
+
 ## What is not exchanged
 - Plug-in settings and automation are not part of audio or MIDI files.
 - MP3 is a compressed format: use WAV or AIFF to move material between programs, and MP3 only for listening.

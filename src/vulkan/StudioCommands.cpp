@@ -42,6 +42,11 @@ void Studio::registerCommands() {
     addCmd("File", "Save As...", "Ctrl+Shift+S", 'S', C | S, [this] { doFile("saveas"); });
     sep("File");
     addCmd("File", "Import Audio...", "Ctrl+I", 'I', C, [this] { doFile("import"); });
+    addCmd("File", "Import Logic Pro Project Folder...", "", 0, 0, [this] {
+        if (!m_host.folderDialog) { message("Folder dialogs are not available here."); return; }
+        const std::string d = m_host.folderDialog("Choose a Logic Pro project (.logicx folder)");
+        if (!d.empty()) importLogic(d);
+    });
     addCmd("File", "Import MIDI File...", "", 0, 0, [this] { doFile("importmidi"); });
     addCmd("File", "Export MIDI File...", "", 0, 0, [this] { doFile("exportmidi"); });
     addCmd("File", "Bounce / Export Audio...", "Ctrl+B", 'B', C, [this] { dlgBounce(); });

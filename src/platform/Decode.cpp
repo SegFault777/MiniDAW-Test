@@ -8,6 +8,7 @@
 #include <cctype>
 #include "../core/AudioIO.h"
 #include "../core/Base.h"
+#include "../core/Mp3Gapless.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -116,7 +117,9 @@ bool decodeFile(const std::string& path, std::vector<float>& pcm, std::string* e
 #endif
     }
 #ifdef _WIN32
-    return decodeMediaFoundation(path, pcm, error);
+    if (!decodeMediaFoundation(path, pcm, error)) return false;
+    if (ext == ".mp3") core::trimMp3Decoded(pcm, core::readGaplessHeader(path), kSampleRate);   // gapless: drop encoder / decoder delay
+    return true;
 #else
     // Other platforms: a WAV file with an unusual extension still works.
     if (core::readWavFile(path, pcm, nullptr)) return true;

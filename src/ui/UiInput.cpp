@@ -1,6 +1,7 @@
 // MiniDAW - a lightweight Logic Pro-inspired digital audio workstation
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "../core/LogicImport.h"
 #include <algorithm>
 #include <cmath>
 #include <chrono>
@@ -236,6 +237,7 @@ void NativeUi::openAny(const std::string& p) {
     switch (core::classifyFile(p)) {
     case core::FileKind::Project: guardUnsaved([this, p] { openProject(p); m_dirty = true; }); break;
     case core::FileKind::Audio: m_s.importAudio(p, m_selTrack, m_s.positionBeats()); message(msg("Importing %1", p)); break;
+    case core::FileKind::Logic: { std::string summary; core::importLogicPackage(m_s, p, &summary); message(summary); break; }
     case core::FileKind::Midi: {
         std::string err;
         if (m_s.importMidiFile(p, &err)) message(msg("Imported %1", p)); else message(msg("Could not import: %1", err));

@@ -93,6 +93,7 @@ public:
     /// Opens any supported file: a project (after the unsaved-changes question), an audio file or a MIDI file (imported into the
     /// current project). Used by File > Open, drag and drop and "open with".
     void openAny(const std::string& path);
+    void importLogic(const std::string& folder);   ///< audio of a Logic Pro package (.logicx folder)
     void importAudioFile(const std::string& path);
     int selectedTrack() const { return m_selTrack; }
     bool quitRequested() const { return m_quit; }

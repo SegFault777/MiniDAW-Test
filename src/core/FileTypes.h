@@ -8,7 +8,7 @@
 
 namespace core {
 
-enum class FileKind { Project, Audio, Midi, Unknown };
+enum class FileKind { Project, Audio, Midi, Logic, Unknown };   ///< Logic = a Logic Pro package (.logicx folder), see core/LogicImport
 
 /// Lower-case extension including the dot (".mp3"), or "" when there is none. Works with / and \ separators.
 std::string fileExtension(const std::string& path);

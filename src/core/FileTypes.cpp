@@ -32,6 +32,7 @@ FileKind classifyFile(const std::string& path) {
     const std::string e = fileExtension(path);
     if (e.empty()) return FileKind::Unknown;
     if (e == ".mdaw") return FileKind::Project;
+    if (e == ".logicx") return FileKind::Logic;
     if (std::find(audioExtensions().begin(), audioExtensions().end(), e) != audioExtensions().end()) return FileKind::Audio;
     if (std::find(midiExtensions().begin(), midiExtensions().end(), e) != midiExtensions().end()) return FileKind::Midi;
     return FileKind::Unknown;

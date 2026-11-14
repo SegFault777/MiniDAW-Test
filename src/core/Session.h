@@ -87,6 +87,12 @@ public:
     std::shared_ptr<dsp::Effect> limiter() const { return m_limiter; }
 
     void importAudio(const std::string& path, int track, double startBeat);
+
+    /// One use of an audio file: a region of an existing audio track starting at 'startBeat', playing 'frames' frames from
+    /// 'srcOffset' (frames of the engine sample rate; frames <= 0 = to the end of the file). Used by the Logic Pro import.
+    struct AudioPlacement { int track = 0; double startBeat = 0; long long srcOffset = 0; long long frames = 0; };
+    /// Decodes the file once and puts a region for every placement on its track (no tempo following, no stretching).
+    void importAudioPlacements(const std::string& path, const std::vector<AudioPlacement>& places);
     bool importMidiFile(const std::string& path, std::string* error);
     bool exportMidiFile(const std::string& path, std::string* error);
     int addMidiRegion(int track, double startBeat, double lengthBeats);

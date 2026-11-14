@@ -2,6 +2,7 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Vulkan UI: the modal parameter dialog and every dialog built on it, plus the file commands.
+#include "../core/LogicImport.h"
 #include <algorithm>
 #include <cstdio>
 #include "../dsp/AudioOps.h"
@@ -134,10 +135,18 @@ void Studio::importAudioFile(const std::string& p) {
     m_modelDirty = true;
 }
 
+void Studio::importLogic(const std::string& folder) {
+    std::string summary;
+    core::importLogicPackage(m_s, folder, &summary);
+    message(summary);
+    m_modelDirty = true;
+}
+
 void Studio::openAny(const std::string& p) {
     switch (core::classifyFile(p)) {
     case core::FileKind::Project: guardUnsaved([this, p] { openFile(p); }); break;
     case core::FileKind::Audio: importAudioFile(p); break;
+    case core::FileKind::Logic: importLogic(p); break;
     case core::FileKind::Midi: {
         std::string err;
         if (m_s.importMidiFile(p, &err)) message(fmt("Imported %1", p));

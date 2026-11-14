@@ -1,6 +1,7 @@
 // MiniDAW - a lightweight Logic Pro-inspired digital audio workstation
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "FileTypes.h"
 #include "Session.h"
 
 #include <algorithm>
@@ -1307,12 +1308,14 @@ std::shared_ptr<dsp::Instrument> Session::makeInstrument(const std::string& id) 
 
 void Session::decodeAsync(const std::string& path, DecodeDone done) {
     if (m_hooks.decode) { m_hooks.decode(path, std::move(done)); return; }
-    // Without a platform decoder only WAV files can be read; the result arrives immediately.
+    // Without a platform decoder only WAV and AIFF files can be read; the result arrives immediately.
     auto data = std::make_shared<AudioData>();
     data->name = baseName(path);
     data->path = path;
     std::string err;
-    if (!readWavFile(path, data->pcm, &err) || data->frames() == 0) {
+    const std::string ext = fileExtension(path);
+    const bool aiff = ext == ".aif" || ext == ".aiff" || ext == ".aifc";
+    if (!(aiff ? readAiffFile(path, data->pcm, &err) : readWavFile(path, data->pcm, &err)) || data->frames() == 0) {
         done(nullptr, tr("Could not decode %1").arg(data->name).str());
         return;
     }
