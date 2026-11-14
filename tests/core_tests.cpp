@@ -1126,6 +1126,14 @@ static void testBplistAndLogicChunks() {
         auto rr = core::parseProjectData(reinterpret_cast<const std::uint8_t*>(raw.data()), raw.size());
         std::fprintf(stderr, "real sample: %s | pool %zu\n", rr.note.c_str(), rr.project.mediaPool.size());
         CHECK(rr.decoded && rr.note.find("end of the file") != std::string::npos && !rr.project.mediaPool.empty());
+        {   // exact MIDI region length (reference probe: track 8 has a 4-bar region at beat 16)
+            bool four = false; int whole = 0;
+            for (const auto& tr : rr.project.tracks) for (const auto& mr : tr.midi) {
+                if (tr.number == 8 && std::fabs(mr.startBeat - 16.0) < 1e-6 && std::fabs(mr.lengthBeats - 16.0) < 1e-6) four = true;
+                if (std::fabs(mr.lengthBeats - std::round(mr.lengthBeats)) < 1e-9) ++whole;
+            }
+            CHECK(four && whole > 0);
+        }
         // numbers of the reference decoder (LogicProFormatWriter session_model) on the Logic Pro X 10.5 sample
         CHECK(rr.note.find("255 audio and 28 MIDI regions, 912 notes, 1 tempo point(s), 1 marker(s)") != std::string::npos);
         core::LogicProject lp = rr.project;
@@ -1201,6 +1209,10 @@ static void testLogicFixtures() {
                          st.notes, f[3].c_str(), st.tempoPoints, f[4].c_str(), st.markers, f[5].c_str());
         }
         if (st.meterPoints != std::stoi(f[6])) ++meterDiff;
+        if (f[0] == "fixtures/F23_av.logicx") {   // four 1-bar instrument regions at beat 0
+            int bars = 0; for (const auto& tr : lp.tracks) for (const auto& mr : tr.midi) if (std::fabs(mr.lengthBeats - 4.0) < 1e-9 && mr.startBeat == 0.0) ++bars;
+            CHECK(bars == 4 && st.exactMidiLengths >= 4);
+        }
     }
     std::fprintf(stderr, "logic fixtures: %d compared, %d mismatches, %d meter-count differences\n", rows, bad, meterDiff);
     CHECK(rows > 50 && bad == 0);

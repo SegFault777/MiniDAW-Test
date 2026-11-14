@@ -89,7 +89,7 @@ std::vector<MenuItem> NativeUi::fileMenu() {
     return {item("New Project", "Ctrl+N", [this] { doFile("new"); }), item("Open...", "Ctrl+O", [this] { doFile("open"); }), item("Open Recent...", "", [this] { openMenu(recentMenu(), m_menuRect.x + 20, m_menuRect.y + 60); }),
             item("Recover Autosaved Project", "", [this] { doFile("recover"); }, m_s.hasAutosave()), sep(),
             item("Save", "Ctrl+S", [this] { doFile("save"); }), item("Save As...", "Ctrl+Shift+S", [this] { doFile("saveas"); }), sep(),
-            item("Import Audio...", "Ctrl+I", [this] { doFile("import"); }), item("Import MIDI File...", "", [this] { doFile("importmidi"); }),
+            item("Import Audio...", "Ctrl+I", [this] { doFile("import"); }), item("Import MIDI File...", "", [this] { doFile("importmidi"); }), item("Import Logic Pro Project Folder...", "", [this] { doFile("importlogic"); }),
             item("Export MIDI File...", "", [this] { doFile("exportmidi"); }), item("Bounce to WAV...", "Ctrl+B", [this] { dlgBounce(); }), sep(),
             item("Preferences...", "Ctrl+,", [this] { dlgPreferences(); }), sep(), item("Quit", "", [this] { if (m_host.quit) m_host.quit(); })};
 }
@@ -280,6 +280,12 @@ void NativeUi::doFile(const std::string& what) {
     } else if (what == "importmidi") {
         const std::string p = ask("Import MIDI File", core::midiFilter().c_str(), false);
         if (!p.empty()) { if (m_s.importMidiFile(p, &err)) message(msg("Imported %1", p)); else message(msg("Could not import: %1", err)); }
+    } else if (what == "importlogic") {
+        if (!m_host.folderDialog) { message("Folder dialogs are not available here."); }
+        else {
+            const std::string d = m_host.folderDialog("Choose a Logic Pro project (.logicx folder)");
+            if (!d.empty()) { std::string summary; core::importLogicPackage(m_s, d, &summary); message(summary); }
+        }
     } else if (what == "exportmidi") {
         std::string p = ask("Export MIDI File", "MIDI files|*.mid", true);
         if (!p.empty()) { if (p.find('.') == std::string::npos) p += ".mid"; if (m_s.exportMidiFile(p, &err)) message(msg("Exported %1", p)); else message(msg("Could not export: %1", err)); }

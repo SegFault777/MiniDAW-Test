@@ -245,10 +245,12 @@ LogicArrangementStats decodeLogicArrangement(const std::uint8_t* data, std::size
     // ---- notes of every note sequence (role 0x17, payload starting with a note event), by sequence number
     std::map<std::uint32_t, std::vector<Note>> notesOf;
     std::map<std::uint32_t, std::string> seqName;
+    std::map<std::uint32_t, std::size_t> seqRec;   // first qeSM record of a sequence (offset)
     for (const Rec& r : recs) {
         if (r.is("qeSM") && r.size >= 0x12 && !seqName.count(v.u32(r.off + 8) >> 18)) {   // the first qeSM of a sequence names it
             const std::size_t nl = v.u8(r.off + 0x34);
             seqName[v.u32(r.off + 8) >> 18] = r.off + 0x36 + nl <= r.off + 36 + r.size ? std::string(reinterpret_cast<const char*>(data + r.off + 0x36), nl) : std::string();
+            seqRec[v.u32(r.off + 8) >> 18] = r.off;
         }
         if (!r.is("qSvE") || v.u16(r.off + 6) != 0x17 || r.size < 32 || v.u32(r.pay()) != 0x90) continue;
         std::vector<Note> notes;
@@ -327,7 +329,21 @@ LogicArrangementStats decodeLogicArrangement(const std::uint8_t* data, std::size
         if (it != notesOf.end()) m.notes = it->second;
         double end = 0;
         for (const Note& n : m.notes) end = std::max(end, n.start + n.length);
-        m.lengthBeats = std::max(4.0, std::ceil(end / 4.0) * 4.0);   // whole bars (4/4); the exact length field is not decoded
+        m.lengthBeats = std::max(4.0, std::ceil(end / 4.0) * 4.0);   // fallback: whole bars (4/4)
+        {   // exact length: u32 (960 PPQ ticks) in the region's qeSM at 0x78, moved by the even-rounded name length (name field sits before it)
+            auto rec = seqRec.find(seq);
+            if (rec == seqRec.end()) rec = seqRec.find(p.regionIndex);
+            if (rec != seqRec.end()) {
+                const std::size_t ro = rec->second, rsize = 36 + v.u32(ro + 0x1c);
+                const std::size_t nl = v.u8(ro + 0x34), off = 0x78 + ((nl + (nl & 1)) - 6);
+                {
+                    if (nl + (nl & 1) >= 6 && off + 4 <= rsize) {
+                        const std::uint32_t L = v.u32(ro + off);
+                        if (L >= 240 && L % 240 == 0 && L <= 960u * 4 * 2000) { m.lengthBeats = double(L) / kPpq; ++st.exactMidiLengths; }
+                    }
+                }
+            }
+        }
         st.notes += int(m.notes.size());
         trackFor(p.track, true).midi.push_back(std::move(m));
         ++st.midiRegions;

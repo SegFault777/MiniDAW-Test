@@ -16,7 +16,7 @@
 namespace core {
 
 struct LogicArrangementStats {
-    int tempoPoints = 0, meterPoints = 0, markers = 0, audioRegions = 0, midiRegions = 0, notes = 0, unresolvedAudio = 0;
+    int exactMidiLengths = 0, tempoPoints = 0, meterPoints = 0, markers = 0, audioRegions = 0, midiRegions = 0, notes = 0, unresolvedAudio = 0;
 };
 
 /// Track names in the order of Logic's arrange list (index 0 = track 1; a final empty row of the list is included).

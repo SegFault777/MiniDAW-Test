@@ -31,6 +31,12 @@ re-implementation, checked against that project's own decoder (see "Verification
 - MIDI: 80-byte placements (`0x20`), content = the note qSvE of the child sequence (@+0x20 / 4, else @+0x08 / 4), 32-byte notes
   (`90 00 00 00`, position region-relative, velocity @+0x0b, pitch @+0x0c, length @+0x1c). `*Automation` sequences are not regions.
 
+## MIDI region length
+u32 in 960-PPQ ticks inside the region's first `qeSM` record, at `0x78 + (even(nameLength) - 6)` (the name field, u8/u16 length @0x34 + text, sits in front of it
+and shifts the field; the reference notes give 0x78 for the name "Inst 1"). Accepted when a multiple of 240 ticks and below 2000 bars. Checked: 39 of 39
+regions of the reference fixtures are plausible and at least as long as their notes; 25 of 26 in the real project (the other is an empty region with a different
+layout and uses the fallback). A 4-bar region of the real project (track 8, beat 16) reads as 16 beats.
+
 ## Track names
 The arrange list is a run of `karT` rows (runs are separated by zero-size `karT` records; the run with NumberOfTracks + 1 rows is the arrange
 list). Row i (1-based) is Logic's track number i - the number the placement events carry. A row's object id (u32 @row+8) is the object id
@@ -44,7 +50,7 @@ MIDI region with its notes, one software-instrument track per Logic track number
 decoded once. Without a readable ProjectData the recordings are imported one track each (the older behaviour).
 
 ## What is not (yet)
-- **MIDI region length**: the length field is not decoded; regions get the notes' extent rounded up to whole 4/4 bars (empty region: 1 bar).
+- **MIDI region length** is read from the region's `qeSM` (see above); when that field is missing or implausible (1 empty region of the real sample) the notes' extent rounded up to whole 4/4 bars is used (empty region: 1 bar).
 - **Take folders / comps**, region fades, gain, flex, plug-ins, software instrument choice, mixer, automation, extended notes
   (note format byte 0x40), sysex.
 - Only 44.1 kHz-based sessions were checked end to end; trim / length are scaled by the project sample rate.
