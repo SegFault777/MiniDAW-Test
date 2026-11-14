@@ -38,7 +38,7 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; Flags: unchecked
 Name: "fileassoc"; Description: "Associate .mdaw project files with {#MyAppName} (the Native version may already use them)"; Flags: unchecked
-Name: "openwith"; Description: "Add {#MyAppName} to the \"Open with\" list of audio and MIDI files (mp3, wav, aiff, flac, m4a, ogg, mid)"
+Name: "openwith"; Description: "Add {#MyAppName} to the ""Open with"" list of audio and MIDI files (mp3, wav, aiff, flac, m4a, ogg, mid)"
 Name: "plugindirs"; Description: "Create the folder for your own MiniDAW plug-ins (%LOCALAPPDATA%\MiniDAW\plugins)"
 
 [Files]
