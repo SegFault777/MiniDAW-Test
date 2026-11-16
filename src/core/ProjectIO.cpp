@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
+#include <map>
 #include <regex>
 #include "../dsp/MidiFile.h"
 #include "../dsp/Stretch.h"
@@ -134,7 +135,7 @@ void Session::importAudioPlacements(const std::string& path, const std::vector<A
 }
 
 // ------------------------------------------------------------------ MIDI files
-bool Session::importMidiFile(const std::string& path, std::string* error) {
+bool Session::importMidiFile(const std::string& path, std::string* error, const MidiImportOptions& options) {
     std::string raw;
     if (!readFile(path, raw, error)) return false;
     dsp::MidiSong song;
@@ -146,7 +147,8 @@ bool Session::importMidiFile(const std::string& path, std::string* error) {
         std::lock_guard<std::mutex> l(m_mutex);
         for (const Track& t : m_tracks) empty = empty && t.regions.empty();
     }
-    if (empty) {   // adopt the tempo map and the time signatures of the file into an empty project
+    const bool adopt = options.tempo == MidiTempoPolicy::UseFile || (options.tempo == MidiTempoPolicy::Auto && empty);
+    if (adopt) {   // adopt the tempo map and the time signatures of the file
         auto tm = std::make_shared<dsp::TempoMap>(*tempoMap());
         std::vector<dsp::TempoPoint> tp;
         for (const auto& t : song.tempos) {
@@ -175,23 +177,34 @@ bool Session::importMidiFile(const std::string& path, std::string* error) {
     {
         std::lock_guard<std::mutex> l(m_mutex);
         int n = 1;
-        for (const dsp::MidiTrack& mt : song.tracks) {
+        auto addTrack = [&](const std::string& name, const std::vector<const dsp::MidiNote*>& notes) {
             bool drums = true;
             double maxEnd = 0;
-            for (const dsp::MidiNote& note : mt.notes) {
-                drums = drums && note.channel == 9;
-                maxEnd = std::max(maxEnd, note.startBeat + note.lengthBeats);
+            for (const dsp::MidiNote* note : notes) {
+                drums = drums && note->channel == 9;
+                maxEnd = std::max(maxEnd, note->startBeat + note->lengthBeats);
             }
-            const std::string name = mt.name.empty() ? tr("Imported %1").arg(n).str() : mt.name;
             Track t = makeTrack(drums ? TrackType::Drummer : TrackType::Instrument, name);
             Region r;
             r.midi = true;
             r.name = name;
             r.start = 0;
             r.lengthBeats = std::max(tm->barLength(1), tm->nextBarLine(maxEnd));
-            for (const dsp::MidiNote& note : mt.notes) r.notes.push_back({note.pitch, note.startBeat, note.lengthBeats, note.velocity});
+            for (const dsp::MidiNote* note : notes) r.notes.push_back({note->pitch, note->startBeat, note->lengthBeats, note->velocity});
             t.regions.push_back(std::move(r));
             m_tracks.push_back(std::move(t));
+        };
+        for (const dsp::MidiTrack& mt : song.tracks) {
+            const std::string name = mt.name.empty() ? tr("Imported %1").arg(n).str() : mt.name;
+            std::map<int, std::vector<const dsp::MidiNote*>> byChannel;
+            for (const dsp::MidiNote& note : mt.notes) byChannel[note.channel].push_back(&note);
+            if (options.splitChannels && byChannel.size() > 1) {
+                for (const auto& [ch, notes] : byChannel) addTrack(name + " (ch " + std::to_string(ch + 1) + ")", notes);
+            } else {
+                std::vector<const dsp::MidiNote*> all;
+                for (const dsp::MidiNote& note : mt.notes) all.push_back(&note);
+                addTrack(name, all);
+            }
             ++n;
         }
     }
@@ -793,7 +806,19 @@ bool Session::exportStems(const std::string& folder, const ExportOptions& optIn,
     // every stem has the length of the whole project, so the files line up: the length is decided once from the whole mix
     std::vector<std::pair<bool, bool>> saved;   // original mute / solo
     for (const Track& t : tracks) saved.emplace_back(t.mute, t.solo);
-    auto restore = [&] { std::lock_guard<std::mutex> l(m_mutex); for (size_t i = 0; i < m_tracks.size() && i < saved.size(); ++i) { m_tracks[i].mute = saved[i].first; m_tracks[i].solo = saved[i].second; } };
+    const float savedMaster = m_master;
+    const bool savedLimiterBypass = m_limiter->bypass;
+    auto restore = [&] {
+        std::lock_guard<std::mutex> l(m_mutex);
+        for (size_t i = 0; i < m_tracks.size() && i < saved.size(); ++i) { m_tracks[i].mute = saved[i].first; m_tracks[i].solo = saved[i].second; }
+        m_master = savedMaster;
+        m_limiter->bypass = savedLimiterBypass;
+    };
+    if (!opt.masterEffects) {   // stems with the track effects only: no master volume, no limiter
+        std::lock_guard<std::mutex> l(m_mutex);
+        m_master = 1.f;
+        m_limiter->bypass = true;
+    }
     bool ok = true;
     std::string firstError;
     int number = 0;

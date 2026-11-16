@@ -169,7 +169,6 @@ Normalize	ノーマライズ
 Automation	オートメーション
 Automation Parameter	オートメーション パラメータ
 Volume	ボリューム
-Pan	パン
 Send A	センドA
 Send B	センドB
 Marker %1	マーカー %1
@@ -691,10 +690,33 @@ Ride Bell	ライドベル
 Tambourine	タンバリン
 Cowbell	カウベル
 Percussion	パーカッション
+Tempo and time signature	テンポと拍子
+Adopt if the project is empty	プロジェクトが空なら取り込む
+Use the file's	ファイルのものを使う
+Keep the project's	プロジェクトのものを保持
+One track for every MIDI channel	MIDIチャンネルごとに1トラック
+The notes start at bar 1. Markers of the file are added.	ノートは1小節目から始まります。ファイルのマーカーも追加されます。
+Import	読み込む
+Icon style	アイコンスタイル
+Classic	クラシック
+Material Symbols needs its font files in the fonts folder.	Material Symbolsはfontsフォルダにフォントファイルが必要です。
+Without them the classic icons are used.	ない場合はクラシックアイコンを使います。
 # Tutorial
+Mixer groups	ミキサーグループ
+Bringing files in	ファイルを取り込む
+Exporting for other DAWs	他のDAW向けに書き出す
+Tracks in the same mixer group move together: faders, pans, sends, mute and solo. A drum kit recorded on six tracks is the classic example.	同じミキサーグループのトラックは、フェーダー、パン、センド、ミュート、ソロが一緒に動きます。6トラックに録音したドラムセットが代表例です。
+In the mixer, click the small circle at the top of a channel strip and choose a group from A to H, or right-click a track in the arrangement and use Mixer Group. Every group has its own colour.	ミキサーでチャンネルストリップ上部の小さな丸をクリックしてAからHのグループを選ぶか、アレンジでトラックを右クリックして「ミキサーグループ」を選びます。グループごとに色が違います。
+Hold Alt while you change a control to change only that track. Ctrl+K and typing group b also puts the selected track in group B.	Altを押しながら操作すると、そのトラックだけが変わります。Ctrl+Kを押して group b と入力しても、選択中のトラックがグループBになります。
+Drag an audio or MIDI file onto the window, or use File > Open. MiniDAW reads WAV, AIFF, MP3, M4A and FLAC audio and Standard MIDI Files.	オーディオまたはMIDIファイルをウィンドウにドラッグするか、ファイル > 開くを使います。MiniDAWはWAV、AIFF、MP3、M4A、FLACのオーディオと標準MIDIファイルを読み込めます。
+File > Import MIDI File asks what to do with the tempo map of the file, and whether a track that uses several channels becomes one track per channel.	ファイル > MIDIファイルを読み込むでは、ファイルのテンポマップの扱いと、複数チャンネルを使うトラックをチャンネルごとのトラックに分けるかを選べます。
+A Logic Pro project is a folder ending in .logicx: File > Import Logic Pro Project Folder brings in its tempo, markers, track names, audio regions and MIDI regions. Plug-ins, automation and the mixer are not read.	Logic Proのプロジェクトは .logicx で終わるフォルダです。ファイル > Logic Proプロジェクトフォルダを読み込むで、テンポ、マーカー、トラック名、オーディオリージョン、MIDIリージョンを取り込めます。プラグイン、オートメーション、ミキサーは読み込まれません。
+Bounce / Export Audio (Ctrl+B) writes WAV, AIFF or MP3 from 44.1 to 96 kHz. MP3 files get title, artist and album tags.	バウンス / オーディオ書き出し（Ctrl+B）は44.1～96 kHzのWAV、AIFF、MP3を書き出します。MP3にはタイトル、アーティスト、アルバムのタグが付きます。
+Tick One file for every track to export stems. All files start at the same point and have the same length, so they line up at bar 1 in Logic Pro, Ableton Live or Cubase.	「トラックごとに1ファイル」にチェックするとステムを書き出します。すべてのファイルの開始位置と長さが同じなので、Logic Pro、Ableton Live、Cubaseで1小節目に合わせて置けます。
+Switch off Stems: keep master volume and limiter when the other program should do its own master processing. File > Export MIDI File also writes your tempo map, time signatures and markers.	相手のソフトでマスター処理を行いたいときは「ステム: マスターボリュームとリミッターを含める」をオフにします。ファイル > MIDIファイルを書き出すは、テンポマップ、拍子、マーカーも書き出します。
+This tutorial has 18 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	このチュートリアルは18ページの短い構成です。次へ／戻るボタン、または左右の矢印キーを使います。Escで閉じ、ヘルプ > チュートリアルからいつでも開き直せます。
 Welcome to MiniDAW	MiniDAWへようこそ
 MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.	MiniDAWは軽くて高速な音楽スタジオです。1つのウィンドウで録音、シーケンス、編集、ミックスができます。
-This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	このチュートリアルは短い15ページです。「次へ」「戻る」ボタンか左右の矢印キーを使ってください。Escで閉じ、ヘルプ > チュートリアルからいつでも開き直せます。
 You do not need to remember anything: Ctrl+K opens a palette that finds every command by name.	覚える必要はありません。Ctrl+Kを押すと、名前ですべてのコマンドを探せるパレットが開きます。
 The window at a glance	ウィンドウの全体像
 The menu bar and the transport (play, record, tempo, position) are at the top.	一番上にメニューバーとトランスポート(再生、録音、テンポ、位置)があります。
@@ -784,6 +806,7 @@ Title (MP3)	タイトル (MP3)
 Artist (MP3)	アーティスト (MP3)
 Album (MP3)	アルバム (MP3)
 One file for every track (stems, all the same length)	トラックごとに1ファイル(ステム、長さはすべて同じ)
+Stems: keep master volume and limiter	ステム: マスターボリュームとリミッターを含める
 One file for every track (stems)	トラックごとに1ファイル(ステム)
 Stems start at the same point and have the same length.	ステムは同じ位置から始まり、長さも同じです。
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Logic Pro、Ableton Live、Cubaseの1小節目にドラッグしてください。

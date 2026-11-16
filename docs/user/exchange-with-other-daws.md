@@ -27,6 +27,8 @@ WAV and AIFF are read by MiniDAW itself. The other audio formats are decoded by 
 MP3 export uses the MP3 encoder of Windows (Media Foundation), so nothing extra is installed. WAV and AIFF are written by MiniDAW itself, so they work on any system.
 
 ### Stems (one file for every track)
+
+By default the stems carry the master volume and the limiter of the project, so they sum to the same level as a normal bounce. Switch off **Stems: keep master volume and limiter** to get the stems with only their own track effects (inserts and sends): a mixer in another DAW can then apply its own master processing. Stems can be WAV, AIFF or MP3 like any other export; the format choice of the dialog applies to every file.
 Tick **One file for every track** and choose a folder. Every track that makes sound becomes a file called `01 Name.wav`, `02 Name.wav` ... All files start at the same point and have exactly the same length, so you can drop them all into another DAW at bar 1 and they line up. Level and panning of the tracks are included, the master effects are too, and the mute / solo state of your project is not changed.
 
 Tips for the other program:
@@ -41,6 +43,8 @@ Tips for the other program:
 - one track per instrument or Drummer track, with its name (Drummer tracks on channel 10).
 
 Importing reads the same things back. Logic Pro, Ableton Live, Cubase, Pro Tools, FL Studio and others read and write these files, including their tempo and marker tracks.
+
+**Import options** (File > Import MIDI File...): choose what happens with the tempo map and time signatures of the file - *Adopt if the project is empty* (the default, also used when you drop a file on the window), *Use the file's* (always replace the project's), or *Keep the project's* (never touch them). Tick *One track for every MIDI channel* when a file track mixes several channels (a type 0 file, or a track that plays drums and a bass): each channel becomes its own track, named for example "Piano (ch 2)", and channel 10 becomes a Drummer track. Program changes (sound choices) are not imported, because MiniDAW has its own instruments.
 
 ## Logic Pro projects (.logicx)
 

@@ -1,6 +1,7 @@
 // MiniDAW - a lightweight Logic Pro-inspired digital audio workstation
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "IconFont.h"
 #include "Text.h"
 #include <algorithm>
 #include "../ui/FontData.h"
@@ -27,7 +28,7 @@ void appendUtf8(std::string& out, std::uint32_t cp) {
     else { out.push_back(char(0xF0 | (cp >> 18))); out.push_back(char(0x80 | ((cp >> 12) & 0x3F))); out.push_back(char(0x80 | ((cp >> 6) & 0x3F))); out.push_back(char(0x80 | (cp & 0x3F))); }
 }
 
-Fonts::Fonts(std::unique_ptr<FontSource> source) : m_src(std::move(source)), m_atlas(size_t(kAtlas) * kAtlas, 0) {}
+Fonts::Fonts(std::unique_ptr<FontSource> source) : m_src(makeIconAwareSource(std::move(source))), m_atlas(size_t(kAtlas) * kAtlas, 0) {}
 
 float Fonts::lineHeight(bool bold, int px) { return m_src ? m_src->lineHeight(bold, px) : float(px); }
 

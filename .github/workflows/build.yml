@@ -189,6 +189,13 @@ jobs:
         shell: pwsh
         run: choco install innosetup -y --no-progress
 
+      # Material Symbols (Google, Apache-2.0) for the icon style setting. Optional: if the download fails the build goes on and
+      # the Vulkan version uses its classic icons.
+      - name: Get the Material Symbols fonts
+        continue-on-error: true
+        shell: bash
+        run: bash tools/fetch-material-symbols.sh
+
       - name: Build, deploy and create the installer
         shell: bash
         env:

@@ -28,3 +28,9 @@ The reading of track names in `src/core/LogicArrangement.cpp` (`readLogicTrackNa
 source of logicxkit, https://github.com/phierceweb/logicxkit (Apache-2.0, Copyright Mike Farr): the `karT` arrange list and the `ivnE`
 Environment objects. Only the byte offsets and the rules for choosing the list were taken, re-implemented in C++. No logicxkit code is
 included. `tests/data/logicx_tracknames.tsv` holds names read by logicxkit from the LogicProFormatWriter test fixtures.
+
+## Material Symbols (icon fonts, optional)
+The Vulkan version can draw its icons from the Material Symbols fonts (Outlined, Rounded, Sharp), Copyright Google LLC, Apache License 2.0
+(https://www.apache.org/licenses/LICENSE-2.0), https://github.com/google/material-design-icons. The fonts are not part of the source repository:
+`tools/fetch-material-symbols.sh` downloads them into `resources/fonts`, `build.sh` copies them into the installer and portable folders together
+with their licence note (`LICENSE.txt`). MiniDAW only reads the files; the TrueType reader in `src/vulkan/TrueType.cpp` is its own code.

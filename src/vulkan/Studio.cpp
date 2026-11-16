@@ -2,6 +2,7 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Vulkan UI: the frame loop, window layout, menu bar, transport, status bar, keyboard shortcuts, command registry and palette.
+#include "IconFont.h"
 #include "Studio.h"
 #include <algorithm>
 #include <cstdio>
@@ -20,6 +21,12 @@ std::string lower(std::string s) { std::transform(s.begin(), s.end(), s.begin(),
 
 Studio::Studio(core::Session& session, Host host) : m_s(session), m_host(std::move(host)) {
     registerCommands();
+    {   // icon style: the fonts of Material Symbols are optional, a missing font falls back to the classic icons
+        auto& th = IconTheme::instance();
+        if (!m_host.iconFontDirs.empty()) th.setFontDirs(m_host.iconFontDirs);
+        const auto it = m_host.settings.find("iconStyle");
+        th.setStyle(IconTheme::parseStyle(it == m_host.settings.end() ? "outlined" : it->second));
+    }
     for (const std::string& fid : dsp::insertEffectIds()) { auto fx = dsp::createEffect(fid); m_effectNames.emplace_back(fid, fx ? fx->displayName() : fid); }
     m_tempo = m_s.tempoMap();
     applyLayout(m_host.settings);

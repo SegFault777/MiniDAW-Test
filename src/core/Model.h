@@ -135,6 +135,18 @@ struct MixSnapshot {
 /// The file type of an export. MP3 needs an encoder from the platform layer (Session::Hooks::encodeMp3).
 enum class ExportContainer { Wav, Aiff, Mp3 };
 
+/// What a MIDI file import does with the tempo map and the time signatures of the file.
+enum class MidiTempoPolicy {
+    Auto,          ///< adopt them when the project has no regions yet, otherwise keep the project's (the default)
+    UseFile,       ///< always replace the project's tempo map and time signatures with the file's
+    KeepProject,   ///< never touch the project's tempo map and time signatures
+};
+
+struct MidiImportOptions {
+    MidiTempoPolicy tempo = MidiTempoPolicy::Auto;
+    bool splitChannels = false;   ///< a file track that uses several MIDI channels becomes one track per channel
+};
+
 struct ExportOptions {
     ExportContainer container = ExportContainer::Wav;
     int sampleRate = 44100;                              ///< 44100, 48000, 88200 or 96000 (MP3: 44100 or 48000).
@@ -146,6 +158,7 @@ struct ExportOptions {
     float normalizeDb = -1.f;
     bool dither = false;                                 ///< TPDF dither (16-bit only).
     bool tail = true;                                    ///< Add 2 s for reverb and echo tails.
+    bool masterEffects = true;                           ///< Stems: keep the master volume and the limiter (false = the stems carry only the track effects).
 };
 
 }  // namespace core

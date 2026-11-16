@@ -169,7 +169,6 @@ Normalize	标准化
 Automation	自动化
 Automation Parameter	自动化参数
 Volume	音量
-Pan	声像
 Send A	发送 A
 Send B	发送 B
 Marker %1	标记 %1
@@ -691,10 +690,33 @@ Ride Bell	叮叮镲钟
 Tambourine	铃鼓
 Cowbell	牛铃
 Percussion	打击乐
+Tempo and time signature	速度和拍号
+Adopt if the project is empty	工程为空时采用
+Use the file's	使用文件的
+Keep the project's	保留工程的
+One track for every MIDI channel	每个 MIDI 通道一条轨道
+The notes start at bar 1. Markers of the file are added.	音符从第 1 小节开始。文件中的标记也会添加。
+Import	导入
+Icon style	图标样式
+Classic	经典
+Material Symbols needs its font files in the fonts folder.	Material Symbols 需要在 fonts 文件夹中放置字体文件。
+Without them the classic icons are used.	没有字体时使用经典图标。
 # Tutorial
+Mixer groups	混音器分组
+Bringing files in	导入文件
+Exporting for other DAWs	导出给其他 DAW
+Tracks in the same mixer group move together: faders, pans, sends, mute and solo. A drum kit recorded on six tracks is the classic example.	同一混音器分组的轨道会一起变化：推子、声像、发送、静音和独奏。录在六条轨道上的鼓组就是典型例子。
+In the mixer, click the small circle at the top of a channel strip and choose a group from A to H, or right-click a track in the arrangement and use Mixer Group. Every group has its own colour.	在混音器中点击通道条顶部的小圆圈，从 A 到 H 选择分组；或在编排视图中右键点击轨道，选择“混音器分组”。每个分组都有自己的颜色。
+Hold Alt while you change a control to change only that track. Ctrl+K and typing group b also puts the selected track in group B.	按住 Alt 操作时只会改变该轨道。按 Ctrl+K 并输入 group b，也可以把选中的轨道放入 B 组。
+Drag an audio or MIDI file onto the window, or use File > Open. MiniDAW reads WAV, AIFF, MP3, M4A and FLAC audio and Standard MIDI Files.	把音频或 MIDI 文件拖到窗口上，或使用“文件 > 打开”。MiniDAW 可读取 WAV、AIFF、MP3、M4A、FLAC 音频和标准 MIDI 文件。
+File > Import MIDI File asks what to do with the tempo map of the file, and whether a track that uses several channels becomes one track per channel.	“文件 > 导入 MIDI 文件”会询问如何处理文件的速度图，以及使用多个通道的轨道是否按通道拆分成多条轨道。
+A Logic Pro project is a folder ending in .logicx: File > Import Logic Pro Project Folder brings in its tempo, markers, track names, audio regions and MIDI regions. Plug-ins, automation and the mixer are not read.	Logic Pro 工程是以 .logicx 结尾的文件夹。“文件 > 导入 Logic Pro 工程文件夹”会导入速度、标记、轨道名称、音频区域和 MIDI 区域。插件、自动化和混音器不会被读取。
+Bounce / Export Audio (Ctrl+B) writes WAV, AIFF or MP3 from 44.1 to 96 kHz. MP3 files get title, artist and album tags.	“混音导出 / 导出音频”（Ctrl+B）可写出 44.1 到 96 kHz 的 WAV、AIFF 或 MP3。MP3 文件会带有标题、艺术家和专辑标签。
+Tick One file for every track to export stems. All files start at the same point and have the same length, so they line up at bar 1 in Logic Pro, Ableton Live or Cubase.	勾选“每条轨道一个文件”即可导出分轨。所有文件起点和长度相同，可在 Logic Pro、Ableton Live 或 Cubase 中对齐到第 1 小节。
+Switch off Stems: keep master volume and limiter when the other program should do its own master processing. File > Export MIDI File also writes your tempo map, time signatures and markers.	如果希望在其他软件中自行做母带处理，请关闭“分轨：包含主音量和限制器”。“文件 > 导出 MIDI 文件”还会写入速度图、拍号和标记。
+This tutorial has 18 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	本教程共 18 个简短页面。使用“下一步”和“返回”按钮或左右方向键。按 Esc 关闭，随时可从“帮助 > 教程”再次打开。
 Welcome to MiniDAW	欢迎使用 MiniDAW
 MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.	MiniDAW 是一个轻巧快速的音乐工作室:在一个窗口中完成录音、编曲、编辑和混音。
-This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	本教程共 15 个简短页面。使用“下一页”“上一页”按钮或左右方向键。按 Esc 关闭,随时可从 帮助 > 教程 重新打开。
 You do not need to remember anything: Ctrl+K opens a palette that finds every command by name.	无需记忆:按 Ctrl+K 会打开命令面板,可按名称查找所有命令。
 The window at a glance	窗口一览
 The menu bar and the transport (play, record, tempo, position) are at the top.	顶部是菜单栏和走带控制(播放、录音、速度、位置)。
@@ -784,6 +806,7 @@ Title (MP3)	标题 (MP3)
 Artist (MP3)	艺术家 (MP3)
 Album (MP3)	专辑 (MP3)
 One file for every track (stems, all the same length)	每个轨道一个文件(分轨,长度相同)
+Stems: keep master volume and limiter	分轨：包含主音量和限制器
 One file for every track (stems)	每个轨道一个文件(分轨)
 Stems start at the same point and have the same length.	分轨从同一位置开始,长度相同。
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	把它们拖到 Logic Pro、Ableton Live 或 Cubase 的第 1 小节即可。

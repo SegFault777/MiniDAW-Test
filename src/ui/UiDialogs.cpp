@@ -4,6 +4,7 @@
 // Parameter dialogs of the Qt-free UI (the counterparts of the Qt dialogs of MainWindow.cpp).
 #include <algorithm>
 #include <cmath>
+#include "../core/FileTypes.h"
 #include "../core/MidiOps.h"
 #include "../dsp/Drummer.h"
 #include "../core/ExportFormats.h"
@@ -200,10 +201,11 @@ void NativeUi::dlgBounce() {
         Field::choice("MP3 bit rate", core::exportMp3RateNames(), int(last("bKbps", 2))), Field::check("Dither (16-bit)", last("bDither", 0) != 0),
         Field::check("Normalize", last("bNorm", 0) != 0), Field::number("Normalize to", last("bLevel", -1), -24, 0, 0.5, 1, " dB"),
         Field::check("Add a 2 s tail for reverb and echo", last("bTail", 1) != 0), Field::check("One file for every track (stems)", false),
+        Field::check("Stems: keep master volume and limiter", last("bMaster", 1) != 0),
         Field::input("Title (MP3)", ""), Field::input("Artist (MP3)", ""), Field::input("Album (MP3)", "")},
         [this](const Dialog::Values& v) {
         m_last["bRange"] = v[0].index; m_last["bFormat"] = v[1].index; m_last["bRate"] = v[2].index; m_last["bKbps"] = v[3].index;
-        m_last["bDither"] = v[4].checked; m_last["bNorm"] = v[5].checked; m_last["bLevel"] = v[6].value; m_last["bTail"] = v[7].checked;
+        m_last["bDither"] = v[4].checked; m_last["bNorm"] = v[5].checked; m_last["bLevel"] = v[6].value; m_last["bTail"] = v[7].checked; m_last["bMaster"] = v[9].checked;
         core::ExportOptions opt;
         core::applyExportChoices(opt, v[1].index, v[2].index, v[3].index);
         opt.cycleOnly = v[0].index == 1;
@@ -211,7 +213,8 @@ void NativeUi::dlgBounce() {
         opt.normalize = v[5].checked;
         opt.normalizeDb = float(v[6].value);
         opt.tail = v[7].checked;
-        opt.tags.title = v[9].text; opt.tags.artist = v[10].text; opt.tags.album = v[11].text; opt.tags.comment = "Made with MiniDAW";
+        opt.masterEffects = v[9].checked;
+        opt.tags.title = v[10].text; opt.tags.artist = v[11].text; opt.tags.album = v[12].text; opt.tags.comment = "Made with MiniDAW";
         std::string err;
         if (v[8].checked) {   // stems
             if (!m_host.folderDialog) { message("File dialogs are not available here."); return; }
@@ -227,6 +230,22 @@ void NativeUi::dlgBounce() {
         path = core::withExportExtension(path, opt.container);
         message(m_s.exportAudio(path, opt, &err) ? msg("Bounced to %1", path) : msg("Could not bounce: %1", err));
     }, "Bounce"));
+}
+
+void NativeUi::dlgImportMidi() {
+    openDialog(std::make_unique<Dialog>("Import MIDI File", Dialog::Values{Field::choice("Tempo and time signature", {"Adopt if the project is empty", "Use the file's", "Keep the project's"}, int(last("mTempo", 0))),
+        Field::check("One track for every MIDI channel", last("mSplit", 0) != 0)},
+        [this](const Dialog::Values& v) {
+        m_last["mTempo"] = v[0].index; m_last["mSplit"] = v[1].checked;
+        core::MidiImportOptions opt;
+        opt.tempo = v[0].index == 1 ? core::MidiTempoPolicy::UseFile : v[0].index == 2 ? core::MidiTempoPolicy::KeepProject : core::MidiTempoPolicy::Auto;
+        opt.splitChannels = v[1].checked;
+        if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
+        const std::string p = m_host.fileDialog("Import MIDI File", core::midiFilter(), false);
+        if (p.empty()) return;
+        std::string err;
+        if (m_s.importMidiFile(p, &err, opt)) message(msg("Imported %1", p)); else message(msg("Could not import: %1", err));
+    }, "Import"));
 }
 
 void NativeUi::dlgAux(int bus) {

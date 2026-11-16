@@ -169,7 +169,6 @@ Normalize	Normalizar
 Automation	Automatización
 Automation Parameter	Parámetro de automatización
 Volume	Volumen
-Pan	Panorama
 Send A	Envío A
 Send B	Envío B
 Marker %1	Marcador %1
@@ -691,10 +690,33 @@ Ride Bell	Campana del ride
 Tambourine	Pandereta
 Cowbell	Cencerro
 Percussion	Percusión
+Tempo and time signature	Tempo y compás
+Adopt if the project is empty	Adoptar si el proyecto está vacío
+Use the file's	Usar el del archivo
+Keep the project's	Mantener el del proyecto
+One track for every MIDI channel	Una pista por canal MIDI
+The notes start at bar 1. Markers of the file are added.	Las notas empiezan en el compás 1. Se añaden los marcadores del archivo.
+Import	Importar
+Icon style	Estilo de iconos
+Classic	Clásico
+Material Symbols needs its font files in the fonts folder.	Material Symbols necesita sus archivos de fuente en la carpeta fonts.
+Without them the classic icons are used.	Sin ellos se usan los iconos clásicos.
 # Tutorial
+Mixer groups	Grupos del mezclador
+Bringing files in	Traer archivos
+Exporting for other DAWs	Exportar para otros DAW
+Tracks in the same mixer group move together: faders, pans, sends, mute and solo. A drum kit recorded on six tracks is the classic example.	Las pistas del mismo grupo se mueven juntas: faders, panorama, envíos, silencio y solo. Una batería grabada en seis pistas es el ejemplo clásico.
+In the mixer, click the small circle at the top of a channel strip and choose a group from A to H, or right-click a track in the arrangement and use Mixer Group. Every group has its own colour.	En el mezclador, haz clic en el círculo pequeño de la parte superior de una pista y elige un grupo de la A a la H, o haz clic derecho en una pista del arreglo y usa Grupo del mezclador. Cada grupo tiene su color.
+Hold Alt while you change a control to change only that track. Ctrl+K and typing group b also puts the selected track in group B.	Mantén Alt mientras cambias un control para modificar solo esa pista. Ctrl+K y escribir group b también pone la pista seleccionada en el grupo B.
+Drag an audio or MIDI file onto the window, or use File > Open. MiniDAW reads WAV, AIFF, MP3, M4A and FLAC audio and Standard MIDI Files.	Arrastra un archivo de audio o MIDI a la ventana, o usa Archivo > Abrir. MiniDAW lee audio WAV, AIFF, MP3, M4A y FLAC y archivos MIDI estándar.
+File > Import MIDI File asks what to do with the tempo map of the file, and whether a track that uses several channels becomes one track per channel.	Archivo > Importar archivo MIDI pregunta qué hacer con el mapa de tempo del archivo y si una pista que usa varios canales se divide en una pista por canal.
+A Logic Pro project is a folder ending in .logicx: File > Import Logic Pro Project Folder brings in its tempo, markers, track names, audio regions and MIDI regions. Plug-ins, automation and the mixer are not read.	Un proyecto de Logic Pro es una carpeta que termina en .logicx: Archivo > Importar carpeta de proyecto de Logic Pro trae su tempo, marcadores, nombres de pista, regiones de audio y regiones MIDI. Los plug-ins, la automatización y el mezclador no se leen.
+Bounce / Export Audio (Ctrl+B) writes WAV, AIFF or MP3 from 44.1 to 96 kHz. MP3 files get title, artist and album tags.	Bounce / Exportar audio (Ctrl+B) escribe WAV, AIFF o MP3 de 44,1 a 96 kHz. Los MP3 llevan etiquetas de título, artista y álbum.
+Tick One file for every track to export stems. All files start at the same point and have the same length, so they line up at bar 1 in Logic Pro, Ableton Live or Cubase.	Marca Un archivo por pista para exportar stems. Todos empiezan en el mismo punto y duran lo mismo, así que encajan en el compás 1 en Logic Pro, Ableton Live o Cubase.
+Switch off Stems: keep master volume and limiter when the other program should do its own master processing. File > Export MIDI File also writes your tempo map, time signatures and markers.	Desactiva Stems: mantener volumen master y limitador si el otro programa debe hacer su propio procesado master. Archivo > Exportar archivo MIDI también escribe el mapa de tempo, los compases y los marcadores.
+This tutorial has 18 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	Este tutorial tiene 18 páginas cortas. Usa los botones Siguiente y Atrás o las flechas izquierda y derecha. Esc lo cierra y puedes volver a abrirlo desde Ayuda > Tutorial.
 Welcome to MiniDAW	Bienvenido a MiniDAW
 MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.	MiniDAW es un estudio musical ligero y rápido: graba, secuencia, edita y mezcla en una sola ventana.
-This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	Este tutorial tiene 15 páginas breves. Usa los botones Siguiente y Atrás o las flechas izquierda y derecha. Esc lo cierra y puedes abrirlo cuando quieras desde Ayuda > Tutorial.
 You do not need to remember anything: Ctrl+K opens a palette that finds every command by name.	No necesitas memorizar nada: Ctrl+K abre una paleta que encuentra cualquier comando por su nombre.
 The window at a glance	La ventana de un vistazo
 The menu bar and the transport (play, record, tempo, position) are at the top.	Arriba están la barra de menús y el transporte (reproducir, grabar, tempo, posición).
@@ -784,6 +806,7 @@ Title (MP3)	Título (MP3)
 Artist (MP3)	Artista (MP3)
 Album (MP3)	Álbum (MP3)
 One file for every track (stems, all the same length)	Un archivo por pista (stems, todos con la misma duración)
+Stems: keep master volume and limiter	Stems: mantener volumen master y limitador
 One file for every track (stems)	Un archivo por pista (stems)
 Stems start at the same point and have the same length.	Los stems empiezan en el mismo punto y tienen la misma duración.
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Arrástralos al compás 1 de Logic Pro, Ableton Live o Cubase.

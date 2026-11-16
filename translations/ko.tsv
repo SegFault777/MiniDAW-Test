@@ -233,9 +233,6 @@ Normalize	노멀라이즈
 Automation	오토메이션
 Automation Parameter	오토메이션 파라미터
 Volume	볼륨
-Pan	팬
-Send A	센드 A
-Send B	센드 B
 Marker %1	마커 %1
 Add Marker	마커 추가
 Next Marker	다음 마커
@@ -561,12 +558,9 @@ Click to add a point, drag to move it, right-click to delete it	클릭하면 점
 Click to add a point, drag to move it, right-click to delete it.	클릭하면 점 추가, 끌어서 이동, 오른쪽 클릭으로 삭제합니다.
 %1 notes copied.	%1개의 노트를 복사했습니다.
 All	전체
-Loops	루프
 Inst	악기
 FX	이펙트
 Project	프로젝트
-Audio	오디오
-Instruments	악기
 Drums	드럼
 Narrow	좁게
 Track Height: Small	트랙 높이: 아주 작게
@@ -577,7 +571,6 @@ Mixer: Narrow Strips	믹서: 좁은 스트립
 Browser: Project Clips	브라우저: 프로젝트 클립
 No channels of this kind.	이 종류의 채널이 없어요.
 No regions yet.	아직 리전이 없어요.
-Drummer	드러머
 # v0.12 Vulkan interface
    from	시작
    to	끝
@@ -767,10 +760,33 @@ Ride Bell	라이드 벨
 Tambourine	탬버린
 Cowbell	카우벨
 Percussion	퍼커션
+Tempo and time signature	템포와 박자
+Adopt if the project is empty	프로젝트가 비어 있으면 가져오기
+Use the file's	파일의 것 사용
+Keep the project's	프로젝트의 것 유지
+One track for every MIDI channel	MIDI 채널마다 트랙 하나
+The notes start at bar 1. Markers of the file are added.	노트는 1마디에서 시작합니다. 파일의 마커도 추가됩니다.
+Import	가져오기
+Icon style	아이콘 스타일
+Classic	클래식
+Material Symbols needs its font files in the fonts folder.	Material Symbols는 fonts 폴더에 글꼴 파일이 있어야 합니다.
+Without them the classic icons are used.	글꼴이 없으면 클래식 아이콘을 씁니다.
 # Tutorial
+Mixer groups	믹서 그룹
+Bringing files in	파일 가져오기
+Exporting for other DAWs	다른 DAW용으로 내보내기
+Tracks in the same mixer group move together: faders, pans, sends, mute and solo. A drum kit recorded on six tracks is the classic example.	같은 믹서 그룹의 트랙은 페이더, 팬, 센드, 뮤트, 솔로가 함께 움직입니다. 트랙 여섯 개에 녹음한 드럼 세트가 대표적인 예입니다.
+In the mixer, click the small circle at the top of a channel strip and choose a group from A to H, or right-click a track in the arrangement and use Mixer Group. Every group has its own colour.	믹서에서 채널 스트립 위쪽의 작은 원을 눌러 A~H 중 그룹을 고르거나, 편곡 화면에서 트랙을 오른쪽 클릭해 믹서 그룹을 선택하세요. 그룹마다 색이 다릅니다.
+Hold Alt while you change a control to change only that track. Ctrl+K and typing group b also puts the selected track in group B.	Alt를 누른 채 조작하면 그 트랙만 바뀝니다. Ctrl+K를 누르고 group b를 입력해도 선택한 트랙이 B 그룹이 됩니다.
+Drag an audio or MIDI file onto the window, or use File > Open. MiniDAW reads WAV, AIFF, MP3, M4A and FLAC audio and Standard MIDI Files.	오디오나 MIDI 파일을 창으로 끌어다 놓거나 파일 > 열기를 쓰세요. MiniDAW는 WAV, AIFF, MP3, M4A, FLAC 오디오와 표준 MIDI 파일을 읽습니다.
+File > Import MIDI File asks what to do with the tempo map of the file, and whether a track that uses several channels becomes one track per channel.	파일 > MIDI 파일 가져오기에서는 파일의 템포 맵을 어떻게 할지, 여러 채널을 쓰는 트랙을 채널마다 트랙으로 나눌지 고를 수 있습니다.
+A Logic Pro project is a folder ending in .logicx: File > Import Logic Pro Project Folder brings in its tempo, markers, track names, audio regions and MIDI regions. Plug-ins, automation and the mixer are not read.	Logic Pro 프로젝트는 .logicx로 끝나는 폴더입니다. 파일 > Logic Pro 프로젝트 폴더 가져오기로 템포, 마커, 트랙 이름, 오디오 리전, MIDI 리전을 가져옵니다. 플러그인, 오토메이션, 믹서는 읽지 않습니다.
+Bounce / Export Audio (Ctrl+B) writes WAV, AIFF or MP3 from 44.1 to 96 kHz. MP3 files get title, artist and album tags.	바운스 / 오디오 내보내기(Ctrl+B)는 44.1~96 kHz의 WAV, AIFF, MP3를 만듭니다. MP3에는 제목, 아티스트, 앨범 태그가 들어갑니다.
+Tick One file for every track to export stems. All files start at the same point and have the same length, so they line up at bar 1 in Logic Pro, Ableton Live or Cubase.	트랙마다 파일 하나를 체크하면 스템을 내보냅니다. 모든 파일의 시작점과 길이가 같아서 Logic Pro, Ableton Live, Cubase에서 1마디에 맞춰 놓으면 됩니다.
+Switch off Stems: keep master volume and limiter when the other program should do its own master processing. File > Export MIDI File also writes your tempo map, time signatures and markers.	다른 프로그램에서 마스터 처리를 직접 하려면 스템: 마스터 볼륨과 리미터 포함을 끄세요. 파일 > MIDI 파일 내보내기는 템포 맵, 박자, 마커도 함께 씁니다.
+This tutorial has 18 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	이 튜토리얼은 짧은 18페이지로 되어 있습니다. 다음/이전 버튼이나 왼쪽·오른쪽 화살표 키를 쓰세요. Esc로 닫을 수 있고, 도움말 > 튜토리얼에서 언제든 다시 열 수 있습니다.
 Welcome to MiniDAW	MiniDAW에 오신 것을 환영합니다
 MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.	MiniDAW는 가볍고 빠른 음악 스튜디오입니다. 한 창에서 녹음하고, 시퀀싱하고, 편집하고, 믹스하세요.
-This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.	이 튜토리얼은 짧은 15페이지로 되어 있습니다. 다음/이전 버튼이나 왼쪽·오른쪽 화살표 키를 쓰세요. Esc로 닫을 수 있고, 도움말 > 튜토리얼에서 언제든 다시 열 수 있습니다.
 You do not need to remember anything: Ctrl+K opens a palette that finds every command by name.	외울 필요는 없습니다. Ctrl+K를 누르면 이름으로 모든 명령을 찾아 주는 팔레트가 열립니다.
 The window at a glance	창 구성 한눈에 보기
 The menu bar and the transport (play, record, tempo, position) are at the top.	맨 위에는 메뉴 막대와 트랜스포트(재생, 녹음, 템포, 위치)가 있습니다.
@@ -860,6 +876,7 @@ Title (MP3)	제목 (MP3)
 Artist (MP3)	아티스트 (MP3)
 Album (MP3)	앨범 (MP3)
 One file for every track (stems, all the same length)	트랙마다 파일 하나씩 (스템, 길이 모두 동일)
+Stems: keep master volume and limiter	스템: 마스터 볼륨과 리미터 포함
 One file for every track (stems)	트랙마다 파일 하나씩 (스템)
 Stems start at the same point and have the same length.	스템은 같은 지점에서 시작하고 길이가 같습니다.
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Logic Pro, Ableton Live, Cubase의 1마디에 끌어다 놓으세요.

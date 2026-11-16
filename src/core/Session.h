@@ -93,7 +93,7 @@ public:
     struct AudioPlacement { int track = 0; double startBeat = 0; long long srcOffset = 0; long long frames = 0; };
     /// Decodes the file once and puts a region for every placement on its track (no tempo following, no stretching).
     void importAudioPlacements(const std::string& path, const std::vector<AudioPlacement>& places);
-    bool importMidiFile(const std::string& path, std::string* error);
+    bool importMidiFile(const std::string& path, std::string* error, const MidiImportOptions& options = MidiImportOptions());
     bool exportMidiFile(const std::string& path, std::string* error);
     int addMidiRegion(int track, double startBeat, double lengthBeats);
     int addDrummerRegion(int track, double startBeat, int bars);

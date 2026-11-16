@@ -2,11 +2,14 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
-// Vulkan UI: toolbar icons drawn with draw-list primitives (no image files, they scale with the display).
+// Vulkan UI: toolbar icons. icons::play etc. draw the icon of the chosen style (IconFont.h): a Material Symbols glyph, or the classic
+// drawing made of draw-list shapes (icons::classic, no image files, scales with the display) when the style is Classic or the font cannot.
 #include "Draw.h"
+#include "IconFont.h"
 
 namespace vkui {
 namespace icons {
+namespace classic {
 
 using R = const Rect&;
 
@@ -94,6 +97,25 @@ inline void fit(DrawList& d, R r, Color c) {
     d.triangle({r.cx() - s, r.cy() - 3}, {r.cx() - s, r.cy() + 3}, {r.cx() - s + 4, r.cy()}, c);
     d.triangle({r.cx() + s, r.cy() - 3}, {r.cx() + s, r.cy() + 3}, {r.cx() + s - 4, r.cy()}, c);
 }
+
+}  // namespace classic
+
+using R = const Rect&;
+
+/// The glyph of 'icon' in the current style, em square about 72 % of the button; false = draw it the classic way.
+inline bool material(DrawList& d, R r, Color c, Icon icon) {
+    const std::uint32_t cp = IconTheme::instance().glyphFor(icon);
+    if (!cp) return false;
+    d.glyph(r.cx(), r.cy(), std::min(r.w, r.h) * 0.72f, cp, c);
+    return true;
+}
+
+#define MINIDAW_ICON(fn, ic) inline void fn(DrawList& d, R r, Color c) { if (!material(d, r, c, Icon::ic)) classic::fn(d, r, c); }
+MINIDAW_ICON(play, Play) MINIDAW_ICON(stop, Stop) MINIDAW_ICON(record, Record) MINIDAW_ICON(rewind, Rewind) MINIDAW_ICON(loop, Loop)
+MINIDAW_ICON(metronome, Metronome) MINIDAW_ICON(pointer, Pointer) MINIDAW_ICON(pencil, Pencil) MINIDAW_ICON(scissors, Scissors)
+MINIDAW_ICON(eraser, Eraser) MINIDAW_ICON(mute, Mute) MINIDAW_ICON(browser, Browser) MINIDAW_ICON(inspector, Inspector) MINIDAW_ICON(dock, Dock)
+MINIDAW_ICON(search, Search) MINIDAW_ICON(follow, Follow) MINIDAW_ICON(plus, Plus) MINIDAW_ICON(minus, Minus) MINIDAW_ICON(fit, Fit)
+#undef MINIDAW_ICON
 
 }  // namespace icons
 }  // namespace vkui

@@ -20,6 +20,7 @@ $CXX -std=c++20 -O2 -Wall -Wextra native_plugin_tests.cpp $D/NativeEffect.cpp -l
 $CXX -std=c++20 -O1 -Wall -Wextra core_tests.cpp $ENGINE -o /tmp/minidaw_core_tests
 $CXX -std=c++20 -O1 -pthread -Wall -Wextra platform_tests.cpp ../src/platform/*.cpp $D/NativeEffect.cpp $ENGINE -ldl -o /tmp/minidaw_platform_tests
 $CXX -std=c++20 -O1 -Wall -Wextra ui_tests.cpp ../src/ui/*.cpp $ENGINE -o /tmp/minidaw_ui_tests
+$CXX -std=c++20 -O1 -g -fsanitize=address,undefined -Wall -Wextra vulkan_ttf_tests.cpp ../src/vulkan/TrueType.cpp -o /tmp/minidaw_ttf_tests
 # the Vulkan user interface: everything except the two files that need Windows / the Vulkan loader
 VK=()
 for f in ../src/vulkan/*.cpp; do case "$f" in */VkMain.cpp|*/VkRenderer.cpp) ;; *) VK+=("$f") ;; esac; done
@@ -36,4 +37,5 @@ test -s ../src/vulkan/shaders/ui.vert && test -s ../src/vulkan/shaders/ui.frag
 /tmp/minidaw_core_tests
 /tmp/minidaw_platform_tests
 /tmp/minidaw_ui_tests
+/tmp/minidaw_ttf_tests
 /tmp/minidaw_vulkan_tests

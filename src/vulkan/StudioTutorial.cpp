@@ -1,4 +1,4 @@
-// MiniDAW Vulkan interface: the built-in tutorial (Help > Tutorial...). Fifteen short pages in a modal window.
+// MiniDAW Vulkan interface: the built-in tutorial (Help > Tutorial...). Eighteen short pages in a modal window.
 // The texts are plain English: Studio::tr translates them through translations/*.tsv like every other text.
 #include <algorithm>
 #include <cstdio>
@@ -21,7 +21,7 @@ const std::vector<TutorialPage>& pages() {
     static const std::vector<TutorialPage> p = {
         {"Welcome to MiniDAW",
          {"MiniDAW is a light, fast music studio: record, sequence, edit and mix in one window.",
-          "This tutorial has 15 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.",
+          "This tutorial has 18 short pages. Use the Next and Back buttons or the Left and Right arrow keys. Esc closes it, and you can open it again any time from Help > Tutorial.",
           "You do not need to remember anything: Ctrl+K opens a palette that finds every command by name."},
          nullptr},
         {"The window at a glance",
@@ -86,6 +86,21 @@ const std::vector<TutorialPage>& pages() {
          {"A mixer snapshot remembers all levels, pans, sends, mutes and solos. Save one with Ctrl+Shift+Enter and bring it back with one click or Alt+1 to Alt+9. Open the tab with Ctrl+5.",
           "Workspaces change the whole layout with one key: F5 is for arranging, F6 for mixing and F7 for editing."},
          "Show Snapshots"},
+        {"Mixer groups",
+         {"Tracks in the same mixer group move together: faders, pans, sends, mute and solo. A drum kit recorded on six tracks is the classic example.",
+          "In the mixer, click the small circle at the top of a channel strip and choose a group from A to H, or right-click a track in the arrangement and use Mixer Group. Every group has its own colour.",
+          "Hold Alt while you change a control to change only that track. Ctrl+K and typing group b also puts the selected track in group B."},
+         "Show Mixer"},
+        {"Bringing files in",
+         {"Drag an audio or MIDI file onto the window, or use File > Open. MiniDAW reads WAV, AIFF, MP3, M4A and FLAC audio and Standard MIDI Files.",
+          "File > Import MIDI File asks what to do with the tempo map of the file, and whether a track that uses several channels becomes one track per channel.",
+          "A Logic Pro project is a folder ending in .logicx: File > Import Logic Pro Project Folder brings in its tempo, markers, track names, audio regions and MIDI regions. Plug-ins, automation and the mixer are not read."},
+         "Import MIDI File..."},
+        {"Exporting for other DAWs",
+         {"Bounce / Export Audio (Ctrl+B) writes WAV, AIFF or MP3 from 44.1 to 96 kHz. MP3 files get title, artist and album tags.",
+          "Tick One file for every track to export stems. All files start at the same point and have the same length, so they line up at bar 1 in Logic Pro, Ableton Live or Cubase.",
+          "Switch off Stems: keep master volume and limiter when the other program should do its own master processing. File > Export MIDI File also writes your tempo map, time signatures and markers."},
+         "Bounce / Export Audio..."},
         {"Saving, exporting and what next",
          {"Save your project with Ctrl+S. MiniDAW also keeps an automatic backup and offers to recover it if the program closes unexpectedly. Undo (Ctrl+Z) and Redo (Ctrl+Shift+Z) go back as far as you need.",
           "Use Bounce / Export Audio to render the song to a WAV file.",

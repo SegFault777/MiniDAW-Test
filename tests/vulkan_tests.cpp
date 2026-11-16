@@ -9,6 +9,7 @@
 #include "../src/core/Files.h"
 #include "../src/core/Session.h"
 #include "../src/vulkan/SoftRaster.h"
+#include "../src/vulkan/IconFont.h"
 #include "../src/vulkan/Studio.h"
 #include "../src/vulkan/Theme.h"
 
@@ -257,25 +258,25 @@ int main(int argc, char** argv) {
         CHECK(st.runCommand("Show Mixer"));
     }
 
-    // ---- Help > Tutorial: 15 pages, keys and buttons, "Try it"
+    // ---- Help > Tutorial: 18 pages, keys and buttons, "Try it"
     {
-        CHECK(Studio::tutorialPageCount() == 15);
+        CHECK(Studio::tutorialPageCount() == 18);
         CHECK(st.runCommand("Tutorial..."));
         r.frame(2);
         CHECK(st.tutorialOpen() && st.tutorialPage() == 0);
         r.shot("/tmp/vk_tutorial1.ppm");
-        for (int i = 1; i < 15; ++i) { r.key(KeyRight); r.frame(1); CHECK(st.tutorialPage() == i); if (i == 8) r.shot("/tmp/vk_tutorial9.ppm"); }
-        r.key(KeyRight); CHECK(st.tutorialPage() == 14);   // stays on the last page
-        r.shot("/tmp/vk_tutorial15.ppm");
-        r.key(KeyLeft); CHECK(st.tutorialPage() == 13);
+        for (int i = 1; i < 18; ++i) { r.key(KeyRight); r.frame(1); CHECK(st.tutorialPage() == i); if (i == 8) r.shot("/tmp/vk_tutorial9.ppm"); if (i == 14) r.shot("/tmp/vk_tutorial_groups.ppm"); if (i == 15) r.shot("/tmp/vk_tutorial_import.ppm"); if (i == 16) r.shot("/tmp/vk_tutorial_export.ppm"); }
+        r.key(KeyRight); CHECK(st.tutorialPage() == 17);   // stays on the last page
+        r.shot("/tmp/vk_tutorial18.ppm");
+        r.key(KeyLeft); CHECK(st.tutorialPage() == 16);
         // the buttons: Back / Next are at the bottom of the centred panel
         const float pw = std::min(680.f, r.W - 40), ph = std::min(470.f, r.H - 40);
         const float px = (r.W - pw) / 2, py = (r.H - ph) / 2;
         const float btnY = py + ph - 44 + 15;
         r.click(px + pw - 24 - 55, btnY); r.wait(1.0);
-        CHECK(st.tutorialPage() == 14);
+        CHECK(st.tutorialPage() == 17);
         r.click(px + 24 + 48, btnY); r.wait(1.0);
-        CHECK(st.tutorialPage() == 13);
+        CHECK(st.tutorialPage() == 16);
         r.key(KeyEscape); r.frame(1);
         CHECK(!st.tutorialOpen());
         // "Try it" on the Drummer page closes the tutorial and opens the Drummer tab
@@ -539,6 +540,16 @@ int main(int argc, char** argv) {
         f.read(reinterpret_cast<char*>(h), 44);
         CHECK(h[0] == 'R' && h[1] == 'I' && h[34] == 24);                              // a 24-bit WAV, as the dialog said
         CHECK(stb.toastText().find("Bounced") != std::string::npos);
+        // Import MIDI File...: options first, then the file (tempo policy, one track per channel)
+        std::remove("/tmp/vk_import_midi.mid");
+        CHECK(stb.runCommand("Import MIDI File..."));
+        frameb(3);
+        CHECK(stb.dialogOpen());
+        softRender(dlb, *fontsb, theme::bg0).savePpm("/tmp/vk_import_midi_dialog.ppm");
+        stb.host().fileDialog = [&](const std::string&, const std::string&, bool) { return std::string(); };   // cancel the file choice
+        stb.acceptDialog();
+        frameb(2);
+        CHECK(!stb.dialogOpen());
     }
 
     // ---- scissors, eraser, mute tool, pencil
@@ -746,5 +757,109 @@ int main(int argc, char** argv) {
     }
     // ---- a bigger session still draws fast enough: count vertices
     std::printf("tracks %zu verts %zu\n", st.tracks().size(), r.dl.vertices().size());
+    // ---- icon style: classic drawing or Material Symbols (Outlined / Rounded / Sharp) from font files, chosen in Preferences
+    {
+        auto& th = IconTheme::instance();
+        // code point files: "name hex", junk and comments ignored
+        const auto cps = IconTheme::parseCodepoints("play_arrow e037\n# comment\nbad\nstop  E047\nnope zzz\nhuge 110000\n");
+        CHECK(cps.size() == 2 && cps.at("play_arrow") == 0xE037 && cps.at("stop") == 0xE047);
+        CHECK(IconTheme::parseStyle("Rounded") == IconStyle::Rounded && IconTheme::parseStyle("x") == IconStyle::Outlined && IconTheme::parseStyle("x", IconStyle::Classic) == IconStyle::Classic);
+        for (IconStyle st : {IconStyle::Classic, IconStyle::Outlined, IconStyle::Rounded, IconStyle::Sharp}) CHECK(IconTheme::parseStyle(IconTheme::styleKey(st)) == st);
+
+        // no fonts anywhere: every style falls back to the classic drawing
+        th.setFontDirs({"data/no-such-folder"});
+        th.setStyle(IconStyle::Outlined);
+        CHECK(th.available(IconStyle::Classic) && !th.available(IconStyle::Outlined) && th.glyphFor(Icon::Play) == 0 && th.fontPath(IconStyle::Outlined).empty());
+
+        auto crop = [&](Rig& g, float cx, float cy) {   // 40 x 40 dp around a point of the toolbar
+            g.frame(2);
+            const SoftImage im = softRender(g.dl, *g.fonts, theme::bg0);
+            std::vector<std::uint32_t> v;
+            for (int y = int(cy) - 20; y < int(cy) + 20; ++y) for (int x = int(cx) - 20; x < int(cx) + 20; ++x) v.push_back(im.at(x, y));
+            return v;
+        };
+        auto differ = [](const std::vector<std::uint32_t>& a, const std::vector<std::uint32_t>& b) { int n = 0; for (size_t i = 0; i < a.size(); ++i) n += a[i] != b[i]; return n; };
+        Rig g;
+        th.setStyle(IconStyle::Classic);
+        const auto classicPlay = crop(g, 120, 58), classicTools = crop(g, 750, 58);
+        th.setStyle(IconStyle::Outlined);
+        CHECK(differ(crop(g, 120, 58), classicPlay) == 0);   // missing font: identical to Classic
+
+        // with the (synthetic) fonts
+        th.setFontDirs({"data/fonts"});
+        CHECK(th.available(IconStyle::Outlined) && th.available(IconStyle::Rounded) && th.available(IconStyle::Sharp));
+        CHECK(th.fontPath(IconStyle::Sharp).find("MaterialSymbolsSharp-test.ttf") != std::string::npos);
+        th.setStyle(IconStyle::Classic);
+        CHECK(th.glyphFor(Icon::Play) == 0);
+        th.setStyle(IconStyle::Outlined);
+        const std::uint32_t gOut = th.glyphFor(Icon::Play);
+        CHECK(gOut == kIconPlane + 0 * 0x100u + 0u);
+        th.setStyle(IconStyle::Sharp);
+        CHECK(th.glyphFor(Icon::Stop) == kIconPlane + 2 * 0x100u + 1u);
+        th.setStyle(IconStyle::Rounded);
+        CHECK(th.glyphFor(Icon::Play) != 0 && th.glyphFor(Icon::Metronome) == 0);   // this font has no metronome: that one icon stays classic
+
+        th.setStyle(IconStyle::Outlined);
+        const auto outPlay = crop(g, 120, 58);
+        th.setStyle(IconStyle::Rounded);
+        const auto rouPlay = crop(g, 120, 58);
+        th.setStyle(IconStyle::Sharp);
+        const auto shaPlay = crop(g, 120, 58);
+        CHECK(differ(outPlay, classicPlay) > 40 && differ(rouPlay, outPlay) > 40 && differ(shaPlay, rouPlay) > 40 && differ(shaPlay, outPlay) > 40);
+        // the Rounded font lacks the metronome only: the metronome button looks as it does in Classic style, the play button does not
+        const auto rouMetro = crop(g, 610, 58);
+        th.setStyle(IconStyle::Classic);
+        const auto claMetro = crop(g, 610, 58);
+        CHECK(differ(rouMetro, claMetro) == 0);
+        std::fprintf(stderr, "icon styles: classic/outlined/rounded/sharp play button differ by %d / %d / %d pixels\n", differ(outPlay, classicPlay), differ(rouPlay, outPlay), differ(shaPlay, rouPlay));
+        (void)classicTools;
+
+        // Preferences: the choice lists the four styles, marks missing fonts, and applies at once
+        th.setStyle(IconStyle::Classic);
+        {
+            Rig p;
+            th.setFontDirs({"data/fonts"});
+            th.setStyle(IconStyle::Classic);
+            CHECK(p.st->runCommand("Preferences..."));
+            p.frame(3);
+            p.shot("/tmp/vk_icon_prefs.ppm");
+            p.st->acceptDialog();                       // saves the dialog as it is: Classic stays
+            p.frame(2);
+            CHECK(th.style() == IconStyle::Classic && p.st->host().settings["iconStyle"] == "classic");
+            // pick Sharp in the dialog: it applies at once and is saved
+            CHECK(p.st->runCommand("Preferences..."));
+            p.frame(2);
+            CHECK(p.st->dialogField(10) && p.st->dialogField(10)->label == "Icon style");
+            p.st->dialogField(10)->index = 3;
+            p.st->acceptDialog();
+            p.frame(2);
+            CHECK(th.style() == IconStyle::Sharp && p.st->host().settings["iconStyle"] == "sharp");
+        }
+        // a saved style is read when the Studio starts
+        {
+            Host h; h.loopFolder = "../loops"; h.iconFontDirs = {"data/fonts"}; h.settings["iconStyle"] = "sharp";
+            Session s2; buildDemo(s2);
+            Studio st2(s2, h);
+            CHECK(th.style() == IconStyle::Sharp && th.available(IconStyle::Sharp));
+            Host h2 = h; h2.settings["iconStyle"] = "rounded";
+            Studio st3(s2, h2);
+            CHECK(th.style() == IconStyle::Rounded);
+        }
+        if (const char* demo = std::getenv("MINIDAW_ICON_DEMO")) {   // screenshots with real icon fonts at hand: MINIDAW_ICON_DEMO=<folder with MaterialSymbols*.ttf + .codepoints>
+            th.setFontDirs({demo});
+            Rig d;
+            th.setStyle(IconStyle::Classic);
+            d.shot("/tmp/vk_icons_classic.ppm");
+            th.setStyle(IconStyle::Outlined);
+            d.shot("/tmp/vk_icons_material.ppm");
+            CHECK(d.st->runCommand("Preferences..."));
+            d.frame(3);
+            d.shot("/tmp/vk_icons_prefs.ppm");
+            d.st->acceptDialog();
+        }
+        th.setStyle(IconStyle::Classic);
+        th.setFontDirs({});
+    }
+
     return fails ? 1 : 0;
 }

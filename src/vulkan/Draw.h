@@ -101,6 +101,8 @@ public:
     /// Text vertically centred in r and shortened with ".." when it does not fit.
     void textIn(const Rect& r, const std::string& s, Color c, TextStyle st = {}, Align a = Align::Left);
     float textWidth(const std::string& s, TextStyle st = {}) const;
+    /// One glyph of an icon font (a virtual code point, see IconFont.h) with its em square of 'emDp' centred on (cx, cy).
+    void glyph(float cx, float cy, float emDp, std::uint32_t codepoint, Color c);
     float lineHeight(TextStyle st = {}) const;
     std::string fit(const std::string& s, float maxWidth, TextStyle st = {}) const;
 

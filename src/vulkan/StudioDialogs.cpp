@@ -2,6 +2,7 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Vulkan UI: the modal parameter dialog and every dialog built on it, plus the file commands.
+#include "IconFont.h"
 #include "../core/LogicImport.h"
 #include <algorithm>
 #include <cstdio>
@@ -196,8 +197,7 @@ void Studio::doFile(const std::string& what) {
         const std::string p = ask("Import Audio", core::audioFilter().c_str(), false);
         if (!p.empty()) importAudioFile(p);
     } else if (what == "importmidi") {
-        const std::string p = ask("Import MIDI File", core::midiFilter().c_str(), false);
-        if (!p.empty()) { if (m_s.importMidiFile(p, &err)) message("Imported " + p); else message("Could not import: " + err); }
+        dlgImportMidi();
     } else if (what == "exportmidi") {
         std::string p = ask("Export MIDI File", "MIDI files|*.mid", true);
         if (!p.empty()) { if (p.find('.') == std::string::npos) p += ".mid"; if (m_s.exportMidiFile(p, &err)) message("Exported " + p); else message("Could not export: " + err); }
@@ -412,6 +412,7 @@ void Studio::dlgBounce() {
                 DlgField::check("Normalize", false), DlgField::number("Normalize to", -1, -24, 0, 0.5, 1, " dB"),
                 DlgField::check("Dither (16-bit)", false), DlgField::check("Add a 2 s tail for reverb and echo", true),
                 DlgField::check("One file for every track (stems, all the same length)", false),
+                DlgField::check("Stems: keep master volume and limiter", true),
                 DlgField::input("Title (MP3)", ""), DlgField::input("Artist (MP3)", ""), DlgField::input("Album (MP3)", ""),
                 DlgField::note("Stems start at the same point and have the same length."),
                 DlgField::note("Drop them into Logic Pro, Ableton Live or Cubase at bar 1.")},
@@ -420,7 +421,8 @@ void Studio::dlgBounce() {
         core::applyExportChoices(o, v[0].index, v[1].index, v[2].index);
         o.cycleOnly = v[3].checked; o.normalize = v[4].checked; o.normalizeDb = float(v[5].value); o.dither = v[6].checked; o.tail = v[7].checked;
         const bool stems = v[8].checked;
-        o.tags.title = v[9].text; o.tags.artist = v[10].text; o.tags.album = v[11].text;
+        o.masterEffects = v[9].checked;
+        o.tags.title = v[10].text; o.tags.artist = v[11].text; o.tags.album = v[12].text;
         o.tags.comment = "Made with MiniDAW";
         if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
         std::string err;
@@ -438,6 +440,22 @@ void Studio::dlgBounce() {
         p = core::withExportExtension(p, o.container);
         if (m_s.exportAudio(p, o, &err)) message(fmt("Bounced %1", p)); else message(fmt("Bounce failed: %1", err));
     }, "Bounce");
+}
+void Studio::dlgImportMidi() {
+    openDialog("Import MIDI File",
+               {DlgField::choice("Tempo and time signature", {"Adopt if the project is empty", "Use the file's", "Keep the project's"}, 0),
+                DlgField::check("One track for every MIDI channel", false),
+                DlgField::note("The notes start at bar 1. Markers of the file are added.")},
+               [this](const std::vector<DlgField>& v) {
+        core::MidiImportOptions opt;
+        opt.tempo = v[0].index == 1 ? core::MidiTempoPolicy::UseFile : v[0].index == 2 ? core::MidiTempoPolicy::KeepProject : core::MidiTempoPolicy::Auto;
+        opt.splitChannels = v[1].checked;
+        if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
+        const std::string p = m_host.fileDialog("Import MIDI File", core::midiFilter(), false);
+        if (p.empty()) return;
+        std::string err;
+        if (m_s.importMidiFile(p, &err, opt)) message(fmt("Imported %1", p)); else message(fmt("Could not import: %1", err));
+    }, "Import");
 }
 void Studio::dlgRenameTrack(int t) {
     if (t < 0 || t >= int(m_tracks.size())) return;
@@ -497,11 +515,17 @@ void Studio::dlgPreferences() {
     for (size_t i = 0; i < langList.size(); ++i) if (langList[i].first == get("language", "auto")) langIdx = int(i);
     std::vector<std::string> langNames;
     for (const auto& l : langList) langNames.push_back(l.second);
+    std::vector<std::string> iconStyleNames;
+    for (IconStyle st : {IconStyle::Classic, IconStyle::Outlined, IconStyle::Rounded, IconStyle::Sharp})
+        iconStyleNames.push_back(std::string(IconTheme::styleName(st)) + (IconTheme::instance().available(st) ? "" : " (missing)"));
     std::vector<DlgField> f = {DlgField::choice("Output device", names(outs), indexOf(outs, get("output", ""))), DlgField::choice("Buffer size", bufNames, bufIdx), DlgField::choice("Input device", names(ins), indexOf(ins, get("input", ""))),
                                DlgField::number("Recording latency compensation", std::atof(get("recOffset", "0").c_str()), -500, 500, 1, 0, " ms"), DlgField::choice("MIDI input", midiNames, midiIdx), DlgField::choice("Language", langNames, langIdx),
                                DlgField::number("Autosave every", std::atof(get("autosave", "2").c_str()), 0, 60, 1, 0, " min"), DlgField::input("Loops folder", get("loops", m_host.loopFolder)), DlgField::input("VST3 folders (separate with ;)", get("vst3Folders", "")),
                                DlgField::slider("Interface scale", std::atof(get("uiScale", "1").c_str()), 0.75, 2.0, 2, " x"),
+                               DlgField::choice("Icon style", iconStyleNames, int(IconTheme::instance().style())),
                                DlgField::note("Restart MiniDAW to apply a new language or scale. Autosave 0 = off."),
+                               DlgField::note("Material Symbols needs its font files in the fonts folder."),
+                               DlgField::note("Without them the classic icons are used."),
                                DlgField::note(fmt(m_host.portable ? "Portable mode: settings are kept in %1." : "Settings are kept in %1.", m_host.dataDir + "\\vulkan-settings.ini"))};
     openDialog("Preferences", std::move(f), [this, outs, ins, midis, langList, bufs](const std::vector<DlgField>& v) {
         auto s = m_host.settings;
@@ -516,6 +540,9 @@ void Studio::dlgPreferences() {
         s["vst3Folders"] = v[8].text;
         char sc[16]; std::snprintf(sc, sizeof sc, "%.2f", v[9].value);
         s["uiScale"] = sc;
+        const IconStyle iconStyle = IconStyle(std::clamp(v[10].index, 0, 3));
+        s["iconStyle"] = IconTheme::styleKey(iconStyle);
+        IconTheme::instance().setStyle(iconStyle);   // takes effect at once
         m_host.settings = s;
         if (!v[7].text.empty() && v[7].text != m_host.loopFolder) { m_host.loopFolder = v[7].text; m_loopsLoaded = false; }
         m_s.setRecordingOffsetMs(int(v[3].value));

@@ -41,6 +41,7 @@ struct Host {
     std::function<void(const std::map<std::string, std::string>&)> applySettings;
     std::function<void(const std::map<std::string, std::string>&)> storeSettings;   // merge + save a few keys (the layout) without re-applying the audio settings
     std::string dataDir;
+    std::vector<std::string> iconFontDirs;   // where the Material Symbols fonts are looked for (see IconFont.h); empty = leave as set
     bool portable = false;
 };
 
@@ -260,7 +261,7 @@ private:
     void finishDialog(bool ok);
     void dlgQuantize(); void dlgScaleQuantize(); void dlgHumanize(); void dlgChordTrigger(); void dlgArpeggiator(); void dlgTranspose();
     void dlgVelocityRamp(); void dlgScaleVelocity(); void dlgFixedLength(); void dlgStripSilence(); void dlgNormalize(); void dlgFlex(); void dlgFades();
-    void dlgTempo(); void dlgTimeSignature(); void dlgBounce(); void dlgPreferences(); void dlgAbout(); void dlgRenameTrack(int t); void dlgRenameRegion();
+    void dlgTempo(); void dlgTimeSignature(); void dlgBounce(); void dlgImportMidi(); void dlgPreferences(); void dlgAbout(); void dlgRenameTrack(int t); void dlgRenameRegion();
     void dlgRiff(); void dlgLogical(); void dlgGroove(); void dlgAdaptTempo(); void dlgBeatDetective(); void dlgAux(int bus); void dlgSnapshotName(int index); void rollRiff();
     void guardUnsaved(std::function<void()> proceed);
     void doFile(const std::string& what);

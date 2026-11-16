@@ -1334,6 +1334,102 @@ static void testLogicPackage() {
     }
 }
 
+static void testStemsMasterEffects() {
+    const std::string dir = tmpDir() + "/stem_master";
+    removeTree(dir);
+    makeDirs(dir);
+    const std::string wav = makeWav("sm.wav", 330, 44100 * 2, 0.4f);
+    Session s;
+    const int t = s.addTrack(TrackType::Audio, "Tone");
+    s.importAudio(wav, t, 0);
+    for (int i = 0; i < 400 && s.snapshot()[size_t(t)].regions.empty(); ++i) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    CHECK(!s.snapshot()[size_t(t)].regions.empty());
+    s.setMasterVolume(0.5f);
+    auto peakOf = [](const std::string& path) {
+        std::vector<float> pcm; std::string err;
+        float p = 0;
+        if (readWavFile(path, pcm, &err)) for (float x : pcm) p = std::max(p, std::fabs(x));
+        return p;
+    };
+    ExportOptions o;
+    o.format = dsp::WavFormat::Float32;
+    o.tail = false;
+    std::vector<std::string> a, b; std::string err;
+    CHECK(s.exportStems(dir + "/with", o, &a, &err));
+    o.masterEffects = false;
+    CHECK(s.exportStems(dir + "/without", o, &b, &err));
+    auto tone = [](const std::vector<std::string>& v) { for (const auto& f : v) if (f.find("Tone.wav") != std::string::npos) return f; return std::string(); };
+    CHECK(!tone(a).empty() && !tone(b).empty());
+    const float pw = peakOf(tone(a)), pn = peakOf(tone(b));
+    CHECK(pw > 0.05f && pn > pw * 1.8f && pn < pw * 2.2f);          // master volume 0.5 is gone
+    CHECK(std::fabs(s.masterVolume() - 0.5f) < 1e-6f);              // and comes back
+}
+
+
+static void testMidiImportOptions() {
+    const std::string dir = tmpDir() + "/midi_opts";
+    removeTree(dir);
+    makeDirs(dir);
+    // a file with its own tempo (100 BPM, 3/4) and one file track that uses three channels (0, 1 and the drum channel 9)
+    dsp::MidiSong song;
+    song.bpm = 100; song.num = 3; song.den = 4;
+    song.tempos = {{0, 100}};
+    dsp::MidiTrack mt;
+    mt.name = "Multi";
+    mt.notes = {{0, 60, 90, 0.0, 1.0}, {1, 64, 90, 1.0, 1.0}, {9, 36, 100, 2.0, 0.5}};
+    song.tracks.push_back(mt);
+    const auto bytes = dsp::writeMidiFile(song);
+    const std::string path = dir + "/multi.mid";
+    { std::string raw(bytes.begin(), bytes.end()), e; CHECK(writeFile(path, raw, &e)); }
+    std::string err;
+
+    {   // Auto, empty project: the file's tempo is adopted; one track
+        Session s; s.setBpm(120);
+        const int base = s.trackCount();
+        CHECK(s.importMidiFile(path, &err));
+        CHECK(std::fabs(s.tempoMap()->bpmAt(0) - 100) < 1e-6 && s.tempoMap()->meterAtBeat(0).num == 3);
+        CHECK(s.trackCount() == base + 1);
+    }
+    {   // KeepProject: nothing changes in the tempo map
+        Session s; s.setBpm(120);
+        MidiImportOptions o; o.tempo = MidiTempoPolicy::KeepProject;
+        CHECK(s.importMidiFile(path, &err, o));
+        CHECK(std::fabs(s.tempoMap()->bpmAt(0) - 120) < 1e-6 && s.tempoMap()->meterAtBeat(0).num == 4);
+    }
+    {   // Auto in a project that already has a region: the project's tempo stays; UseFile replaces it anyway
+        Session s; s.setBpm(120);
+        CHECK(s.importMidiFile(path, &err, [] { MidiImportOptions o; o.tempo = MidiTempoPolicy::KeepProject; return o; }()));
+        s.setBpm(90);
+        CHECK(s.importMidiFile(path, &err));                                    // there are regions now: Auto keeps 90
+        CHECK(std::fabs(s.tempoMap()->bpmAt(0) - 90) < 1e-6);
+        MidiImportOptions o; o.tempo = MidiTempoPolicy::UseFile;
+        CHECK(s.importMidiFile(path, &err, o));
+        CHECK(std::fabs(s.tempoMap()->bpmAt(0) - 100) < 1e-6 && s.tempoMap()->meterAtBeat(0).num == 3);
+    }
+    {   // splitChannels: three tracks, the drum channel becomes a Drummer track, names tell the channel
+        Session s;
+        const int base = s.trackCount();
+        MidiImportOptions o; o.splitChannels = true;
+        CHECK(s.importMidiFile(path, &err, o));
+        const auto sn = s.snapshot();
+        CHECK(int(sn.size()) == base + 3);
+        CHECK(sn[size_t(base)].name == "Multi (ch 1)" && sn[size_t(base + 1)].name == "Multi (ch 2)" && sn[size_t(base + 2)].name == "Multi (ch 10)");
+        CHECK(sn[size_t(base)].type == TrackType::Instrument && sn[size_t(base + 2)].type == TrackType::Drummer);
+        CHECK(sn[size_t(base)].regions[0].notes.size() == 1 && sn[size_t(base + 2)].regions[0].notes.size() == 1 && sn[size_t(base + 2)].regions[0].notes[0].pitch == 36);
+    }
+    {   // a single-channel track is never split
+        Session s;
+        const int base = s.trackCount();
+        dsp::MidiSong one; one.tracks.push_back({"Solo", {{2, 60, 90, 0.0, 1.0}, {2, 62, 90, 1.0, 1.0}}});
+        const auto b2 = dsp::writeMidiFile(one);
+        const std::string p2 = dir + "/solo.mid";
+        { std::string raw(b2.begin(), b2.end()), e; CHECK(writeFile(p2, raw, &e)); }
+        MidiImportOptions o; o.splitChannels = true;
+        CHECK(s.importMidiFile(p2, &err, o));
+        CHECK(s.trackCount() == base + 1 && s.snapshot()[size_t(base)].name == "Solo");
+    }
+}
+
 static void testExportMp3AndStems() {
     const std::string wav = makeWav("exportsrc2.wav", 330, 44100 * 3);
     Session s;
@@ -1674,7 +1770,7 @@ static void testMoveRegions() {
 int main() {
     testJson(); testText(); testWav(); testSaveLoad(); testUndo(); testClipboardAndDuplicate(); testAutosave();
     testExport(); testBounce(); testAutomationPan(); testMidiOps(); testMidiOps2(); testSessionRegions(); testSessionTransforms();
-    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems(); testMp3Gapless(); testLogicPackage(); testBplistAndLogicChunks(); testLogicFixtures(); testLogicTrackNames();
+    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems(); testStemsMasterEffects(); testMidiImportOptions(); testMp3Gapless(); testLogicPackage(); testBplistAndLogicChunks(); testLogicFixtures(); testLogicTrackNames();
     std::printf("core fails=%d\n", fails);
     return fails;
 }

@@ -278,8 +278,7 @@ void NativeUi::doFile(const std::string& what) {
         const std::string p = ask("Import Audio", core::audioFilter().c_str(), false);
         if (!p.empty()) { m_s.importAudio(p, m_selTrack, m_s.positionBeats()); message(msg("Importing %1", p)); }
     } else if (what == "importmidi") {
-        const std::string p = ask("Import MIDI File", core::midiFilter().c_str(), false);
-        if (!p.empty()) { if (m_s.importMidiFile(p, &err)) message(msg("Imported %1", p)); else message(msg("Could not import: %1", err)); }
+        dlgImportMidi();
     } else if (what == "importlogic") {
         if (!m_host.folderDialog) { message("Folder dialogs are not available here."); }
         else {

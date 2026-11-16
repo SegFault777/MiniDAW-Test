@@ -620,6 +620,7 @@ int main() {
     host.loopFolder = app.settings.count("loops") && !app.settings["loops"].empty() ? app.settings["loops"] : app.exeDir + "\\loops";
     host.settings = app.settings;
     host.dataDir = app.dataDir;
+    host.iconFontDirs = {app.exeDir + "\\fonts", app.dataDir + "\\fonts"};
     host.portable = app.portable;
     host.audioDevices = [](bool input) {
         std::vector<std::pair<std::string, std::string>> v;

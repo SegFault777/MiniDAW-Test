@@ -180,6 +180,17 @@ float DrawList::text(float x, float y, const std::string& s, Color c, TextStyle 
     return total / m_scale;
 }
 
+void DrawList::glyph(float cx, float cy, float emDp, std::uint32_t codepoint, Color c) {
+    if (!m_fonts || alphaOf(c) == 0) return;
+    const int pxSize = std::max(6, int(std::lround(emDp * m_scale)));
+    const GlyphInfo g = m_fonts->glyph(codepoint, false, pxSize);   // copied: the cache may be reset by the next lookup
+    if (g.w <= 0 || g.h <= 0) return;
+    const float left = std::round(px(cx) - float(pxSize) * 0.5f), top = std::round(px(cy) - float(pxSize) * 0.5f);
+    const float gx = left + float(g.bearingX), gy = top + float(g.bearingY);
+    quad(vert(gx, gy, g.u0, g.v0, 0, 0, 0, -1, c), vert(gx + float(g.w), gy, g.u1, g.v0, 0, 0, 0, -1, c),
+         vert(gx, gy + float(g.h), g.u0, g.v1, 0, 0, 0, -1, c), vert(gx + float(g.w), gy + float(g.h), g.u1, g.v1, 0, 0, 0, -1, c));
+}
+
 float DrawList::textWidth(const std::string& s, TextStyle st) const {
     if (!m_fonts || s.empty()) return 0;
     const int pxSize = std::max(6, int(std::lround(st.size * m_scale)));
