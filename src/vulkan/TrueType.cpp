@@ -129,10 +129,32 @@ bool TrueTypeFont::load(std::vector<std::uint8_t> data, std::string* error) {
         if (fmt == 12 && ((pid == 3 && eid == 10) || pid == 0)) best12 = sub;
         else if (fmt == 4 && ((pid == 3 && (eid == 1 || eid == 0)) || pid == 0)) best4 = sub;
     }
+    // glyph names (post format 2): glyphNameIndex[numGlyphs] u16, then Pascal strings for the indices from 258 on
+    for (int i = 0; i < numTables; ++i) {
+        const std::size_t e = 12 + std::size_t(i) * 16;
+        if (r.u32(e) != 0x706F7374) continue;   // post
+        const std::uint32_t off = r.u32(e + 8), len = r.u32(e + 12);
+        if (!r.ok(off, len) || len < 34 || r.u32(off) != 0x00020000) break;
+        const int n = int(r.u16(off + 32));
+        std::vector<std::string> strs;
+        std::size_t p = off + 34 + std::size_t(n) * 2;
+        while (p < std::size_t(off) + len) { const std::size_t l = r.u8(p); if (p + 1 + l > std::size_t(off) + len) break; strs.emplace_back(reinterpret_cast<const char*>(m_data.data() + p + 1), l); p += 1 + l; }
+        for (int g = 0; g < n && g < m_numGlyphs; ++g) {
+            const std::size_t idx = r.u16(off + 34 + std::size_t(g) * 2);
+            if (idx >= 258 && idx - 258 < strs.size()) m_names.emplace_back(strs[idx - 258], g);
+        }
+        std::sort(m_names.begin(), m_names.end());
+        break;
+    }
     m_sub = best12 ? best12 : best4;
     m_subFormat = best12 ? 12 : best4 ? 4 : 0;
     if (!m_sub) return fail("The font has no usable character map.");
     return true;
+}
+
+int TrueTypeFont::glyphByName(const std::string& name) const {
+    const auto it = std::lower_bound(m_names.begin(), m_names.end(), std::make_pair(name, -1));
+    return it != m_names.end() && it->first == name ? it->second : 0;
 }
 
 int TrueTypeFont::glyphIndex(std::uint32_t cp) const {

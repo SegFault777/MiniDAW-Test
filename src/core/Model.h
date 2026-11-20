@@ -93,6 +93,7 @@ struct Track {
     TrackType type = TrackType::Audio;
     float volume = 0.8f, pan = 0.f, sendA = 0.f, sendB = 0.f;
     bool mute = false, solo = false, armed = false;
+    int midiChannel = 0;                           ///< MIDI channel used when the track is exported to a MIDI file: 0 = automatic, 1..16 (Drummer tracks are automatic = 10)
     int group = 0;                                 ///< mixer group: 0 = none, 1..8 = A..H. Grouped tracks move their faders, pans, sends, mute and solo together
     std::vector<Region> regions;
     DrumPattern steps{};
@@ -158,6 +159,7 @@ struct ExportOptions {
     float normalizeDb = -1.f;
     bool dither = false;                                 ///< TPDF dither (16-bit only).
     bool tail = true;                                    ///< Add 2 s for reverb and echo tails.
+    bool stemSends = true;                               ///< Stems: keep the reverb and echo of the sends (false = dry stems, only the insert effects).
     bool masterEffects = true;                           ///< Stems: keep the master volume and the limiter (false = the stems carry only the track effects).
 };
 

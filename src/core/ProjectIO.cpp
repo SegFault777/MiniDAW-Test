@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <fstream>
 #include <map>
+#include <set>
 #include <regex>
 #include "../dsp/MidiFile.h"
 #include "../dsp/Stretch.h"
@@ -177,7 +178,7 @@ bool Session::importMidiFile(const std::string& path, std::string* error, const 
     {
         std::lock_guard<std::mutex> l(m_mutex);
         int n = 1;
-        auto addTrack = [&](const std::string& name, const std::vector<const dsp::MidiNote*>& notes) {
+        auto addTrack = [&](const std::string& name, const std::vector<const dsp::MidiNote*>& notes, int channel) {
             bool drums = true;
             double maxEnd = 0;
             for (const dsp::MidiNote* note : notes) {
@@ -185,6 +186,7 @@ bool Session::importMidiFile(const std::string& path, std::string* error, const 
                 maxEnd = std::max(maxEnd, note->startBeat + note->lengthBeats);
             }
             Track t = makeTrack(drums ? TrackType::Drummer : TrackType::Instrument, name);
+            if (!drums && channel >= 0) t.midiChannel = channel + 1;   // exporting the project again gives the notes their channel back
             Region r;
             r.midi = true;
             r.name = name;
@@ -199,11 +201,11 @@ bool Session::importMidiFile(const std::string& path, std::string* error, const 
             std::map<int, std::vector<const dsp::MidiNote*>> byChannel;
             for (const dsp::MidiNote& note : mt.notes) byChannel[note.channel].push_back(&note);
             if (options.splitChannels && byChannel.size() > 1) {
-                for (const auto& [ch, notes] : byChannel) addTrack(name + " (ch " + std::to_string(ch + 1) + ")", notes);
+                for (const auto& [ch, notes] : byChannel) addTrack(name + " (ch " + std::to_string(ch + 1) + ")", notes, ch);
             } else {
                 std::vector<const dsp::MidiNote*> all;
                 for (const dsp::MidiNote& note : mt.notes) all.push_back(&note);
-                addTrack(name, all);
+                addTrack(name, all, byChannel.size() == 1 ? byChannel.begin()->first : -1);
             }
             ++n;
         }
@@ -229,15 +231,28 @@ bool Session::exportMidiFile(const std::string& path, std::string* error) {
         for (const dsp::MeterPoint& mp : tm->meterPoints()) song.meters.push_back({tm->barStart(mp.bar), mp.num, mp.den});
         for (const Marker& mk : markers()) song.markers.push_back({mk.beat, mk.name});
     }
-    for (const Track& t : snapshot()) {
+    const std::vector<Track> tracks = snapshot();
+    // channels: a chosen channel is kept; the automatic ones are 1, 2, 3 ... in track order, skipping channel 10 (drums) and any chosen one
+    std::set<int> taken;
+    for (const Track& t : tracks)
+        if (t.type == TrackType::Instrument && t.midiChannel > 0) taken.insert(t.midiChannel - 1);
+    int nextAuto = 0;
+    auto autoChannel = [&] {
+        while (nextAuto == 9 || taken.count(nextAuto)) ++nextAuto;
+        const int ch = nextAuto < 16 ? nextAuto : 0;   // more than 15 tracks: share channel 1
+        ++nextAuto;
+        return ch;
+    };
+    for (const Track& t : tracks) {
         if (t.type != TrackType::Instrument && t.type != TrackType::Drummer) continue;
         dsp::MidiTrack mt;
         mt.name = t.name;
+        const int channel = t.type == TrackType::Drummer ? 9 : t.midiChannel > 0 ? t.midiChannel - 1 : autoChannel();
         for (const Region& r : t.regions) {
             if (!r.midi) continue;
             for (const Note& n : r.notes) {
                 if (n.start >= r.lengthBeats) continue;
-                mt.notes.push_back({t.type == TrackType::Drummer ? 9 : 0, n.pitch, n.velocity, r.start + n.start,
+                mt.notes.push_back({channel, n.pitch, n.velocity, r.start + n.start,
                                     std::min(n.length, r.lengthBeats - n.start)});
             }
         }
@@ -301,6 +316,7 @@ bool Session::writeProject(const std::string& path, bool autosave, std::string* 
         o["mute"] = t.mute;
         o["solo"] = t.solo;
         if (t.group > 0) o["group"] = t.group;
+        if (t.midiChannel > 0) o["midiChannel"] = t.midiChannel;
         if (t.type == TrackType::Drums) {
             Json rows = Json::array();
             for (const auto& row : t.steps) {
@@ -533,6 +549,7 @@ bool Session::loadProject(const std::string& path, std::string* error) {
             t.mute = o["mute"].toBool();
             t.solo = o["solo"].toBool();
             t.group = std::clamp(int(o["group"].toInt(0)), 0, 8);
+            t.midiChannel = std::clamp(int(o["midiChannel"].toInt(0)), 0, 16);
             if (t.type == TrackType::Drums) {
                 const auto& rows = o["steps"].items();
                 for (size_t r = 0; r < size_t(kDrumRows) && r < rows.size(); ++r) {
@@ -792,6 +809,7 @@ bool Session::exportAudio(const std::string& path, const ExportOptions& opt, std
 bool Session::exportStems(const std::string& folder, const ExportOptions& optIn, std::vector<std::string>* written, std::string* error) {
     ExportOptions opt = optIn;
     opt.cycleOnly = optIn.cycleOnly;
+    opt.stemSends = optIn.stemSends;
     const auto tracks = snapshot();
     std::vector<int> audible;   // tracks that have something to play
     for (int i = 0; i < int(tracks.size()); ++i) {
@@ -813,7 +831,9 @@ bool Session::exportStems(const std::string& folder, const ExportOptions& optIn,
         for (size_t i = 0; i < m_tracks.size() && i < saved.size(); ++i) { m_tracks[i].mute = saved[i].first; m_tracks[i].solo = saved[i].second; }
         m_master = savedMaster;
         m_limiter->bypass = savedLimiterBypass;
+        m_noSends = false;
     };
+    if (!opt.stemSends) { std::lock_guard<std::mutex> l(m_mutex); m_noSends = true; }   // dry stems: the aux returns stay out
     if (!opt.masterEffects) {   // stems with the track effects only: no master volume, no limiter
         std::lock_guard<std::mutex> l(m_mutex);
         m_master = 1.f;

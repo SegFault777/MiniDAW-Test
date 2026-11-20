@@ -202,10 +202,11 @@ void NativeUi::dlgBounce() {
         Field::check("Normalize", last("bNorm", 0) != 0), Field::number("Normalize to", last("bLevel", -1), -24, 0, 0.5, 1, " dB"),
         Field::check("Add a 2 s tail for reverb and echo", last("bTail", 1) != 0), Field::check("One file for every track (stems)", false),
         Field::check("Stems: keep master volume and limiter", last("bMaster", 1) != 0),
+        Field::check("Stems: keep reverb and echo sends", last("bSends", 1) != 0),
         Field::input("Title (MP3)", ""), Field::input("Artist (MP3)", ""), Field::input("Album (MP3)", "")},
         [this](const Dialog::Values& v) {
         m_last["bRange"] = v[0].index; m_last["bFormat"] = v[1].index; m_last["bRate"] = v[2].index; m_last["bKbps"] = v[3].index;
-        m_last["bDither"] = v[4].checked; m_last["bNorm"] = v[5].checked; m_last["bLevel"] = v[6].value; m_last["bTail"] = v[7].checked; m_last["bMaster"] = v[9].checked;
+        m_last["bDither"] = v[4].checked; m_last["bNorm"] = v[5].checked; m_last["bLevel"] = v[6].value; m_last["bTail"] = v[7].checked; m_last["bMaster"] = v[9].checked; m_last["bSends"] = v[10].checked;
         core::ExportOptions opt;
         core::applyExportChoices(opt, v[1].index, v[2].index, v[3].index);
         opt.cycleOnly = v[0].index == 1;
@@ -214,7 +215,8 @@ void NativeUi::dlgBounce() {
         opt.normalizeDb = float(v[6].value);
         opt.tail = v[7].checked;
         opt.masterEffects = v[9].checked;
-        opt.tags.title = v[10].text; opt.tags.artist = v[11].text; opt.tags.album = v[12].text; opt.tags.comment = "Made with MiniDAW";
+        opt.stemSends = v[10].checked;
+        opt.tags.title = v[11].text; opt.tags.artist = v[12].text; opt.tags.album = v[13].text; opt.tags.comment = "Made with MiniDAW";
         std::string err;
         if (v[8].checked) {   // stems
             if (!m_host.folderDialog) { message("File dialogs are not available here."); return; }

@@ -110,6 +110,14 @@ inline bool material(DrawList& d, R r, Color c, Icon icon) {
     return true;
 }
 
+/// A glyph of the current icon style centred on (cx, cy) with an em square of 'em' dp; false = the caller draws its classic shape.
+inline bool glyph(DrawList& d, float cx, float cy, float em, Color c, Icon icon) {
+    const std::uint32_t cp = IconTheme::instance().glyphFor(icon);
+    if (!cp) return false;
+    d.glyph(cx, cy, em, cp, c);
+    return true;
+}
+
 #define MINIDAW_ICON(fn, ic) inline void fn(DrawList& d, R r, Color c) { if (!material(d, r, c, Icon::ic)) classic::fn(d, r, c); }
 MINIDAW_ICON(play, Play) MINIDAW_ICON(stop, Stop) MINIDAW_ICON(record, Record) MINIDAW_ICON(rewind, Rewind) MINIDAW_ICON(loop, Loop)
 MINIDAW_ICON(metronome, Metronome) MINIDAW_ICON(pointer, Pointer) MINIDAW_ICON(pencil, Pencil) MINIDAW_ICON(scissors, Scissors)

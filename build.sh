@@ -427,13 +427,13 @@ do_vulkan_deploy() {
     mkdir -p "$DIST_VULKAN/shaders"
     cp "$BUILD/MiniDAWVulkan.exe" "$DIST_VULKAN/MiniDAWVulkan.exe"
     cp "$BUILD"/shaders/*.spv "$DIST_VULKAN/shaders/"
-    if ls "$ROOT"/resources/fonts/*.ttf >/dev/null 2>&1; then   # Material Symbols for the icon style setting (tools/fetch-material-symbols.sh)
+    if ls "$ROOT"/resources/fonts/*.ttf >/dev/null 2>&1; then   # optional: full Material Symbols fonts replace the built-in icons of their style
         mkdir -p "$DIST_VULKAN/fonts"
         cp "$ROOT"/resources/fonts/* "$DIST_VULKAN/fonts/"
         echo "icon fonts copied: $(ls "$DIST_VULKAN/fonts" | wc -l) files"
-    else
-        echo "no icon fonts in resources/fonts: the Vulkan version will use the classic icons (tools/fetch-material-symbols.sh)"
     fi
+    mkdir -p "$DIST_VULKAN/licenses"
+    cp "$ROOT"/licenses/* "$DIST_VULKAN/licenses/"   # licences of the built-in icons (Material Symbols, Apache-2.0)
     copy_payload "$DIST_VULKAN"
     mkdir -p "$DIST_VULKAN_PORTABLE"
     cp -r "$DIST_VULKAN"/. "$DIST_VULKAN_PORTABLE"/

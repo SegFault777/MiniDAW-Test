@@ -206,6 +206,15 @@ void Session::setTrackGroup(int i, int group) {
     { std::lock_guard<std::mutex> l(m_mutex); m_tracks[size_t(i)].group = std::clamp(group, 0, 8); }
     changed(false);
 }
+void Session::setTrackMidiChannel(int i, int channel) {
+    {
+        std::lock_guard<std::mutex> l(m_mutex);
+        if (i < 0 || i >= int(m_tracks.size())) return;
+    }
+    checkpoint();
+    { std::lock_guard<std::mutex> l(m_mutex); m_tracks[size_t(i)].midiChannel = std::clamp(channel, 0, 16); }
+    changed(false);
+}
 #undef TRACK_SET
 
 void Session::setArmed(int i, bool on) {
@@ -1168,7 +1177,7 @@ void Session::renderBlock(i64 pos, int frames, float* out, bool running) {
         t.peakR = peakR;
     }
 
-    for (size_t bus = 0; bus < m_aux.size() && m_only < 0; ++bus) {   // sends are not part of a bounce in place
+    for (size_t bus = 0; bus < m_aux.size() && m_only < 0 && !m_noSends; ++bus) {   // sends are not part of a bounce in place, nor of dry stems
         if (!m_aux[bus]->bypass) m_aux[bus]->process(m_auxBuf[bus].data(), frames);
         for (size_t i = 0; i < n2; ++i) out[i] += m_auxBuf[bus][i];
     }

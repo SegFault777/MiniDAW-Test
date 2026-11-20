@@ -24,6 +24,10 @@ public:
     /// Glyph index of a character (0 = none).
     int glyphIndex(std::uint32_t codepoint) const;
 
+    /// Glyph index by the name in the 'post' table (format 2; the icon fonts name their glyphs after the icon, "play_arrow"). 0 = none.
+    /// The 258 standard Macintosh names ("space", "A" ...) are not looked up.
+    int glyphByName(const std::string& name) const;
+
     /// Draws a glyph so that the em square (unitsPerEm) is 'px' pixels high: the bitmap's bearing is measured from the top left
     /// corner of that square, as for the text of the UI (advance = px). Returns false for a missing glyph. An empty glyph (space)
     /// returns true with a 0 x 0 bitmap.
@@ -40,6 +44,7 @@ private:
     // cmap subtable (format 4 or 12) found by load()
     std::size_t m_sub = 0;
     int m_subFormat = 0;
+    std::vector<std::pair<std::string, int>> m_names;   // sorted by name; from the post table
     mutable int m_budget = 0;   // glyph records one rasterize() may visit (composites in damaged fonts can nest without end)
 };
 

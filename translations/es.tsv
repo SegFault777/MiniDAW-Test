@@ -701,6 +701,7 @@ Icon style	Estilo de iconos
 Classic	Clásico
 Material Symbols needs its font files in the fonts folder.	Material Symbols necesita sus archivos de fuente en la carpeta fonts.
 Without them the classic icons are used.	Sin ellos se usan los iconos clásicos.
+MIDI Ch	Canal MIDI
 # Tutorial
 Mixer groups	Grupos del mezclador
 Bringing files in	Traer archivos
@@ -807,6 +808,7 @@ Artist (MP3)	Artista (MP3)
 Album (MP3)	Álbum (MP3)
 One file for every track (stems, all the same length)	Un archivo por pista (stems, todos con la misma duración)
 Stems: keep master volume and limiter	Stems: mantener volumen master y limitador
+Stems: keep reverb and echo sends	Stems: mantener envíos de reverb y eco
 One file for every track (stems)	Un archivo por pista (stems)
 Stems start at the same point and have the same length.	Los stems empiezan en el mismo punto y tienen la misma duración.
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Arrástralos al compás 1 de Logic Pro, Ableton Live o Cubase.

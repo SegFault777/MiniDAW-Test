@@ -771,6 +771,7 @@ Icon style	아이콘 스타일
 Classic	클래식
 Material Symbols needs its font files in the fonts folder.	Material Symbols는 fonts 폴더에 글꼴 파일이 있어야 합니다.
 Without them the classic icons are used.	글꼴이 없으면 클래식 아이콘을 씁니다.
+MIDI Ch	MIDI 채널
 # Tutorial
 Mixer groups	믹서 그룹
 Bringing files in	파일 가져오기
@@ -877,6 +878,7 @@ Artist (MP3)	아티스트 (MP3)
 Album (MP3)	앨범 (MP3)
 One file for every track (stems, all the same length)	트랙마다 파일 하나씩 (스템, 길이 모두 동일)
 Stems: keep master volume and limiter	스템: 마스터 볼륨과 리미터 포함
+Stems: keep reverb and echo sends	스템: 리버브·에코 센드 포함
 One file for every track (stems)	트랙마다 파일 하나씩 (스템)
 Stems start at the same point and have the same length.	스템은 같은 지점에서 시작하고 길이가 같습니다.
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Logic Pro, Ableton Live, Cubase의 1마디에 끌어다 놓으세요.

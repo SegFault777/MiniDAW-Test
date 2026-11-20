@@ -119,6 +119,14 @@ void Studio::registerCommands() {
         for (int gnum = 0; gnum <= 8; ++gnum)
             addCmd("Track", groupLabels[gnum], "", 0, 0, [this, gnum] { m_s.setTrackGroup(m_selTrack, gnum); m_modelDirty = true; }, trk);
     }
+    {   // palette-only aliases: Ctrl+K, "midi channel 5" (the channel of the track in an exported MIDI file)
+        static const char* chLabels[] = {"~MIDI Channel: Auto", "~MIDI Channel: 1", "~MIDI Channel: 2", "~MIDI Channel: 3", "~MIDI Channel: 4",
+                                         "~MIDI Channel: 5", "~MIDI Channel: 6", "~MIDI Channel: 7", "~MIDI Channel: 8", "~MIDI Channel: 9",
+                                         "~MIDI Channel: 10", "~MIDI Channel: 11", "~MIDI Channel: 12", "~MIDI Channel: 13", "~MIDI Channel: 14",
+                                         "~MIDI Channel: 15", "~MIDI Channel: 16"};
+        for (int ch = 0; ch <= 16; ++ch)
+            addCmd("Track", chLabels[ch], "", 0, 0, [this, ch] { m_s.setTrackMidiChannel(m_selTrack, ch); m_modelDirty = true; }, trk);
+    }
     addCmd("Track", "Mute Track", "Shift+M", 'M', S, [this] { m_s.setMute(m_selTrack, !m_tracks[size_t(m_selTrack)].mute); }, trk);
     addCmd("Track", "Solo Track", "Shift+S", 'S', S, [this] { m_s.setSolo(m_selTrack, !m_tracks[size_t(m_selTrack)].solo); }, trk);
     addCmd("Track", "Select Previous Track", "Up", KeyUp, 0, [this] { m_selTrack = std::max(0, m_selTrack - 1); m_selRegion = -1; }, trk);

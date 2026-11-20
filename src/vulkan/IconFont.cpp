@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "IconFont.h"
 
+#include "IconFontData.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
@@ -28,6 +30,11 @@ bool readFileBytes(const fs::path& p, std::vector<std::uint8_t>& out) {
 
 IconTheme& IconTheme::instance() { static IconTheme t; return t; }
 
+void IconTheme::setBuiltInEnabled(bool on) {
+    m_builtIn = on;
+    for (auto& f : m_faces) f.reset();
+}
+
 void IconTheme::setFontDirs(std::vector<std::string> dirs) {
     m_dirs = std::move(dirs);
     for (auto& f : m_faces) f.reset();
@@ -50,13 +57,16 @@ IconStyle IconTheme::parseStyle(const std::string& key, IconStyle fallback) {
 
 const std::vector<const char*>& IconTheme::candidates(Icon icon) {
     static const std::vector<std::vector<const char*>> table = {
-        /* Play */ {"play_arrow"}, /* Stop */ {"stop"}, /* Record */ {"fiber_manual_record", "radio_button_checked"}, /* Rewind */ {"skip_previous", "fast_rewind"},
+        /* Play */ {"play_arrow.fill", "play_arrow"}, /* Stop */ {"stop.fill", "stop"}, /* Record */ {"fiber_manual_record.fill", "fiber_manual_record", "radio_button_checked"},
+        /* Rewind */ {"skip_previous.fill", "skip_previous", "fast_rewind"},
         /* Loop */ {"repeat", "loop", "sync"}, /* Metronome */ {"metronome", "music_note"}, /* Pointer */ {"arrow_selector_tool", "near_me", "navigation", "arrow_outward"},
         /* Pencil */ {"edit", "draw", "create"}, /* Scissors */ {"content_cut", "cut"}, /* Eraser */ {"ink_eraser", "backspace", "close"},
         /* Mute */ {"volume_off", "no_sound"}, /* Browser */ {"library_music", "left_panel_open", "folder_open", "view_sidebar"},
         /* Inspector */ {"right_panel_open", "info", "tune", "view_sidebar"}, /* Dock */ {"bottom_panel_open", "dock_to_bottom", "view_agenda"},
         /* Search */ {"search"}, /* Follow */ {"my_location", "filter_center_focus", "center_focus_strong", "vertical_align_center"},
-        /* Plus */ {"add"}, /* Minus */ {"remove"}, /* Fit */ {"fit_screen", "zoom_out_map", "fullscreen"}};
+        /* Plus */ {"add"}, /* Minus */ {"remove"}, /* Fit */ {"fit_screen", "zoom_out_map", "fullscreen"},
+        /* DropDown */ {"arrow_drop_down", "keyboard_arrow_down", "expand_more"}, /* ChevronRight */ {"chevron_right", "keyboard_arrow_right"},
+        /* ExpandMore */ {"expand_more", "keyboard_arrow_down"}, /* Check */ {"check", "done"}, /* Close */ {"close", "clear"}};
     return table[size_t(std::clamp(int(icon), 0, int(Icon::Count) - 1))];
 }
 
@@ -82,6 +92,22 @@ IconTheme::Face& IconTheme::face(IconStyle style) {
     Face& f = *m_faces[i];
     if (f.tried || style == IconStyle::Classic) return f;
     f.tried = true;
+
+    // glyph of every icon: through the names of a .codepoints file when there is one, else through the names of the font itself
+    auto resolve = [&](TrueTypeFont& tt, const std::map<std::string, std::uint32_t>* codepoints) {
+        int found = 0;
+        for (int ic = 0; ic < int(Icon::Count); ++ic) {
+            f.glyph[ic] = 0;
+            for (const char* cand : candidates(Icon(ic))) {
+                int g = 0;
+                if (codepoints) { const auto it = codepoints->find(cand); if (it != codepoints->end()) g = tt.glyphIndex(it->second); }
+                else g = tt.glyphByName(cand);
+                if (g > 0) { f.glyph[ic] = g; ++found; break; }
+            }
+        }
+        return found;
+    };
+
     const std::string prefix = "materialsymbols" + lower(styleKey(style));
     for (const std::string& dir : m_dirs) {
         std::error_code ec;
@@ -95,32 +121,34 @@ IconTheme::Face& IconTheme::face(IconStyle style) {
         }
         std::sort(fonts.begin(), fonts.end());
         std::sort(cps.begin(), cps.end());
-        if (fonts.empty() || cps.empty()) continue;
-        // the codepoints file with the same stem as the font, else the first one
-        fs::path cpFile = cps.front();
-        for (const auto& c : cps) if (c.stem().string() == fonts.front().stem().string()) { cpFile = c; break; }
+        if (fonts.empty()) continue;
         std::vector<std::uint8_t> bytes;
-        std::ifstream cf(cpFile);
-        if (!cf || !readFileBytes(fonts.front(), bytes)) continue;
-        const std::string cpText((std::istreambuf_iterator<char>(cf)), std::istreambuf_iterator<char>());
-        const auto names = parseCodepoints(cpText);
+        if (!readFileBytes(fonts.front(), bytes)) continue;
         TrueTypeFont tt;
-        if (!tt.load(std::move(bytes), nullptr) || names.empty()) continue;
-        int found = 0;
-        for (int ic = 0; ic < int(Icon::Count); ++ic) {
-            f.glyph[ic] = 0;
-            for (const char* cand : candidates(Icon(ic))) {
-                const auto it = names.find(cand);
-                if (it == names.end()) continue;
-                const int g = tt.glyphIndex(it->second);
-                if (g > 0) { f.glyph[ic] = g; ++found; break; }
-            }
+        if (!tt.load(std::move(bytes), nullptr)) continue;
+        std::map<std::string, std::uint32_t> names;
+        if (!cps.empty()) {   // the codepoints file with the same stem as the font, else the first one
+            fs::path cpFile = cps.front();
+            for (const auto& c : cps) if (c.stem().string() == fonts.front().stem().string()) { cpFile = c; break; }
+            std::ifstream cf(cpFile);
+            if (cf) names = parseCodepoints(std::string((std::istreambuf_iterator<char>(cf)), std::istreambuf_iterator<char>()));
         }
-        if (found == 0) continue;
+        if (resolve(tt, names.empty() ? nullptr : &names) == 0) continue;
         f.font = std::move(tt);
         f.path = fonts.front().string();
         f.ok = true;
-        break;
+        return f;
+    }
+    if (m_builtIn) {
+        const EmbeddedIconFont& e = embeddedIconFont(int(style));
+        if (e.data && e.size) {
+            TrueTypeFont tt;
+            if (tt.load(std::vector<std::uint8_t>(e.data, e.data + e.size), nullptr) && resolve(tt, nullptr) > 0) {
+                f.font = std::move(tt);
+                f.path = "(built in)";
+                f.ok = true;
+            }
+        }
     }
     return f;
 }

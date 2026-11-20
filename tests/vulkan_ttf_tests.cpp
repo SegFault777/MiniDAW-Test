@@ -32,6 +32,9 @@ int main() {
     // character map: BMP private use (format 4) and plane 15 (format 12)
     CHECK(f.glyphIndex(0xE000) == 1 && f.glyphIndex(0xE001) == 2 && f.glyphIndex(0xE005) == 6);
     CHECK(f.glyphIndex(0xF0001) == 7);
+    // glyph names (post table, format 2): the icon fonts are searched by name
+    CHECK(f.glyphByName("sq") == 1 && f.glyphByName("tri") == 2 && f.glyphByName("blank") == 6 && f.glyphByName("far") == 7);
+    CHECK(f.glyphByName("nope") == 0 && f.glyphByName("") == 0 && f.glyphByName("SQ") == 0);
     CHECK(f.glyphIndex('A') == 0 && f.glyphIndex(0xE100) == 0 && f.glyphIndex(0x10FFFF) == 0);
 
     // coverage sums against FreeType

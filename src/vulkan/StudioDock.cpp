@@ -493,6 +493,14 @@ void Studio::drawInspector(const Rect& r) {
             int idx = t.preset;
             if (count > 0 && g.dropdown(g.id("insp-preset", t.id), {q.x + 54, q.y, q.w - 54, q.h}, idx, names)) { m_s.setInstrumentPreset(ti, idx); m_modelDirty = true; }
         }
+        if (t.type == core::TrackType::Instrument) {   // the channel of the track in an exported MIDI file
+            q = row(22);
+            dl.textIn({q.x, q.y, 54, q.h}, tr("MIDI Ch"), textDim, small);
+            std::vector<std::string> chans{tr("Auto")};
+            for (int i = 1; i <= 16; ++i) chans.push_back(std::to_string(i));
+            int ch = t.midiChannel;
+            if (g.dropdown(g.id("insp-midich", t.id), {q.x + 54, q.y, q.w - 54, q.h}, ch, chans)) { m_s.setTrackMidiChannel(ti, ch); m_modelDirty = true; }
+        }
     }
     y += 6;
     if (hasRegion()) {
@@ -654,7 +662,8 @@ void Studio::drawBrowser(const Rect& r) {
             const Id hid = id("br-sec", it.kind);
             const Interact hi = g.interact(hid, hdr, false);
             dl.rect(hdr, mix(bg2, bg3, g.anim(hid, hi.hovered ? 1.f : 0.f)));
-            dl.triangle(m_sectionClosed[it.kind] ? Vec2{hdr.x + 12, hdr.cy() - 4} : Vec2{hdr.x + 10, hdr.cy() - 2}, m_sectionClosed[it.kind] ? Vec2{hdr.x + 12, hdr.cy() + 4} : Vec2{hdr.x + 18, hdr.cy() - 2}, m_sectionClosed[it.kind] ? Vec2{hdr.x + 17, hdr.cy()} : Vec2{hdr.x + 14, hdr.cy() + 4}, textDim);
+            if (!icons::glyph(dl, hdr.x + 14, hdr.cy(), 18, text, m_sectionClosed[it.kind] ? Icon::ChevronRight : Icon::ExpandMore))
+                dl.triangle(m_sectionClosed[it.kind] ? Vec2{hdr.x + 12, hdr.cy() - 4} : Vec2{hdr.x + 10, hdr.cy() - 2}, m_sectionClosed[it.kind] ? Vec2{hdr.x + 12, hdr.cy() + 4} : Vec2{hdr.x + 18, hdr.cy() - 2}, m_sectionClosed[it.kind] ? Vec2{hdr.x + 17, hdr.cy()} : Vec2{hdr.x + 14, hdr.cy() + 4}, textDim);
             dl.text(hdr.x + 26, hdr.y + 5, tr(sections[it.kind]) + "  (" + std::to_string(n) + ")", text, bold);
             if (hi.clicked) m_sectionClosed[it.kind] = !m_sectionClosed[it.kind];
             y += 26;

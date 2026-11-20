@@ -701,6 +701,7 @@ Icon style	图标样式
 Classic	经典
 Material Symbols needs its font files in the fonts folder.	Material Symbols 需要在 fonts 文件夹中放置字体文件。
 Without them the classic icons are used.	没有字体时使用经典图标。
+MIDI Ch	MIDI 通道
 # Tutorial
 Mixer groups	混音器分组
 Bringing files in	导入文件
@@ -807,6 +808,7 @@ Artist (MP3)	艺术家 (MP3)
 Album (MP3)	专辑 (MP3)
 One file for every track (stems, all the same length)	每个轨道一个文件(分轨,长度相同)
 Stems: keep master volume and limiter	分轨：包含主音量和限制器
+Stems: keep reverb and echo sends	分轨：包含混响和回声发送
 One file for every track (stems)	每个轨道一个文件(分轨)
 Stems start at the same point and have the same length.	分轨从同一位置开始,长度相同。
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	把它们拖到 Logic Pro、Ableton Live 或 Cubase 的第 1 小节即可。

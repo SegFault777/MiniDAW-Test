@@ -2,6 +2,7 @@
 // Copyright (C) 2026 MiniDAW contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "Gui.h"
+#include "Icons.h"
 #include <cstdio>
 #include "Text.h"
 #include "Theme.h"
@@ -159,7 +160,9 @@ bool Gui::button(Id i, const Rect& r, const std::string& label, ButtonKind kind,
     }
     m_dl->rrect(r, radius, bg);
     if (kind == ButtonKind::Normal) m_dl->rrectStroke(r, radius, 1, mix(border, accent, h * 0.6f));
-    m_dl->textIn(r.inset(4, 0), tr(label), fg, normal, Align::Center);
+    // the flat "x" buttons (remove an effect, a device card, a snapshot) show the close icon of the chosen icon style
+    if (!(kind == ButtonKind::Flat && label == "x" && icons::glyph(*m_dl, r.cx(), r.cy(), std::min(r.w, r.h) * 0.62f, fg, Icon::Close)))
+        m_dl->textIn(r.inset(4, 0), tr(label), fg, normal, Align::Center);
     if (it.hovered) setCursor(Cursor::Hand);
     return enabled && it.clicked;
 }
@@ -196,7 +199,7 @@ bool Gui::checkbox(Id i, const Rect& r, const std::string& label, bool& value) {
     const Rect box{r.x, r.cy() - 7, 14, 14};
     m_dl->rrect(box, 3, mix(mix(bg2, bg3, h), accent, on));
     m_dl->rrectStroke(box, 3, 1, mix(border, accent, std::max(on, h)));
-    if (on > 0.05f) {
+    if (on > 0.05f && !icons::glyph(*m_dl, box.cx(), box.cy(), 19, scaleAlpha(rgb(255, 255, 255), on), Icon::Check)) {
         m_dl->line(box.x + 3, box.y + 7.5f, box.x + 6, box.y + 10.5f, 1.8f, scaleAlpha(rgb(255, 255, 255), on));
         m_dl->line(box.x + 6, box.y + 10.5f, box.x + 11, box.y + 3.5f, 1.8f, scaleAlpha(rgb(255, 255, 255), on));
     }
@@ -410,7 +413,8 @@ bool Gui::dropdown(Id i, const Rect& r, int& index, const std::vector<std::strin
     m_dl->rrect(r, radius, mix(bg2, bg3, h));
     m_dl->rrectStroke(r, radius, 1, mix(border, accent, h * 0.6f));
     m_dl->textIn({r.x + 8, r.y, r.w - 24, r.h}, index >= 0 && index < int(options.size()) ? tr(options[size_t(index)]) : std::string(), text, normal);
-    m_dl->triangle({r.right() - 15, r.cy() - 2}, {r.right() - 7, r.cy() - 2}, {r.right() - 11, r.cy() + 3}, textDim);
+    if (!icons::glyph(*m_dl, r.right() - 13, r.cy(), 20, textDim, Icon::DropDown))
+        m_dl->triangle({r.right() - 15, r.cy() - 2}, {r.right() - 7, r.cy() - 2}, {r.right() - 11, r.cy() + 3}, textDim);
     if (it.hovered) setCursor(Cursor::Hand);
     if (it.clicked) {
         std::vector<MenuItem> items;
@@ -559,7 +563,8 @@ void Gui::drawMenus() {
                 if (it.checked) { dl.line(row.x + 8, row.cy(), row.x + 11, row.cy() + 3.5f, 1.8f, accent); dl.line(row.x + 11, row.cy() + 3.5f, row.x + 17, row.cy() - 4, 1.8f, accent); }
                 dl.textIn({row.x + 26, row.y, row.w - 40, row.h}, tr(it.label), fg, normal);
                 if (!it.shortcut.empty()) dl.textIn({row.x + 26, row.y, row.w - 34, row.h}, it.shortcut, textMute, small, Align::Right);
-                if (!it.children.empty()) dl.triangle({row.right() - 12, row.cy() - 4}, {row.right() - 12, row.cy() + 4}, {row.right() - 7, row.cy()}, fg);
+                if (!it.children.empty() && !icons::glyph(dl, row.right() - 11, row.cy(), 18, fg, Icon::ChevronRight))
+                    dl.triangle({row.right() - 12, row.cy() - 4}, {row.right() - 12, row.cy() + 4}, {row.right() - 7, row.cy()}, fg);
                 if (m_pressedEdge[0] && row.contains(m_mx, m_my) && m.rect.contains(m_mx, m_my) && it.enabled && it.children.empty()) { chosen = it.action; m_pressedEdge[0] = false; }
                 y += kMenuRow;
             }

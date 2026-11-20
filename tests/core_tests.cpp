@@ -1363,6 +1363,41 @@ static void testStemsMasterEffects() {
     const float pw = peakOf(tone(a)), pn = peakOf(tone(b));
     CHECK(pw > 0.05f && pn > pw * 1.8f && pn < pw * 2.2f);          // master volume 0.5 is gone
     CHECK(std::fabs(s.masterVolume() - 0.5f) < 1e-6f);              // and comes back
+
+    // sends: with the reverb send up, the stem carries the reverb; without sends it is the dry track, and the aux returns come back afterwards
+    s.setMasterVolume(1.f);
+    s.setSendA(t, 1.0f);
+    ExportOptions w; w.format = dsp::WavFormat::Float32; w.tail = true; w.masterEffects = false;   // no limiter: it would press the louder (wet) stem
+    std::vector<std::string> wet, dry;
+    auto energy = [](const std::string& path) { std::vector<float> pcm; std::string e; double sum = 0; if (readWavFile(path, pcm, &e)) for (float x : pcm) sum += double(x) * double(x); return sum; };
+    CHECK(s.exportStems(dir + "/wet", w, &wet, &err));
+    w.stemSends = false;
+    CHECK(s.exportStems(dir + "/dry", w, &dry, &err));
+    s.setSendA(t, 0.0f);
+    std::vector<std::string> base;
+    CHECK(s.exportStems(dir + "/base", w, &base, &err));   // sendA 0, stemSends is false here: the track alone
+    w.stemSends = true;
+    std::vector<std::string> base2;
+    CHECK(s.exportStems(dir + "/base2", w, &base2, &err)); // sendA 0 with sends on: still the track alone
+    s.setSendA(t, 1.0f);
+    auto load = [](const std::string& path) { std::vector<float> pcm; std::string e; readWavFile(path, pcm, &e); return pcm; };
+    auto diffEnergy = [&](const std::string& a, const std::string& b) {
+        const auto x = load(a), y = load(b);
+        double d = 0;
+        for (size_t i = 0; i < std::max(x.size(), y.size()); ++i) { const double u = i < x.size() ? x[i] : 0.0, v = i < y.size() ? y[i] : 0.0; d += (u - v) * (u - v); }
+        return d;
+    };
+    const double e0 = energy(tone(base));
+    CHECK(e0 > 0);
+    // with the send at 0 the sends make no difference; with the send up, the dry stem is still the track alone ...
+    CHECK(diffEnergy(tone(base), tone(base2)) < e0 * 1e-6);
+    CHECK(diffEnergy(tone(dry), tone(base)) < e0 * 1e-6);
+    // ... and the stem with sends carries the reverb: a clearly different signal, with a longer sounding tail
+    CHECK(diffEnergy(tone(wet), tone(dry)) > e0 * 0.02);
+    CHECK(load(tone(wet)).size() >= load(tone(dry)).size());
+    std::vector<std::string> again;
+    CHECK(s.exportStems(dir + "/wet2", w, &again, &err));   // after a dry export the sends are back
+    CHECK(diffEnergy(tone(again), tone(wet)) < e0 * 1e-6);
 }
 
 
@@ -1577,6 +1612,83 @@ static void testMidiInterchange() {
     CHECK(mk.size() == 2 && mk[0].name == "Start" && mk[1].name == "Drop" && std::fabs(mk[1].beat - 8) < 1e-6);
 }
 
+static void testMidiChannels() {
+    Session a;
+    for (int i = a.trackCount() - 1; i >= 0; --i) a.removeTrack(i);   // a new project starts with default tracks
+    const int t1 = a.addTrack(TrackType::Instrument, "Auto A");
+    const int t2 = a.addTrack(TrackType::Instrument, "Chosen");
+    const int t3 = a.addTrack(TrackType::Instrument, "Auto B");
+    const int td = a.addTrack(TrackType::Drummer, "Drums");
+    for (int ti : {t1, t2, t3, td}) {
+        const int ri = a.addMidiRegion(ti, 0, 4);
+        a.setRegionNotes(ti, ri, {{60, 0, 1, 100}});
+    }
+    a.setTrackMidiChannel(t2, 3);
+    a.setTrackMidiChannel(99, 5);                          // a track that does not exist is ignored
+    CHECK(a.snapshot()[size_t(t2)].midiChannel == 3);
+    a.setTrackMidiChannel(t1, 40);                         // clamped to 1..16
+    CHECK(a.snapshot()[size_t(t1)].midiChannel == 16);
+    a.setTrackMidiChannel(t1, 0);                          // back to automatic
+    a.undo();
+    CHECK(a.snapshot()[size_t(t1)].midiChannel == 16);     // undo restores the previous value
+    a.setTrackMidiChannel(t1, 0);
+    const std::string file = tmpDir() + "/channels.mid";
+    std::string err;
+    CHECK(a.exportMidiFile(file, &err));
+    std::vector<std::uint8_t> bytes;
+    {
+        FILE* f = std::fopen(file.c_str(), "rb");
+        CHECK(f != nullptr);
+        if (f) { int c; while ((c = std::fgetc(f)) != EOF) bytes.push_back(std::uint8_t(c)); std::fclose(f); }
+    }
+    dsp::MidiSong song;
+    CHECK(dsp::readMidiFile(bytes, song, err));
+    CHECK(song.tracks.size() == 4);
+    auto channelOf = [&](const std::string& name) {
+        for (const auto& mt : song.tracks) if (mt.name == name && !mt.notes.empty()) return mt.notes[0].channel;
+        return -1;
+    };
+    CHECK(channelOf("Auto A") == 0);       // automatic: 1, 2, ... in track order, skipping the chosen channel 3 and the drum channel
+    CHECK(channelOf("Chosen") == 2);
+    CHECK(channelOf("Auto B") == 1);
+    CHECK(channelOf("Drums") == 9);
+
+    // the choice is saved in the project and survives a copy of the track
+    const std::string proj = tmpDir() + "/channels.mdaw";
+    CHECK(a.saveProject(proj, &err));
+    Session b;
+    CHECK(b.loadProject(proj, &err));
+    int found = 0;
+    for (const Track& t : b.snapshot()) {
+        if (t.name == "Chosen") { CHECK(t.midiChannel == 3); ++found; }
+        if (t.name == "Auto A") { CHECK(t.midiChannel == 0); ++found; }
+    }
+    CHECK(found == 2);
+    const int copy = b.duplicateTrack(1);
+    (void) copy;
+    int withThree = 0;
+    for (const Track& t : b.snapshot()) if (t.midiChannel == 3) ++withThree;
+    CHECK(withThree == 2);
+
+    // a file whose track plays on one channel gives the track that channel; exporting again keeps it
+    Session c;
+    for (int i = c.trackCount() - 1; i >= 0; --i) c.removeTrack(i);
+    CHECK(c.importMidiFile(file, &err));
+    int ch3 = 0;
+    for (const Track& t : c.snapshot()) if (t.name == "Chosen") ch3 = t.midiChannel;
+    CHECK(ch3 == 3);
+    // with more than 15 instrument tracks the automatic channels run out and wrap to channel 1 instead of failing
+    Session many;
+    for (int i = many.trackCount() - 1; i >= 0; --i) many.removeTrack(i);
+    for (int i = 0; i < 17; ++i) {
+        const int ti = many.addTrack(TrackType::Instrument, "T" + std::to_string(i));
+        const int ri = many.addMidiRegion(ti, 0, 4);
+        many.setRegionNotes(ti, ri, {{60, 0, 1, 100}});
+    }
+    const std::string f2 = tmpDir() + "/many.mid";
+    CHECK(many.exportMidiFile(f2, &err));
+}
+
 static void testMixerGroups() {
     Session s;
     const int a = s.addTrack(TrackType::Instrument, "A"), b = s.addTrack(TrackType::Instrument, "B"), c = s.addTrack(TrackType::Instrument, "C");
@@ -1770,7 +1882,7 @@ static void testMoveRegions() {
 int main() {
     testJson(); testText(); testWav(); testSaveLoad(); testUndo(); testClipboardAndDuplicate(); testAutosave();
     testExport(); testBounce(); testAutomationPan(); testMidiOps(); testMidiOps2(); testSessionRegions(); testSessionTransforms();
-    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems(); testStemsMasterEffects(); testMidiImportOptions(); testMp3Gapless(); testLogicPackage(); testBplistAndLogicChunks(); testLogicFixtures(); testLogicTrackNames();
+    testMidiOps3(); testTempoDetect(); testRegionCommands(); testConvertPattern(); testSessionNewTransforms(); testV09(); testV012(); testAppPaths(); testFileTypes(); testAiff(); testMoveRegions(); testRevisionAndPeaks(); testMixerGroups(); testMidiChannels(); testMidiInterchange(); testExportFormats2(); testResampler(); testId3(); testExportFormats(); testExportMp3AndStems(); testStemsMasterEffects(); testMidiImportOptions(); testMp3Gapless(); testLogicPackage(); testBplistAndLogicChunks(); testLogicFixtures(); testLogicTrackNames();
     std::printf("core fails=%d\n", fails);
     return fails;
 }

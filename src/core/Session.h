@@ -66,6 +66,7 @@ public:
     /// Mixer groups: tracks with the same group number (1..8, 0 = none) follow each other. A volume change keeps the ratio between
     /// the members, pan and sends keep their difference, mute and solo are shared. One undo step.
     void setTrackGroup(int track, int group);
+    void setTrackMidiChannel(int track, int channel);   ///< 0 = automatic, 1..16: the channel of the track in an exported MIDI file
     /// While false the setters below change only the track they are called for (the UI turns it off while Alt is held).
     void setGroupLinking(bool on) { m_groupLink = on; }
     void setVolume(int i, float v);
@@ -342,6 +343,7 @@ private:
     std::vector<float> m_scratch, m_trackBuf;
     std::array<std::vector<float>, 2> m_auxBuf;
     std::vector<Ev> m_events;
+    bool m_noSends = false;   // true while stems are exported without the aux returns (reverb, echo)
     float m_masterL = 0, m_masterR = 0;
 
     std::atomic<i64> m_pos{0}, m_expected{-1}, m_countRemain{0}, m_countTotal{0}, m_idle{0};

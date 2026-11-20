@@ -28,7 +28,7 @@ MP3 export uses the MP3 encoder of Windows (Media Foundation), so nothing extra 
 
 ### Stems (one file for every track)
 
-By default the stems carry the master volume and the limiter of the project, so they sum to the same level as a normal bounce. Switch off **Stems: keep master volume and limiter** to get the stems with only their own track effects (inserts and sends): a mixer in another DAW can then apply its own master processing. Stems can be WAV, AIFF or MP3 like any other export; the format choice of the dialog applies to every file.
+By default the stems carry the master volume and the limiter of the project, so they sum to the same level as a normal bounce. Switch off **Stems: keep master volume and limiter** to get the stems with only their own track effects (inserts and sends): a mixer in another DAW can then apply its own master processing. Switch off **Stems: keep reverb and echo sends** to get dry stems: the Rev and Echo sends of the tracks are left out, so you can add your own reverb in the other program (the reverb tail is then not part of the files). Stems can be WAV, AIFF or MP3 like any other export; the format choice of the dialog applies to every file.
 Tick **One file for every track** and choose a folder. Every track that makes sound becomes a file called `01 Name.wav`, `02 Name.wav` ... All files start at the same point and have exactly the same length, so you can drop them all into another DAW at bar 1 and they line up. Level and panning of the tracks are included, the master effects are too, and the mute / solo state of your project is not changed.
 
 Tips for the other program:
@@ -41,6 +41,8 @@ Tips for the other program:
 - every **time signature** change,
 - the **markers** of the project,
 - one track per instrument or Drummer track, with its name (Drummer tracks on channel 10).
+
+**MIDI channels**: choose the channel of an instrument track in the Inspector (*MIDI Ch*, or `Ctrl+K` and type *midi channel 5*). *Auto* (the default) gives the instrument tracks the channels 1, 2, 3 ... in track order, skipping channel 10 (drums) and the channels you chose yourself; after 15 tracks the automatic channels start again at 1. The choice is saved in the project, and a MIDI file whose track plays on one channel gives the new track that channel, so a round trip keeps the channels.
 
 Importing reads the same things back. Logic Pro, Ableton Live, Cubase, Pro Tools, FL Studio and others read and write these files, including their tempo and marker tracks.
 

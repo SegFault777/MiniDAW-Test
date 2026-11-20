@@ -413,6 +413,7 @@ void Studio::dlgBounce() {
                 DlgField::check("Dither (16-bit)", false), DlgField::check("Add a 2 s tail for reverb and echo", true),
                 DlgField::check("One file for every track (stems, all the same length)", false),
                 DlgField::check("Stems: keep master volume and limiter", true),
+                DlgField::check("Stems: keep reverb and echo sends", true),
                 DlgField::input("Title (MP3)", ""), DlgField::input("Artist (MP3)", ""), DlgField::input("Album (MP3)", ""),
                 DlgField::note("Stems start at the same point and have the same length."),
                 DlgField::note("Drop them into Logic Pro, Ableton Live or Cubase at bar 1.")},
@@ -422,7 +423,8 @@ void Studio::dlgBounce() {
         o.cycleOnly = v[3].checked; o.normalize = v[4].checked; o.normalizeDb = float(v[5].value); o.dither = v[6].checked; o.tail = v[7].checked;
         const bool stems = v[8].checked;
         o.masterEffects = v[9].checked;
-        o.tags.title = v[10].text; o.tags.artist = v[11].text; o.tags.album = v[12].text;
+        o.stemSends = v[10].checked;
+        o.tags.title = v[11].text; o.tags.artist = v[12].text; o.tags.album = v[13].text;
         o.tags.comment = "Made with MiniDAW";
         if (!m_host.fileDialog) { message("File dialogs are not available here."); return; }
         std::string err;

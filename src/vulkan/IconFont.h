@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 // Vulkan UI: the icon style. "Classic" icons are drawn with draw-list shapes (Icons.h); the Material Symbols styles (Outlined, Rounded,
-// Sharp - Google, Apache-2.0) are drawn from the font files, which are looked for in the "fonts" folders: MaterialSymbols<Style>*.ttf
-// together with the matching *.codepoints file that Google publishes next to the font (name -> code point, one pair per line).
-// An icon that the chosen font cannot draw (font or name missing) falls back to the classic drawing, so the UI never loses a button.
+// Sharp - Google, Apache-2.0) come from the program itself (IconFontData.cpp: the icons that MiniDAW uses, default instance of the variable
+// font). A font file in a "fonts" folder - MaterialSymbols<Style>*.ttf, e.g. Google's variable font as it is - replaces the built-in icons
+// of its style; its glyphs are found by their names (the 'post' table), or through a *.codepoints file next to it (name -> code point).
+// An icon that the font cannot draw falls back to the classic drawing, so the UI never loses a button.
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -22,6 +23,7 @@ enum class IconStyle { Classic = 0, Outlined = 1, Rounded = 2, Sharp = 3 };
 /// The icons of the toolbar and panels. The index is also the low byte of the virtual code point.
 enum class Icon {
     Play, Stop, Record, Rewind, Loop, Metronome, Pointer, Pencil, Scissors, Eraser, Mute, Browser, Inspector, Dock, Search, Follow, Plus, Minus, Fit,
+    DropDown, ChevronRight, ExpandMore, Check, Close,   // small marks of the controls (drop-down arrow, sub-menu, section, check box, close button)
     Count
 };
 
@@ -35,12 +37,16 @@ public:
     void setFontDirs(std::vector<std::string> dirs);
     const std::vector<std::string>& fontDirs() const { return m_dirs; }
 
+    /// The icons that are part of the program (IconFontData.cpp) are used when no font file is found. Off only in tests.
+    void setBuiltInEnabled(bool on);
+    bool builtInEnabled() const { return m_builtIn; }
+
     void setStyle(IconStyle s) { m_style = s; }
     IconStyle style() const { return m_style; }
 
     /// True when the fonts of 'style' were found and loaded (Classic is always available).
     bool available(IconStyle style);
-    /// The font file that was used for 'style', or "" when there is none.
+    /// The font file that was used for 'style', "(built in)" for the icons of the program, or "" when there is none.
     std::string fontPath(IconStyle style);
 
     /// Virtual code point of an icon in the current style, 0 = draw it the classic way.
@@ -68,6 +74,7 @@ private:
     Face& face(IconStyle style);
     std::vector<std::string> m_dirs;
     IconStyle m_style = IconStyle::Outlined;
+    bool m_builtIn = true;
     std::unique_ptr<Face> m_faces[4];
 };
 

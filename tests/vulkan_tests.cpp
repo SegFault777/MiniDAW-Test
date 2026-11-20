@@ -10,6 +10,7 @@
 #include "../src/core/Session.h"
 #include "../src/vulkan/SoftRaster.h"
 #include "../src/vulkan/IconFont.h"
+#include "../src/vulkan/Icons.h"
 #include "../src/vulkan/Studio.h"
 #include "../src/vulkan/Theme.h"
 
@@ -375,6 +376,29 @@ int main(int argc, char** argv) {
         Studio st4(s3, h3);
         st4.applyLayout({{"dockH", "99999"}, {"zoom", "-5"}, {"dockTab", "77"}});
         CHECK(st4.layoutSettings()["dockH"] == "900.0" && st4.layoutSettings()["dockTab"] == "6");
+    }
+
+    // ---- MIDI channel of a track (for MIDI export): inspector row, palette commands
+    {
+        int inst = -1, other = -1;
+        for (int i = 0; i < int(st.tracks().size()); ++i) {
+            if (st.tracks()[size_t(i)].type == core::TrackType::Instrument && inst < 0) inst = i;
+            if (st.tracks()[size_t(i)].type != core::TrackType::Instrument && other < 0) other = i;
+        }
+        CHECK(inst >= 0 && other >= 0);
+        CHECK(st.runCommand("Show Mixer"));
+        st.selectRegion(inst, -1); r.frame(3);
+        CHECK(st.tracks()[size_t(inst)].midiChannel == 0);
+        r.shot("/tmp/vk_midich_auto.ppm");
+        CHECK(st.runCommand("~MIDI Channel: 5")); r.frame(3);
+        CHECK(st.tracks()[size_t(inst)].midiChannel == 5 && s.snapshot()[size_t(inst)].midiChannel == 5);
+        r.shot("/tmp/vk_midich_5.ppm");
+        CHECK(st.runCommand("~MIDI Channel: 16")); r.frame(2);
+        CHECK(st.tracks()[size_t(inst)].midiChannel == 16);
+        CHECK(st.runCommand("~MIDI Channel: Auto")); r.frame(2);
+        CHECK(st.tracks()[size_t(inst)].midiChannel == 0);
+        st.selectRegion(other, -1); r.frame(3);
+        r.shot("/tmp/vk_midich_other.ppm");   // no MIDI Ch row on an audio / drum track
     }
 
     // ---- mixer groups: grouped tracks follow each other, Alt changes only one
@@ -760,6 +784,7 @@ int main(int argc, char** argv) {
     // ---- icon style: classic drawing or Material Symbols (Outlined / Rounded / Sharp) from font files, chosen in Preferences
     {
         auto& th = IconTheme::instance();
+        th.setBuiltInEnabled(false);   // the first checks are about font files; the built-in icons come after them
         // code point files: "name hex", junk and comments ignored
         const auto cps = IconTheme::parseCodepoints("play_arrow e037\n# comment\nbad\nstop  E047\nnope zzz\nhuge 110000\n");
         CHECK(cps.size() == 2 && cps.at("play_arrow") == 0xE037 && cps.at("stop") == 0xE047);
@@ -814,6 +839,46 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "icon styles: classic/outlined/rounded/sharp play button differ by %d / %d / %d pixels\n", differ(outPlay, classicPlay), differ(rouPlay, outPlay), differ(shaPlay, rouPlay));
         (void)classicTools;
 
+        // the icons that are part of the program: every style is available without any font file, every icon has a glyph
+        {
+            th.setFontDirs({});
+            th.setBuiltInEnabled(true);
+            for (IconStyle st : {IconStyle::Outlined, IconStyle::Rounded, IconStyle::Sharp}) {
+                CHECK(th.available(st) && th.fontPath(st) == "(built in)");
+                th.setStyle(st);
+                for (int ic = 0; ic < int(Icon::Count); ++ic) CHECK(th.glyphFor(Icon(ic)) != 0);
+            }
+            // the three styles really are different drawings of the same icon
+            std::vector<std::vector<std::uint8_t>> pencil;
+            for (IconStyle st : {IconStyle::Outlined, IconStyle::Rounded, IconStyle::Sharp}) {
+                th.setStyle(st);
+                GlyphBitmap g;
+                CHECK(th.rasterize(th.glyphFor(Icon::Pencil), 48, g) && g.w > 10 && g.h > 10);
+                pencil.push_back(g.a8);
+            }
+            CHECK(pencil[0] != pencil[1] && pencil[1] != pencil[2] && pencil[0] != pencil[2]);
+            // a font file in a fonts folder replaces the built-in icons of its style only
+            th.setFontDirs({"data/fonts"});
+            CHECK(th.fontPath(IconStyle::Rounded).find("MaterialSymbolsRounded-test.ttf") != std::string::npos);
+            th.setFontDirs({"data/fonts-without-this-style"});
+            CHECK(th.fontPath(IconStyle::Rounded) == "(built in)");
+            // the real fonts of Google, as downloaded (no .codepoints file): MINIDAW_MS_FONTS=<folder with the three variable fonts>
+            if (const char* real = std::getenv("MINIDAW_MS_FONTS")) {
+                std::vector<std::vector<std::uint8_t>> viaFile, viaBuiltIn;
+                for (IconStyle st : {IconStyle::Outlined, IconStyle::Rounded, IconStyle::Sharp}) {
+                    th.setStyle(st);
+                    th.setFontDirs({});
+                    for (int ic = 0; ic < int(Icon::Count); ++ic) { GlyphBitmap g; CHECK(th.rasterize(th.glyphFor(Icon(ic)), 40, g)); viaBuiltIn.push_back(g.a8); }
+                    th.setFontDirs({real});
+                    CHECK(th.fontPath(st).find("MaterialSymbols") != std::string::npos && th.fontPath(st) != "(built in)");
+                    for (int ic = 0; ic < int(Icon::Count); ++ic) { GlyphBitmap g; CHECK(th.rasterize(th.glyphFor(Icon(ic)), 40, g)); viaFile.push_back(g.a8); }
+                }
+                CHECK(viaFile == viaBuiltIn);   // the built-in subset draws exactly what the full font draws
+                std::fprintf(stderr, "real Material Symbols fonts: %zu glyphs identical to the built-in subset\n", viaFile.size());
+            }
+            th.setFontDirs({});
+        }
+
         // Preferences: the choice lists the four styles, marks missing fonts, and applies at once
         th.setStyle(IconStyle::Classic);
         {
@@ -845,17 +910,38 @@ int main(int argc, char** argv) {
             Studio st3(s2, h2);
             CHECK(th.style() == IconStyle::Rounded);
         }
-        if (const char* demo = std::getenv("MINIDAW_ICON_DEMO")) {   // screenshots with real icon fonts at hand: MINIDAW_ICON_DEMO=<folder with MaterialSymbols*.ttf + .codepoints>
-            th.setFontDirs({demo});
+        {   // screenshots with the built-in icons
+            th.setFontDirs({});
             Rig d;
-            th.setStyle(IconStyle::Classic);
-            d.shot("/tmp/vk_icons_classic.ppm");
-            th.setStyle(IconStyle::Outlined);
-            d.shot("/tmp/vk_icons_material.ppm");
-            CHECK(d.st->runCommand("Preferences..."));
-            d.frame(3);
-            d.shot("/tmp/vk_icons_prefs.ppm");
-            d.st->acceptDialog();
+            for (auto [st, file] : {std::pair{IconStyle::Classic, "/tmp/vk_icons_classic.ppm"}, std::pair{IconStyle::Outlined, "/tmp/vk_icons_outlined.ppm"},
+                                    std::pair{IconStyle::Rounded, "/tmp/vk_icons_rounded.ppm"}, std::pair{IconStyle::Sharp, "/tmp/vk_icons_sharp.ppm"}}) {
+                th.setStyle(st);
+                d.shot(file);
+            }
+            // the small marks of the controls follow the style as well: drop-down arrows, check boxes, sub-menu arrows
+            {
+                DrawList probe;
+                probe.begin(100, 100, 1.f, d.fonts.get());
+                th.setStyle(IconStyle::Classic);
+                CHECK(!icons::glyph(probe, 10, 10, 16, rgb(255, 255, 255), Icon::Check) && !icons::glyph(probe, 10, 10, 16, rgb(255, 255, 255), Icon::DropDown));
+                th.setStyle(IconStyle::Rounded);
+                CHECK(icons::glyph(probe, 10, 10, 16, rgb(255, 255, 255), Icon::Check) && icons::glyph(probe, 10, 10, 16, rgb(255, 255, 255), Icon::Close));
+                CHECK(icons::glyph(probe, 10, 10, 16, rgb(255, 255, 255), Icon::ChevronRight) && icons::glyph(probe, 10, 10, 16, rgb(255, 255, 255), Icon::ExpandMore));
+            }
+            auto prefsImage = [&](IconStyle st) {
+                th.setStyle(st);
+                CHECK(d.st->runCommand("Preferences..."));
+                d.frame(3);
+                const SoftImage im = softRender(d.dl, *d.fonts, theme::bg0);
+                if (st == IconStyle::Outlined) d.shot("/tmp/vk_icons_prefs.ppm");
+                d.st->acceptDialog();
+                d.frame(2);
+                return im;
+            };
+            const SoftImage pc = prefsImage(IconStyle::Classic), po = prefsImage(IconStyle::Outlined);
+            int diff = 0;
+            for (int y = 200; y < 560; ++y) for (int x = 480; x < 920; ++x) diff += pc.at(x, y) != po.at(x, y);
+            CHECK(diff > 40);   // the drop-down arrows of the dialog are drawn differently
         }
         th.setStyle(IconStyle::Classic);
         th.setFontDirs({});

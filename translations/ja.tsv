@@ -701,6 +701,7 @@ Icon style	アイコンスタイル
 Classic	クラシック
 Material Symbols needs its font files in the fonts folder.	Material Symbolsはfontsフォルダにフォントファイルが必要です。
 Without them the classic icons are used.	ない場合はクラシックアイコンを使います。
+MIDI Ch	MIDIチャンネル
 # Tutorial
 Mixer groups	ミキサーグループ
 Bringing files in	ファイルを取り込む
@@ -807,6 +808,7 @@ Artist (MP3)	アーティスト (MP3)
 Album (MP3)	アルバム (MP3)
 One file for every track (stems, all the same length)	トラックごとに1ファイル(ステム、長さはすべて同じ)
 Stems: keep master volume and limiter	ステム: マスターボリュームとリミッターを含める
+Stems: keep reverb and echo sends	ステム: リバーブとエコーのセンドを含める
 One file for every track (stems)	トラックごとに1ファイル(ステム)
 Stems start at the same point and have the same length.	ステムは同じ位置から始まり、長さも同じです。
 Drop them into Logic Pro, Ableton Live or Cubase at bar 1.	Logic Pro、Ableton Live、Cubaseの1小節目にドラッグしてください。
