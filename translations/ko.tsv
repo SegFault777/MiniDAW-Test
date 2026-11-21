@@ -772,6 +772,11 @@ Classic	클래식
 Material Symbols needs its font files in the fonts folder.	Material Symbols는 fonts 폴더에 글꼴 파일이 있어야 합니다.
 Without them the classic icons are used.	글꼴이 없으면 클래식 아이콘을 씁니다.
 MIDI Ch	MIDI 채널
+MIDI Channel...	MIDI 채널...
+MIDI Channel	MIDI 채널
+Channel	채널
+The channel of this track in an exported MIDI file.	내보낸 MIDI 파일에서 이 트랙이 쓸 채널입니다.
+Opened a project saved by a newer MiniDAW: some settings may be missing.	새 버전의 MiniDAW로 저장한 프로젝트를 열었습니다. 일부 설정이 빠졌을 수 있습니다.
 # Tutorial
 Mixer groups	믹서 그룹
 Bringing files in	파일 가져오기

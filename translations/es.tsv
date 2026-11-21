@@ -702,6 +702,11 @@ Classic	Clásico
 Material Symbols needs its font files in the fonts folder.	Material Symbols necesita sus archivos de fuente en la carpeta fonts.
 Without them the classic icons are used.	Sin ellos se usan los iconos clásicos.
 MIDI Ch	Canal MIDI
+MIDI Channel...	Canal MIDI...
+MIDI Channel	Canal MIDI
+Channel	Canal
+The channel of this track in an exported MIDI file.	El canal de esta pista en un archivo MIDI exportado.
+Opened a project saved by a newer MiniDAW: some settings may be missing.	Se abrió un proyecto guardado con una versión más reciente de MiniDAW: puede que falten algunos ajustes.
 # Tutorial
 Mixer groups	Grupos del mezclador
 Bringing files in	Traer archivos

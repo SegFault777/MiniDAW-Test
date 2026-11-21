@@ -58,7 +58,7 @@ void NativeUi::addRecent(const std::string& path) {
 
 void NativeUi::openProject(const std::string& p) {
     std::string err;
-    if (m_s.loadProject(p, &err)) { message(msg("Opened %1", p)); addRecent(p); m_selTrack = m_selRegion = -1; }
+    if (m_s.loadProject(p, &err)) { message(m_s.loadedFromNewerVersion() ? std::string("Opened a project saved by a newer MiniDAW: some settings may be missing.") : msg("Opened %1", p)); addRecent(p); m_selTrack = m_selRegion = -1; }
     else message(msg("Could not open the project: %1", err));
     if (m_host.setTitle) m_host.setTitle("MiniDAW - " + p);
 }
@@ -190,6 +190,7 @@ std::vector<MenuItem> NativeUi::trackMenu(int t) {
     m.push_back(item("Move Track Up", "", [=, this] { m_s.moveTrack(t, t - 1); m_selTrack = t - 1; m_dirty = true; }, valid && t > 0));
     m.push_back(item("Move Track Down", "", [=, this] { m_s.moveTrack(t, t + 1); m_selTrack = t + 1; m_dirty = true; }, valid && t + 1 < int(m_tracks.size())));
     m.push_back(item("Rename Track...", "", [this] { m_selRegion = -1; dlgRename(); }, valid));
+    m.push_back(item("MIDI Channel...", "", [=, this] { dlgMidiChannel(t); }, valid && m_tracks[size_t(t)].type == core::TrackType::Instrument));
     m.push_back(sep());
     m.push_back(item("Bounce in Place", "", [=, this] { m_s.bounceTrackInPlace(t); m_dirty = true; }, valid && m_tracks[size_t(t)].type != core::TrackType::Audio));
     m.push_back(item("Convert Pattern to MIDI Region...", "", [this] { dlgPatternToMidi(); }, valid && m_tracks[size_t(t)].type == core::TrackType::Drums));

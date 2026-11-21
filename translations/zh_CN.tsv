@@ -702,6 +702,11 @@ Classic	经典
 Material Symbols needs its font files in the fonts folder.	Material Symbols 需要在 fonts 文件夹中放置字体文件。
 Without them the classic icons are used.	没有字体时使用经典图标。
 MIDI Ch	MIDI 通道
+MIDI Channel...	MIDI 通道...
+MIDI Channel	MIDI 通道
+Channel	通道
+The channel of this track in an exported MIDI file.	导出的 MIDI 文件中此轨道使用的通道。
+Opened a project saved by a newer MiniDAW: some settings may be missing.	已打开由较新版本 MiniDAW 保存的项目，部分设置可能缺失。
 # Tutorial
 Mixer groups	混音器分组
 Bringing files in	导入文件

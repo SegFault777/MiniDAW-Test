@@ -47,6 +47,12 @@ public:
     std::uint64_t revision() const { return m_revision; }
     /// Set when the atlas was full and had to be cleared: glyphs queued earlier in the same frame are stale, draw the frame again.
     bool consumeOverflow() { const bool o = m_overflow; m_overflow = false; return o; }
+    /// Rasterizing a glyph can be slow (Windows GDI font linking for Korean / Japanese ...), and a dialog or the tutorial brings hundreds of new
+    /// glyphs at once. With a budget (ms per frame; 0 = unlimited, the default) the glyphs beyond it are skipped for this frame (drawn empty,
+    /// not cached) and takePending() tells the caller to draw another frame right away: the window stays responsive and the text fills in.
+    void setFrameBudgetMs(double ms) { m_budgetMs = ms; }
+    void beginFrame() { m_spentMs = 0; }
+    bool takePending() { const bool p = m_pending; m_pending = false; return p; }
 
 private:
     std::unique_ptr<FontSource> m_src;
@@ -55,6 +61,9 @@ private:
     int m_penX = 1, m_penY = 1, m_rowH = 0;
     std::uint64_t m_revision = 1;
     bool m_overflow = false;
+    double m_budgetMs = 0, m_spentMs = 0;
+    bool m_pending = false;
+    GlyphInfo m_placeholder;
 };
 
 /// Liberation Sans bitmaps from src/ui/FontData (ASCII only, 11 and 13 px): the font of the headless tests and of the fallback.

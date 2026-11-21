@@ -363,6 +363,7 @@ void renderFrame(App& a) {
     const float scale = std::max(0.75f, a.dpiScale * a.userScale);
     a.renderer->resize(w, h);
     for (int pass = 0; pass < 2; ++pass) {   // a second pass only when the glyph atlas had to be cleared
+        a.fonts->beginFrame();
         a.dl.begin(float(w) / scale, float(h) / scale, scale, a.fonts.get());
         const double t = nowSeconds(a);
         a.gui.beginFrame(a.dl, t);
@@ -371,6 +372,7 @@ void renderFrame(App& a) {
         if (!a.fonts->consumeOverflow()) break;
     }
     if (!a.renderer->render(a.dl, *a.fonts, vkui::theme::bg0)) a.dirty = true;   // the swap chain was rebuilt: draw again
+    if (a.fonts->takePending()) a.dirty = true;   // glyphs are still missing: draw the next frame at once (messages are handled in between)
     a.inFrame = false;
 }
 
@@ -543,6 +545,7 @@ int main() {
     QueryPerformanceFrequency(&app.freq);
     QueryPerformanceCounter(&app.start);
     app.fonts = std::make_shared<vkui::Fonts>(std::make_unique<GdiFontSource>());
+    app.fonts->setFrameBudgetMs(8);   // a page of new Korean / Japanese glyphs must not freeze the window: the rest follows in the next frames
 
     std::shared_ptr<core::TranslationTable> table;
     {

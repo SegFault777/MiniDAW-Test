@@ -92,6 +92,7 @@ public:
     /// File > Open, drag and drop and "open with".
     void openAny(const std::string& path);
     void openAuxDialog(int bus) { dlgAux(bus); m_dirty = true; }   // View menu: Aux A: Reverb / Aux B: Echo
+    void openMidiChannelDialog(int track) { dlgMidiChannel(track); }   ///< Track > MIDI Channel...
     void setDeviceStatus(const std::string& text) { m_device = text; m_dirty = true; }
     void invalidate() { m_dirty = true; }
 
@@ -205,7 +206,7 @@ private:
     double last(const std::string& key, double def) const { auto it = m_last.find(key); return it == m_last.end() ? def : it->second; }
     void dlgTranspose(); void dlgVelocityRamp(); void dlgRepeat(); void dlgQuantize(); void dlgScale(); void dlgHumanize(); void dlgArpeggiate();
     void dlgChord(); void dlgFixedLength(); void dlgScaleVelocity(); void dlgStripSilence(); void dlgDetectTempo(); void dlgPatternToMidi();
-    void dlgTimeSignature(); void dlgTempo(); void dlgBounce(); void dlgImportMidi(); void dlgAbout(); void dlgRename();
+    void dlgTimeSignature(); void dlgTempo(); void dlgBounce(); void dlgImportMidi(); void dlgAbout(); void dlgRename(); void dlgMidiChannel(int t);
     void applyFader(int track, int y, const Rect& r);
     static float faderToGain(double pos);
     static double gainToFader(float gain);

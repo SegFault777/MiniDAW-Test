@@ -1,5 +1,6 @@
 // Tests and screenshots of the Qt-free user interface (src/ui) on a fake project, rendered headless.
 #include <cmath>
+#include <regex>
 #include <cstdio>
 #include <fstream>
 #include <string>
@@ -310,6 +311,32 @@ int main(int argc, char** argv) {
         CHECK(u.dialogOpen());
         u.key(ui::KeyEnter, 0);   // OK
         CHECK(!u.dialogOpen());
+        // the MIDI channel of an instrument track (exported MIDI file): choose 7, then back to Auto
+        {
+            int inst = -1;
+            for (int i = 0; i < s.trackCount(); ++i) if (s.snapshot()[size_t(i)].type == core::TrackType::Instrument) { inst = i; break; }
+            CHECK(inst >= 0);
+            clickAt(60, laneY0 + inst * 60 + 20);   // the track header
+            clickAt(127, 54 + 16);   // the Track menu
+            CHECK(u.menuOpen());
+            u.paint(c); c.savePpm("/tmp/minidaw_ui_trackmenu.ppm");
+            u.key(ui::KeyEscape, 0); CHECK(!u.menuOpen());
+            u.openMidiChannelDialog(inst);
+            CHECK(u.dialogOpen() && hasField("Channel") && u.dialog()->values()[0].index == 0);
+            u.dialog()->values();   // the choice list is Auto, 1 .. 16
+            CHECK(u.dialog()->values()[0].choices.size() == 17);
+            u.paint(c); c.savePpm("/tmp/minidaw_ui_midich.ppm");
+            u.key(ui::KeyEscape, 0);
+            CHECK(!u.dialogOpen() && s.snapshot()[size_t(inst)].midiChannel == 0);
+            s.setTrackMidiChannel(inst, 7);
+            u.openMidiChannelDialog(inst);
+            CHECK(u.dialogOpen() && u.dialog()->values()[0].index == 7);
+            u.paint(c); c.savePpm("/tmp/minidaw_ui_midich7.ppm");
+            u.key(ui::KeyEnter, 0);                       // OK keeps 7
+            CHECK(!u.dialogOpen() && s.snapshot()[size_t(inst)].midiChannel == 7);
+            s.setTrackMidiChannel(inst, 0);
+            s.clearAutosave();
+        }
         // unsaved changes: New Project asks first, Escape keeps the project
         s.setVolume(0, 0.33f);   // marks the project dirty
         const int tracksBefore = s.trackCount();
@@ -347,6 +374,24 @@ int main(int argc, char** argv) {
         const int base = sx.trackCount();
         ux.openAny("/tmp/readme.txt");
         CHECK(ux.lastMessage().find("not supported") != std::string::npos && sx.trackCount() == base);
+
+        {   // a project saved by a newer MiniDAW still opens, with a warning; one saved by this version says "Opened"
+            std::string e;
+            CHECK(sx.saveProject("/tmp/ui_ver.mdaw", &e));
+            std::string text;
+            { FILE* f = std::fopen("/tmp/ui_ver.mdaw", "rb"); CHECK(f != nullptr); if (f) { int ch; while ((ch = std::fgetc(f)) != EOF) text.push_back(char(ch)); std::fclose(f); } }
+            const std::regex re("\"version\"\\s*:\\s*4");
+            CHECK(std::regex_search(text, re));
+            ux.openAny("/tmp/ui_ver.mdaw");
+            ux.paint(cx);
+            CHECK(ux.lastMessage().find("Opened") != std::string::npos && ux.lastMessage().find("newer") == std::string::npos);
+            cx.savePpm("/tmp/ui_open_ok.ppm");
+            { std::string t2 = std::regex_replace(text, re, "\"version\": 99"); FILE* f = std::fopen("/tmp/ui_ver99.mdaw", "wb"); CHECK(f != nullptr); if (f) { std::fwrite(t2.data(), 1, t2.size(), f); std::fclose(f); } }
+            ux.openAny("/tmp/ui_ver99.mdaw");
+            ux.paint(cx);
+            CHECK(ux.lastMessage().find("newer MiniDAW") != std::string::npos && sx.loadedFromNewerVersion());
+            cx.savePpm("/tmp/ui_open_newer.ppm");
+        }
         ux.openAny("/tmp/ui_open.mid");
         CHECK(sx.trackCount() > base);
         { std::ifstream in("/tmp/ui_open.mid", std::ios::binary); std::ofstream out("/tmp/ui_open_upper.MID", std::ios::binary); out << in.rdbuf(); }

@@ -123,7 +123,7 @@ void Studio::addRecent(const std::string& path) {
 
 void Studio::openFile(const std::string& p) {
     std::string err;
-    if (m_s.loadProject(p, &err)) { message("Opened " + p); addRecent(p); m_selTrack = 0; m_selRegion = -1; }
+    if (m_s.loadProject(p, &err)) { message(m_s.loadedFromNewerVersion() ? "Opened a project saved by a newer MiniDAW: some settings may be missing." : "Opened " + p); addRecent(p); m_selTrack = 0; m_selRegion = -1; }
     else message("Could not open the project: " + err);
     if (m_host.setTitle) m_host.setTitle("MiniDAW - " + p);
     m_modelDirty = true;

@@ -20,7 +20,7 @@
 namespace core {
 
 namespace {
-const int kProjectVersion = 3;
+const int kProjectVersion = 4;   // 4: mixer groups, mix snapshots, per-track MIDI channel (older programs ignore these fields)
 
 std::string typeToString(TrackType t) {
     switch (t) {
@@ -487,6 +487,8 @@ bool Session::writeProject(const std::string& path, bool autosave, std::string* 
 }
 
 // ------------------------------------------------------------------ load
+int Session::projectFileVersion() { return kProjectVersion; }
+
 bool Session::loadProject(const std::string& path, std::string* error) {
     std::string text;
     if (!readFile(path, text, error)) return false;
@@ -494,6 +496,7 @@ bool Session::loadProject(const std::string& path, std::string* error) {
     if (!Json::parse(text, root) || !root.isObject() || root["format"].toString() != "MiniDAW")
         return fail(error, tr("Not a valid MiniDAW project file."));
     const std::string dir = parentDir(path);
+    m_loadedVersion = int(root["version"].toInt(0));
 
     stopRecording();
     m_playing = false;

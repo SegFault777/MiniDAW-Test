@@ -1,5 +1,7 @@
 // Tests and screenshots of the Vulkan user interface (src/vulkan) rendered by the CPU twin of its shader: no GPU needed.
 #include "../src/core/LogicProjectData.h"
+#include <array>
+#include <regex>
 #include <chrono>
 #include <fstream>
 #include <cmath>
@@ -378,6 +380,122 @@ int main(int argc, char** argv) {
         CHECK(st4.layoutSettings()["dockH"] == "900.0" && st4.layoutSettings()["dockTab"] == "6");
     }
 
+    // ---- glyph atlas: when it is full it is cleared once, the overflow flag is raised for the redraw, and nothing is overwritten
+    {
+        struct BigSource : FontSource {
+            bool rasterize(std::uint32_t cp, bool, int, GlyphBitmap& out) override {
+                out.w = 60; out.h = 60; out.bearingX = 1; out.bearingY = 50; out.advance = 62;
+                out.a8.assign(size_t(out.w) * size_t(out.h), std::uint8_t(1 + cp % 250));   // every glyph has its own constant value
+                return true;
+            }
+            float lineHeight(bool, int px) override { return float(px); }
+        };
+        Fonts f(std::make_unique<BigSource>());
+        const int perAtlas = (Fonts::kAtlas / 61) * (Fonts::kAtlas / 61);   // 16 x 16 glyphs of 60 x 61 texels fit
+        int overflowAt = -1, overflows = 0;
+        const std::uint64_t rev0 = f.revision();
+        const int total = perAtlas + 100;
+        for (int i = 0; i < total; ++i) {
+            f.glyph(0x4000u + std::uint32_t(i), false, 12);
+            if (f.consumeOverflow()) { ++overflows; if (overflowAt < 0) overflowAt = i; }
+        }
+        CHECK(overflows == 1);                                 // cleared exactly once
+        CHECK(overflowAt == perAtlas);                         // ... when the 257th glyph did not fit
+        CHECK(!f.consumeOverflow());                           // the flag is consumed
+        CHECK(f.revision() > rev0);
+        // the glyphs asked for after the clear are all in the atlas, with their own pixels and without overlap
+        std::vector<std::array<int, 4>> rects;
+        bool pixelsOk = true, inside = true;
+        for (int i = overflowAt; i < total; ++i) {
+            const GlyphInfo& g = f.glyph(0x4000u + std::uint32_t(i), false, 12);
+            const int x0 = int(std::lround(g.u0 * Fonts::kAtlas)), y0 = int(std::lround(g.v0 * Fonts::kAtlas));
+            inside = inside && x0 >= 0 && y0 >= 0 && x0 + g.w <= Fonts::kAtlas && y0 + g.h <= Fonts::kAtlas;
+            if (!inside) break;
+            const std::uint8_t want = std::uint8_t(1 + (0x4000u + std::uint32_t(i)) % 250);
+            pixelsOk = pixelsOk && f.atlas()[size_t(y0) * Fonts::kAtlas + size_t(x0)] == want
+                               && f.atlas()[size_t(y0 + g.h - 1) * Fonts::kAtlas + size_t(x0 + g.w - 1)] == want;
+            for (const auto& r : rects) CHECK(!(x0 < r[0] + r[2] && r[0] < x0 + g.w && y0 < r[1] + r[3] && r[1] < y0 + g.h));
+            rects.push_back({x0, y0, g.w, g.h});
+        }
+        CHECK(inside && pixelsOk);
+        CHECK(!f.consumeOverflow());                           // asking again for cached glyphs does not clear anything
+        // the first glyph of the old content is gone from the cache: it is drawn again, not served from stale texels
+        const GlyphInfo& again = f.glyph(0x4000u, false, 12);
+        CHECK(again.w == 60 && again.h == 60);
+        // a glyph larger than the atlas is skipped (empty), not a crash
+        struct HugeSource : FontSource {
+            bool rasterize(std::uint32_t, bool, int, GlyphBitmap& out) override { out.w = out.h = Fonts::kAtlas; out.a8.assign(size_t(out.w) * size_t(out.h), 9); out.advance = 7; return true; }
+            float lineHeight(bool, int px) override { return float(px); }
+        };
+        Fonts h(std::make_unique<HugeSource>());
+        const GlyphInfo& hg = h.glyph(0x4100u, false, 12);
+        CHECK(hg.w == 0 && hg.h == 0 && hg.advance == 7.f && !h.consumeOverflow());
+    }
+
+    // ---- slow glyph source (Windows GDI font linking): with a frame budget a page of new glyphs does not block, and fills in over a few frames
+    {
+        struct SlowSource : FontSource {
+            bool rasterize(std::uint32_t cp, bool, int, GlyphBitmap& out) override {
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                out.w = 20; out.h = 20; out.bearingX = 0; out.bearingY = 15; out.advance = 22;
+                out.a8.assign(400, std::uint8_t(1 + cp % 250));
+                return true;
+            }
+            float lineHeight(bool, int px) override { return float(px); }
+        };
+        const int count = 200;                                  // 200 glyphs x 2 ms = 400 ms in one go
+        Fonts f(std::make_unique<SlowSource>());
+        f.setFrameBudgetMs(8);
+        int frames = 0, placeholders = 0;
+        double longest = 0;
+        for (; frames < 400; ++frames) {
+            f.beginFrame();
+            const auto t0 = std::chrono::steady_clock::now();
+            placeholders = 0;
+            for (int i = 0; i < count; ++i) if (f.glyph(0x5000u + std::uint32_t(i), false, 13).w == 0) ++placeholders;
+            longest = std::max(longest, std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count());
+            if (!f.takePending()) break;
+            CHECK(placeholders > 0);                            // pending means glyphs were skipped
+        }
+        CHECK(placeholders == 0 && frames >= 20 && frames < 400);   // everything arrived, spread over many frames
+        CHECK(longest < 100);                                   // no frame took anywhere near the 400 ms of a single pass
+        for (int i = 0; i < count; ++i) { const GlyphInfo& g = f.glyph(0x5000u + std::uint32_t(i), false, 13); CHECK(g.w == 20 && g.advance == 22.f); }
+        CHECK(!f.takePending());
+        // without a budget (the default, used by the tests and the other UIs) nothing is ever skipped
+        Fonts u(std::make_unique<SlowSource>());
+        u.beginFrame();
+        for (int i = 0; i < 20; ++i) CHECK(u.glyph(0x6000u + std::uint32_t(i), false, 13).w == 20);
+        CHECK(!u.takePending());
+    }
+
+    // ---- the tutorial with a slow glyph source: the panel is there in the first frame, the text fills in over the next ones
+    {
+        struct SlowWrap : FontSource {
+            std::unique_ptr<FontSource> in = makeBuiltinFontSource();
+            bool rasterize(std::uint32_t cp, bool b, int px, GlyphBitmap& o) override { std::this_thread::sleep_for(std::chrono::milliseconds(3)); return in->rasterize(cp, b, px, o); }
+            float lineHeight(bool b, int px) override { return in->lineHeight(b, px); }
+        };
+        core::Session sy;
+        Host hy;
+        Studio sty(sy, hy);
+        Gui gy; DrawList dly;
+        auto fy = std::make_shared<Fonts>(std::make_unique<SlowWrap>());
+        fy->setFrameBudgetMs(8);
+        double ty = 1.0;
+        auto frameY = [&] { fy->beginFrame(); dly.begin(1440, 900, 1.0f, fy.get()); gy.beginFrame(dly, ty); sty.frame(gy, ty); gy.endFrame(); ty += 0.05; return fy->takePending(); };
+        frameY(); frameY();
+        CHECK(sty.runCommand("Tutorial...") && sty.tutorialOpen());
+        bool pending = frameY();
+        CHECK(pending);                                          // the first frame of the tutorial could not rasterize everything
+        softRender(dly, *fy, theme::bg0).savePpm("/tmp/vk_tut_frame1.ppm");
+        pending = frameY(); pending = frameY();
+        softRender(dly, *fy, theme::bg0).savePpm("/tmp/vk_tut_frame3.ppm");
+        int frames = 3;
+        while (pending && frames < 300) { pending = frameY(); ++frames; }
+        CHECK(!pending && frames > 3);
+        softRender(dly, *fy, theme::bg0).savePpm("/tmp/vk_tut_done.ppm");
+    }
+
     // ---- MIDI channel of a track (for MIDI export): inspector row, palette commands
     {
         int inst = -1, other = -1;
@@ -459,6 +577,24 @@ int main(int argc, char** argv) {
         const int base = sx.trackCount();
         stx.openAny("/tmp/notes.txt");                                    // unsupported: a clear message, nothing happens
         CHECK(stx.toastText().find("not supported") != std::string::npos && sx.trackCount() == base);
+
+        {   // a project saved by a newer MiniDAW still opens, with a warning; one saved by this version says "Opened"
+            std::string e;
+            CHECK(sx.saveProject("/tmp/vk_ver.mdaw", &e));
+            std::string text;
+            { FILE* f = std::fopen("/tmp/vk_ver.mdaw", "rb"); CHECK(f != nullptr); if (f) { int ch; while ((ch = std::fgetc(f)) != EOF) text.push_back(char(ch)); std::fclose(f); } }
+            const std::regex re("\"version\"\\s*:\\s*4");
+            CHECK(std::regex_search(text, re));
+            stx.openFile("/tmp/vk_ver.mdaw");
+            framex(3);
+            CHECK(stx.toastText().find("Opened") != std::string::npos && stx.toastText().find("newer") == std::string::npos);
+            softRender(dlx, *fontsx, theme::bg0).savePpm("/tmp/vk_open_ok.ppm");
+            { std::string t2 = std::regex_replace(text, re, "\"version\": 99"); FILE* f = std::fopen("/tmp/vk_ver99.mdaw", "wb"); CHECK(f != nullptr); if (f) { std::fwrite(t2.data(), 1, t2.size(), f); std::fclose(f); } }
+            stx.openFile("/tmp/vk_ver99.mdaw");
+            framex(3);
+            CHECK(stx.toastText().find("newer MiniDAW") != std::string::npos && sx.loadedFromNewerVersion());
+            softRender(dlx, *fontsx, theme::bg0).savePpm("/tmp/vk_open_newer.ppm");
+        }
         CHECK(stx.runCommand("Open..."));                                 // the dialog returns a .mid file: it is imported
         framex(2);
         CHECK(seenFilter.find("*.mp3") != std::string::npos && seenFilter.find("*.mdaw") != std::string::npos && seenFilter.find("*.mid") != std::string::npos);

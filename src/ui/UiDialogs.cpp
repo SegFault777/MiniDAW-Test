@@ -282,6 +282,15 @@ void NativeUi::dlgRename() {
     } else message("Select a track or a region first.");
 }
 
+void NativeUi::dlgMidiChannel(int t) {
+    const auto tracks = m_s.snapshot();   // not m_tracks: that copy is refreshed once per frame
+    if (t < 0 || t >= int(tracks.size())) return;
+    std::vector<std::string> chans{"Auto"};
+    for (int i = 1; i <= 16; ++i) chans.push_back(std::to_string(i));
+    openDialog(std::make_unique<Dialog>("MIDI Channel", Dialog::Values{Field::choice("Channel", chans, tracks[size_t(t)].midiChannel), Field::note("The channel of this track in an exported MIDI file.")},
+                                        [this, t](const Dialog::Values& v) { m_s.setTrackMidiChannel(t, v[0].index); m_dirty = true; }));
+}
+
 }  // namespace ui
 
 namespace ui {

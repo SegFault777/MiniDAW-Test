@@ -1,6 +1,7 @@
 // Tests of the Qt-free core: JSON, text, WAV files, Session (project model, undo, save / load, autosave,
 // export, bounce in place) and the MIDI operations.
 #include <cmath>
+#include <regex>
 #include <cstdio>
 #include <fstream>
 #include "../src/core/AppPaths.h"
@@ -1677,6 +1678,28 @@ static void testMidiChannels() {
     int ch3 = 0;
     for (const Track& t : c.snapshot()) if (t.name == "Chosen") ch3 = t.midiChannel;
     CHECK(ch3 == 3);
+    // the file version: written as 4, read back; a newer file still opens but is reported
+    {
+        CHECK(Session::projectFileVersion() == 4);
+        Session v;
+        CHECK(v.loadedFileVersion() == 0 && !v.loadedFromNewerVersion());
+        CHECK(v.loadProject(proj, &err) && v.loadedFileVersion() == 4 && !v.loadedFromNewerVersion());
+        std::string text;
+        {
+            FILE* f = std::fopen(proj.c_str(), "rb");
+            CHECK(f != nullptr);
+            if (f) { int ch; while ((ch = std::fgetc(f)) != EOF) text.push_back(char(ch)); std::fclose(f); }
+        }
+        const std::regex re("\"version\"\\s*:\\s*4");
+        CHECK(std::regex_search(text, re));
+        const std::string newer = tmpDir() + "/newer.mdaw", old = tmpDir() + "/old.mdaw";
+        auto put = [&](const std::string& path, const std::string& body) { FILE* f = std::fopen(path.c_str(), "wb"); CHECK(f != nullptr); if (f) { std::fwrite(body.data(), 1, body.size(), f); std::fclose(f); } };
+        put(newer, std::regex_replace(text, re, "\"version\": 99"));
+        CHECK(v.loadProject(newer, &err) && v.loadedFileVersion() == 99 && v.loadedFromNewerVersion());
+        CHECK(v.snapshot().size() == 4);                      // the known parts load as usual
+        put(old, std::regex_replace(text, re, "\"zz\": 0"));   // no version at all (a very old file)
+        CHECK(v.loadProject(old, &err) && v.loadedFileVersion() == 0 && !v.loadedFromNewerVersion());
+    }
     // with more than 15 instrument tracks the automatic channels run out and wrap to channel 1 instead of failing
     Session many;
     for (int i = many.trackCount() - 1; i >= 0; --i) many.removeTrack(i);

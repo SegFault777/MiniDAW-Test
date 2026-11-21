@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "IconFont.h"
 #include "Text.h"
+#include <chrono>
 #include <algorithm>
 #include "../ui/FontData.h"
 
@@ -36,9 +37,17 @@ const GlyphInfo& Fonts::glyph(std::uint32_t cp, bool bold, int px) {
     const std::uint64_t key = std::uint64_t(cp) | (std::uint64_t(bold ? 1 : 0) << 21) | (std::uint64_t(px) << 22);
     auto it = m_glyphs.find(key);
     if (it != m_glyphs.end()) return it->second;
+    if (m_budgetMs > 0 && m_spentMs >= m_budgetMs) {   // out of time for this frame: empty for now, rasterized in a later frame
+        m_pending = true;
+        m_placeholder = GlyphInfo{};
+        m_placeholder.advance = float(px) * (cp >= 0x2E80 ? 1.0f : 0.55f);
+        return m_placeholder;
+    }
     GlyphBitmap bm;
     GlyphInfo info;
+    const auto t0 = std::chrono::steady_clock::now();
     if (!m_src || !m_src->rasterize(cp, bold, px, bm)) { bm = GlyphBitmap{}; bm.advance = float(px) * 0.5f; }
+    if (m_budgetMs > 0) m_spentMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
     info.advance = bm.advance;
     if (bm.w > 0 && bm.h > 0 && bm.w < kAtlas - 2 && bm.h < kAtlas - 2) {
         if (m_penX + bm.w + 1 > kAtlas) { m_penX = 1; m_penY += m_rowH + 1; m_rowH = 0; }

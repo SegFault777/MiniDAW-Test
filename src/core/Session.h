@@ -275,6 +275,9 @@ public:
     void newProject();
     bool saveProject(const std::string& path, std::string* error);
     bool loadProject(const std::string& path, std::string* error);
+    static int projectFileVersion();            ///< the file version this program writes (4 since v0.12: mixer groups, snapshots, MIDI channels)
+    int loadedFileVersion() const { return m_loadedVersion; }   ///< version number of the last loaded file (0 = none or very old)
+    bool loadedFromNewerVersion() const { return m_loadedVersion > projectFileVersion(); }   ///< saved by a newer MiniDAW: unknown settings were ignored
     // ---- Autosave and crash recovery ----
     void setAutosaveDir(const std::string& dir) { m_autosaveDir = dir; }
     std::string autosavePath() const;
@@ -354,6 +357,7 @@ private:
     std::atomic<bool> m_metro{false}, m_countIn{false}, m_loopOn{false}, m_dirty{false};
     std::atomic<std::uint64_t> m_rev{0};
     std::atomic<bool> m_groupLink{true};
+    int m_loadedVersion = 0;
     std::atomic<int> m_flush{0};   // bit 0: release synth notes, bit 1: reset every effect
     std::atomic<float> m_master{0.9f};
     std::atomic<int> m_recOffsetMs{0};
